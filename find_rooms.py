@@ -15,9 +15,6 @@ import argparse
 import csv
 import operator
 
-prefix1 = "Konferenzr."
-prefix2 = "Konfi"
-
 def findRooms(prefix):
 	rooms={}
 	data = unicode(xml.substitute(name=prefix))
