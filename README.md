@@ -3,6 +3,12 @@ roomfinder
 
 Python scripts for finding free conference rooms from a Microsoft Exchange Server.
 
+Requirements:
+ 
+ - curl
+ - Python 2.7
+ - Access to Exchange Web Service (EWS) API of a Microsoft Exchange Server 2010 
+
 Usage:
 
 	$ python find_rooms.py -h
