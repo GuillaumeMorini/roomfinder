@@ -67,7 +67,7 @@ Example:
 
 Since the auto-generated list `rooms.csv` can be very huge it is recommended to copy that list to another file, e.g. `favorite_rooms.csv` and edit that file so that it only holds the meetings rooms you are interested in. After doing so, you can get the status for you favorite rooms very quickly using:
 
-	$ python find_available_room.py -url https://mailb.asv.local/ews/exchange.asmx -u maier 2014-07-03T13:00:00 2014-07-03T17:00:00 -f favorite_rooms.csv
+	$ python find_available_room.py -url https://mail.mycompany.com/ews/exchange.asmx -u maier 2014-07-03T13:00:00 2014-07-03T17:00:00 -f favorite_rooms.csv
 	Password:
 	Free       Konferenzr. 007                                                  007@mycompany.com                                         
 	Busy       Konferenzr. Asterix                                              konf.asterix@mycompany.com                                         
