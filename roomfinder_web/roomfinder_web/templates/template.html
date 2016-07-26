@@ -1,0 +1,21 @@
+{% extends "layout.html" %}
+
+
+{% block content %}
+  <h3> This is the start of my child template</h3>
+  <h4>Current date/time: {{ current_time | datetimefilter }}</h4>
+  <br>
+  <p>My string: {{my_string}}</p>
+  <p>Value from the list: {{my_list[3]}}</p>
+  <p>Loop through the list:</p>
+  <ul>
+    {% for n in my_list %}
+    <li>{{n}}</li>
+    {% endfor %}
+  </ul>
+    <p>Same list with a filter: {{ my_list|join(', ') }}</p>
+  <h3> This is the end of my child template</h3>
+    {% block footer %}
+    {{ super() }}
+        {% endblock %}
+{% endblock %}

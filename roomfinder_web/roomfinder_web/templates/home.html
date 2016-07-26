@@ -1,0 +1,58 @@
+{% extends "layout.html" %}
+
+
+{% block content %}
+  <h3 align="center"> 
+    {% for r in room_list[0] %}
+      {{ r }} <br>
+    {% endfor %}
+  </h3>
+  <br>
+  <!-- <div class="panel panel-default"> -->
+    <table class="table table-bordered">
+    <tr>
+     <th bgcolor="#000">
+       <font color="#9d9d9d">Status</font>
+     </th>
+     <th bgcolor="#000">
+       <font color="#9d9d9d">Room</font>
+     </th>
+     <th bgcolor="#000">
+       <font color="#9d9d9d">Email</font>
+     </th>
+    </tr>
+    {% for r in room_list[1] %}
+      {% if r[0] == "Free" %}
+        <tr>
+        <!-- <tr> -->
+          <td bgcolor="#00FF00">
+            <img src="static/img/available.png" height="32" width="32" />{{ r[0] }}
+          </td>
+          <td bgcolor="#00FF00">
+            {{ r[1] }}
+          </td>
+          <td bgcolor="#00FF00">
+            <a href="sip:{{ r[2] }}">{{ r[2] }}</a>
+          </td>
+        </tr>
+      {% else %}
+        <tr>
+        <!-- <tr> -->
+          <td bgcolor="#FF0000">
+            <img src="static/img/not_available.png" height="32" width="32" />{{ r[0] }}
+          </td>
+          <td bgcolor="#FF0000">
+            {{ r[1] }}
+          </td>
+          <td bgcolor="#FF0000">
+            <a href="sip:{{ r[2] }}">{{ r[2] }}</a>
+          </td>
+        </tr>
+      {% endif %}
+    {% endfor %}
+    </table>
+  <!-- </div> -->
+  {% block footer %}
+    {{ super() }}
+  {% endblock %}
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends "layout.html" %}
+
+
+{% block content %}
+  <form action="/add" method="POST">
+    Email: <input type="text" name="email">
+    <button type="submit">Add!</button>
+    <br> 
+  </form>
+      {% block footer %}
+    {{ super() }}
+  {% endblock %}
+{% endblock %}
