@@ -12,6 +12,7 @@ import xml.etree.ElementTree as ET
 import csv, codecs
 import argparse
 import datetime
+import json
 
 now = datetime.datetime.now().replace(microsecond=0)
 starttime_default = now.isoformat()
@@ -37,23 +38,21 @@ for row in reader:
 start_time = args.starttime
 if not args.endtime:
 	start = datetime.datetime.strptime( start_time, "%Y-%m-%dT%H:%M:%S" )
-	end_time = (start + datetime.timedelta(hours=1)).isoformat()
+	end_time = (start + datetime.timedelta(hours=2)).isoformat()
 else:
 	end_time = args.endtime
 
-user = args.user
-password = getpass.getpass("Password:")
-
-print "Searching for a room from " + start_time + " to " + end_time + ":"
-print "{0:10s} {1:64s} {2:64s}".format("Status", "Room", "Email")
+user = "gmorini@cisco.com"
+password = "***REMOVED***"
 
 xml_template = open("getavailibility_template.xml", "r").read()
 xml = Template(xml_template)
+result=list()
 for room in rooms:
 	data = unicode(xml.substitute(email=room,starttime=start_time,endtime=end_time))
 
 	header = "\"content-type: text/xml;charset=utf-8\""
-	command = "curl --silent --header " + header +" --data '" + data + "' --ntlm "+"--negotiate "+ "-u "+ user+":"+password+" "+ url
+	command = "curl --silent --header " + header +" --data '" + data + "' --ntlm "+ "-u "+ user+":"+password+" "+ url
 	response = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True).communicate()[0]
 
 	tree = ET.fromstring(response)
@@ -64,4 +63,8 @@ for room in rooms:
 	for elem in elems:
 		status=elem.text
 
-	print "{0:10s} {1:64s} {2:64s}".format(status, rooms[room], room)
+	result.append((status, rooms[room], room))
+
+import json
+with open('available_rooms.json', 'w') as outfile:
+    json.dump(("List of rooms status <br> for ILM building <br> from " + start_time + " <br> to " + end_time + ":",sorted(result, key=lambda tup: tup[1])), outfile)

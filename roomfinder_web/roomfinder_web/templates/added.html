@@ -1,0 +1,11 @@
+{% extends "layout.html" %}
+
+
+{% block content %}
+    Email {{ email }} successfully added to the Cisco Spark room named "Roomfinder" !<br><br>
+    Thanks for using Roomfinder service.
+
+      {% block footer %}
+    {{ super() }}
+  {% endblock %}
+{% endblock %}

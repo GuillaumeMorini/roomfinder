@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+
+
+{% block content %}
+  <h3>Current Results of the Vote</h3>
+  <h4>As of: {{ current_time | datetimefilter }}</h4>
+  <table width="300">
+    <tr>
+        <th width="200">Hero</td>
+        <th width="100">Votes</td>
+    </tr>
+    {% for n in tally %}
+      <tr>
+        <td>{{ n[0] }}</td>
+        <td>{{ n[1] }}</td>
+      </tr>
+    {% endfor %}
+  </table>
+  {% block footer %}
+    {{ super() }}
+  {% endblock %}
+{% endblock %}

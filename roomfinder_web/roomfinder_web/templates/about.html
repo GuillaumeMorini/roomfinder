@@ -1,0 +1,20 @@
+{% extends "layout.html" %}
+
+
+{% block content %}
+  <h3>About this Service</h3>
+  <br>
+  <p>
+  This is an applicaiton developed using "Cloud Native"
+  design method to be used for demonstration and education purposes.<br>
+  <br>
+  If you prefer to use Cisco Spark, you can click <a href="/form">here</a> to add your email to the Cisco Spark room.<br>
+  <br>
+  It is used for finding a conference room for the next hours. Full details on this demo application can be found at <a href="http://www.github.com/Guismo1/roomfinder" target="_blank">RoomFinder-Demo on GitHub</a><br>
+  <br>
+  &copy; 2016 - Developped by <a href="mailto:gmorini@cisco.com">Guillaume Morini</a>
+  <br>
+      {% block footer %}
+    {{ super() }}
+  {% endblock %}
+{% endblock %}

@@ -1,0 +1,62 @@
+{% from "macros.html" import nav_link with context %}
+
+<!DOCTYPE html>
+<html>
+  <head>
+    {% block title %}
+      <title>{{ title }}</title>
+    {% endblock %}
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="static/bootstrap.min.css" rel="stylesheet" media="screen">
+    <style type="text/css">
+      .container {
+        max-width: 500px;
+        padding-top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+
+    <nav class="navbar navbar-inverse" role="navigation">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="/">Room Finder Web Server</a>
+        </div>
+
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+          <ul class="nav navbar-nav">
+              {{ nav_link('form', 'Add yourself to Cisco Spark room') }}
+          </ul>
+          <ul class="nav navbar-nav">
+              {{ nav_link('about', 'About') }}
+          </ul>
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="http://mantl.io" target="_blank">Cisco Mantl</a></li>
+          </ul>
+        </div><!-- /.navbar-collapse -->
+
+      </div><!-- /.container-fluid -->
+    </nav>
+
+    {% block heading %}
+      <h1>{{ title }}</h1>
+    {% endblock %}
+    <div class="container">
+    {% block content %}{% endblock %}
+    </div>
+
+    <!-- <div class="container"></div> -->
+    <div class="footer">
+      {% block footer %}
+      {% endblock %}
+    </div>
+    <script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
+    <script src="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+  </body>
+</html>
