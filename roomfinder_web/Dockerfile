@@ -5,6 +5,10 @@ EXPOSE 5000
 ADD proxy.sh /tmp/proxy.sh
 RUN /tmp/proxy.sh
 
+# Add current folder as /app
+ADD . /app
+WORKDIR /app
+
 # Install basic utilities
 RUN apk add -U \
         ca-certificates \
@@ -13,9 +17,6 @@ RUN apk add -U \
 
 # This is failing for some odd pip upgrade error commenting out for now
 #RUN pip install --upgrade pip
-
-ADD . /app
-WORKDIR /app
 
 CMD [ "python", "./roomfinder_web/web_server.py" ]
 
