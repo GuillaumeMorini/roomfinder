@@ -172,6 +172,7 @@ def process_demoroom_message(post_data):
         while cco.find("dir") > -1:
             cco=cco_list.pop()
         reply = find_dir(cco)
+        print "find_dir: "+reply
         message_type="html"
     # If nothing matches, send instructions
     else:
