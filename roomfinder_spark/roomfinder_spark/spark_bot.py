@@ -143,7 +143,7 @@ def process_demoroom_message(post_data):
         else:
             reply = "Sorry, there is currently no available rooms"+reply+"\n"
     # Check if message contains word "options" and if so send options
-    elif text.lower().find("options") > -1:
+    elif text.lower().find("options") > -1 or text.lower().find("help") > -1 or text.lower().find("aide") > -1:
         #options = get_options()
         reply = "The options are limited right now ! This is an alpha release ! \n"
         reply += "  - any sentence with \"dispo\" or \"available\" keyword will display the current available rooms for the next 2 hours timeslot.\n"
@@ -163,12 +163,10 @@ def process_demoroom_message(post_data):
             add_email_demo_room(email, demo_room_id)
             reply += "  - %s \n" % (email)
     # Check if message contains phrase "help" and display generic help message
-    elif text.lower().find("help") > -1 or text.lower().find("aide") > -1:
-        # Reply back to message
-        reply = "Hello, welcome to the Room Finder.\n" \
-                "To find out current available room, ask 'What are the rooms available?'\n" \
-                "To find out the possible options, ask 'What are the options?\n" \
-                '''Or try new things !'''
+    elif text.lower().find("dir") > -1:
+        # Find the cco id
+        cco = re.findall(r'[\w-]+', text)
+        reply = "directory entry for "+cco+"\n"
     # If nothing matches, send instructions
     else:
         reply=natural_langage_bot(text.lower())
