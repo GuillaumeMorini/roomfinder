@@ -229,7 +229,7 @@ def find_image(keyword):
     test=page.text.encode('utf-8').replace('jsonFlickrFeed(','').replace(')','').replace('\\\'','\\\\\'')
     j=json.loads(test)
     i=random.randrange(0, 20)
-    link=j["items"][i]["link"]
+    link=j["items"][i]["media"]["m"]
     return link
 
 # Utilities to interact with the Roomfinder-App Server
