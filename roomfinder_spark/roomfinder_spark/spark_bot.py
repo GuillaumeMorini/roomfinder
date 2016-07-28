@@ -31,7 +31,7 @@ __author__ = 'gmorini'
 # ToDo - Method to monitor incoming 1 on 1 messages
 
 from flask import Flask, request, Response
-import requests, json, re, urllib
+import requests, json, re, urllib, random
 import xml.etree.ElementTree as ET
 
 app = Flask(__name__)
@@ -42,6 +42,8 @@ spark_headers = {}
 spark_headers["Content-type"] = "application/json"
 app_headers = {}
 app_headers["Content-type"] = "application/json"
+google_headers = {}
+google_headers["User-Agent"] = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) AppleWebKit/534.30 (KHTML, like Gecko) Chrome/12.0.742.112 Safari/534.30"
 
 @app.route('/', methods=["POST"])
 def process_webhook():
@@ -174,6 +176,16 @@ def process_demoroom_message(post_data):
         reply = find_dir(cco)
         print "find_dir: "+reply
         message_type="html"
+    elif text.lower().find("image") > -1:
+        # Find the cco id
+        keyword_list = re.findall(r'[\w-]+', text)
+        print "keyword_list= "+str(keyword_list)
+        keyword=keyword_list.pop()
+        while keyword.find("image") > -1:
+            keyword=keyword_list.pop()
+        reply = find_image(keyword)
+        print "find_image: "+reply
+        message_type="image"
     # If nothing matches, send instructions
     else:
         reply=natural_langage_bot(text.lower())
@@ -208,9 +220,17 @@ def find_dir(cco):
     except ImportError:
         from bs4 import BeautifulSoup
     html = page.text
-    #parsed_html = BeautifulSoup(html)
-    #return parsed_html.body.find('div', attrs={'id':'showDetail'}).text
-    return html
+    parsed_html = BeautifulSoup(html)
+    return parsed_html.body.find('div', attrs={'id':'showDetail'})
+
+def find_image(keyword):
+    u = "http://api.flickr.com/services/feeds/photos_public.gne?tags="+keyword+"&lang=en-us&format=json"
+    page = requests.get(u)
+    test=page.text.encode('utf-8').replace('jsonFlickrFeed(','').replace(')','')
+    j=json.loads(test)
+    i=random.randrange(0, 20)
+    link=j["items"][i]["link"]
+    return link
 
 # Utilities to interact with the Roomfinder-App Server
 def get_available():
@@ -286,6 +306,12 @@ def send_message_to_room(room_id, message,message_type):
             "roomId" : room_id,
             "text" : message
         }
+    elif message_type == "image":
+        message_body = {
+            "roomId" : room_id,
+            "text" : ""
+            "files" : [message]
+        }        
     else:
         message_body = {
             "roomId" : room_id,
