@@ -58,35 +58,10 @@ def process_webhook():
     if post_data["data"]["roomId"] == demo_room_id:
         # print("Incoming Demo Room Message.")
         process_demoroom_message(post_data)
-        # message_id = post_data["data"]["id"]
-        # message = get_message(message_id)
-        # pprint(message)
-        #
-        # if message["text"].lower().find("results") > -1:
-        #     results = get_results()
-        #     reply = "The current standings are\n"
-        #     for result in results:
-        #         reply += "  - %s has %s votes.\n" % (result[0], result[1])
-        # elif message["text"].lower().find("options") > -1:
-        #     options = get_options()
-        #     reply = "The options are... \n"
-        #     for option in options:
-        #         reply += "  - %s \n" % (option)
-        # elif message["text"].lower().find("vote") > -1:
-        #     reply = "Let's vote!  Look for a new message from me so you can place a secure vote!"
-        #     start_vote_session(message["personEmail"])
-        # else:
-        #     # Reply back to message
-        #     reply =  "Hello, welcome to the Roomfinder Demo Room.\n" \
-        #             "To find out current status of voting, ask 'What are the results?'\n" \
-        #             "To find out the possible options, ask 'What are the options?\n" \
-        #             '''To place a vote, say "I'd like to vote" to start a private voting session.'''
-        #     send_message_to_room(demo_room_id, reply)
-    # If not the demo room, assume its a user voting session
+    # If not the demo room, assume its a user individual message
     else:
         # print("Incoming Individual Message.")
         sys.stderr.write("Incoming Individual Message\n")
-        process_incoming_message(post_data)
 
     return ""
 
@@ -129,11 +104,12 @@ def process_demoroom_message(post_data):
     if message["personEmail"] == bot_email:
         return ""
 
-    sys.stderr.write("Incoming Room Message\tmessage: "+message["text"]+"\t")
+    text=message["text"].encode("utf-8")
+    sys.stderr.write("Incoming Room Message\tmessage: "+text+"\t")
 
     # Check if message contains word "dispo" and if so send results
-    if message["text"].lower().find("dispo") > -1 or message["text"].lower().find("available") > -1:
-        number = re.findall(r'[0-9]+', message["text"])
+    if text.lower().find("dispo") > -1 or text.lower().find("available") > -1:
+        number = re.findall(r'[0-9]+', text)
         print "number: "+str(number)
         start, end, results = get_available()
         toto=list(results)
@@ -154,20 +130,20 @@ def process_demoroom_message(post_data):
                 reply = ", with more than "+str(inf)+" and less than "+str(sup)+" seats, "+start+" "+end
         else:
             reply = " "+start+" "+end
-            filtered_results=[(result,int(result.split('(')[1].split(')')[0])) for result in toto]
+            filtered_results=toto
 
 
         titi=list(filtered_results)
         # Test if filtered result list is empty or not
         if titi:
             reply = "The current available rooms"+reply+" are:\n"
-            for result in filtered_results:
+            for result in titi:
                 reply += "  - %s\n" % (result)
-                sys.stderr.write("Salle: "+result[0]+" Places: "+str(result[1])+"\n")
+                #sys.stderr.write("Salle: "+result+"\n")
         else:
             reply = "Sorry, there is currently no available rooms"+reply+"\n"
     # Check if message contains word "options" and if so send options
-    elif message["text"].lower().find("options") > -1:
+    elif text.lower().find("options") > -1:
         #options = get_options()
         reply = "The options are limited right now ! This is an alpha release ! \n"
         reply += "  - any sentence with \"dispo\" or \"available\" keyword will display the current available rooms for the next 2 hours timeslot.\n"
@@ -178,16 +154,16 @@ def process_demoroom_message(post_data):
         #for option in options:
             #reply += "  - %s \n" % (option)
     # Check if message contains phrase "add email" and if so add user to room
-    elif message["text"].lower().find("add email") > -1:
+    elif text.lower().find("add email") > -1:
         # Get the email that comes
-        emails = re.findall(r'[\w\.-]+@[\w\.-]+', message["text"])
+        emails = re.findall(r'[\w\.-]+@[\w\.-]+', text)
         # pprint(emails)
         reply = "Adding users to demo room.\n"
         for email in emails:
             add_email_demo_room(email, demo_room_id)
             reply += "  - %s \n" % (email)
     # Check if message contains phrase "help" and display generic help message
-    elif message["text"].lower().find("help") > -1 or message["text"].lower().find("aide") > -1:
+    elif text.lower().find("help") > -1 or text.lower().find("aide") > -1:
         # Reply back to message
         reply = "Hello, welcome to the Room Finder.\n" \
                 "To find out current available room, ask 'What are the rooms available?'\n" \
@@ -195,7 +171,7 @@ def process_demoroom_message(post_data):
                 '''Or try new things !'''
     # If nothing matches, send instructions
     else:
-        reply=natural_langage_bot(message["text"].lower())
+        reply=natural_langage_bot(text.lower())
         if reply == "":
             return reply
     sys.stderr.write("reply: "+reply+"\n")
@@ -236,11 +212,6 @@ def get_options():
     page = requests.get(u, headers=app_headers)
     options = page.json()["options"]
     return options
-
-def place_vote(vote):
-    u = app_server + "/vote/" + vote
-    page = requests.post(u, headers=app_headers)
-    return page.json()
 
 # Roomfinder Demo Room Setup
 def setup_demo_room():
