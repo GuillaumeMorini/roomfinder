@@ -185,7 +185,8 @@ def process_demoroom_message(post_data):
             keyword=keyword_list.pop()
         reply = find_image(keyword)
         print "find_image: "+reply
-        message_type="image"
+        if reply != "Sorry no image found !":
+            message_type="image"
     # If nothing matches, send instructions
     else:
         reply=natural_langage_bot(text.lower())
@@ -228,9 +229,12 @@ def find_image(keyword):
     page = requests.get(u)
     test=page.text.encode('utf-8').replace('jsonFlickrFeed(','').replace(')','').replace('\\\'','\\\\\'')
     j=json.loads(test)
-    i=random.randrange(0, 20)
-    link=j["items"][i]["media"]["m"]
-    return link
+    if len(j["items"]) > 0 :
+        i=random.randrange(0, len(j["items"]))
+        link=j["items"][i]["media"]["m"]
+        return link
+    else:
+        return "Sorry no image found !"
 
 # Utilities to interact with the Roomfinder-App Server
 def get_available():
