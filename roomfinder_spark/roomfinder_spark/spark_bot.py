@@ -96,6 +96,7 @@ def process_demoroom_members():
 
 # Bot functions to process the incoming messages posted by Cisco Spark
 def process_demoroom_message(post_data):
+    message_type="text"
     message_id = post_data["data"]["id"]
     message = get_message(message_id)
     #print(message)
@@ -170,14 +171,15 @@ def process_demoroom_message(post_data):
         cco=cco_list.pop()
         while cco.find("dir") > -1:
             cco=cco_list.pop()
-        reply = "directory entry for "+cco+"\n"
+        reply = find_dir(cco)
+        message_type="html"
     # If nothing matches, send instructions
     else:
         reply=natural_langage_bot(text.lower())
         if reply == "":
             return reply
     sys.stderr.write("reply: "+reply+"\n")
-    send_message_to_room(demo_room_id, reply)
+    send_message_to_room(demo_room_id, reply,message_type)
 
 # Use Program-o API to reply in natural langage
 def natural_langage_bot(message):
@@ -196,6 +198,16 @@ def natural_langage_bot(message):
     except:
         return ""
 
+def find_dir(cco):
+    u = dir_server + "/" + cco
+    page = requests.get(u)
+    try: 
+        from BeautifulSoup import BeautifulSoup
+    except ImportError:
+        from bs4 import BeautifulSoup
+    html = page.text
+    parsed_html = BeautifulSoup(html)
+    return parsed_html.body.find('div', attrs={'id':'showDetail'}).text
 
 # Utilities to interact with the Roomfinder-App Server
 def get_available():
@@ -264,12 +276,18 @@ def send_message_to_email(email, message):
     message = page.json()
     return message
 
-def send_message_to_room(room_id, message):
+def send_message_to_room(room_id, message,message_type):
     spark_u = spark_host + "v1/messages"
-    message_body = {
-        "roomId" : room_id,
-        "text" : message
-    }
+    if message_type == "text":
+        message_body = {
+            "roomId" : room_id,
+            "text" : message
+        }
+    else:
+        message_body = {
+            "roomId" : room_id,
+            "html" : message
+        }        
     page = requests.post(spark_u, headers = spark_headers, json=message_body)
     message = page.json()
     return message
