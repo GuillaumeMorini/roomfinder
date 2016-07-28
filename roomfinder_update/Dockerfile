@@ -1,7 +1,7 @@
 FROM python:2-alpine
 
 # Proxy setting
-ADD ../proxy.sh /tmp/proxy.sh
+ADD proxy.sh /tmp/proxy.sh
 RUN /tmp/proxy.sh
 
 # Add current folder as /app
