@@ -208,8 +208,9 @@ def find_dir(cco):
     except ImportError:
         from bs4 import BeautifulSoup
     html = page.text
-    parsed_html = BeautifulSoup(html)
-    return parsed_html.body.find('div', attrs={'id':'showDetail'}).text
+    #parsed_html = BeautifulSoup(html)
+    #return parsed_html.body.find('div', attrs={'id':'showDetail'}).text
+    return html
 
 # Utilities to interact with the Roomfinder-App Server
 def get_available():
