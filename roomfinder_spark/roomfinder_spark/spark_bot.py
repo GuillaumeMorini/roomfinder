@@ -199,7 +199,8 @@ def natural_langage_bot(message):
         return ""
 
 def find_dir(cco):
-    u = dir_server + "/" + cco
+    print "dir_server: "+dir_server
+    u = dir_server + cco
     page = requests.get(u)
     try: 
         from BeautifulSoup import BeautifulSoup
