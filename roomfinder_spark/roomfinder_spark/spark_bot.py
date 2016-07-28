@@ -309,7 +309,7 @@ def send_message_to_room(room_id, message,message_type):
     elif message_type == "image":
         message_body = {
             "roomId" : room_id,
-            "text" : ""
+            "text" : "",
             "files" : [message]
         }        
     else:
