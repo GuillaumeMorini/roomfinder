@@ -2,7 +2,7 @@ FROM python:2-alpine
 EXPOSE 5000
 
 # Proxy setting
-ADD proxy.sh /tmp/proxy.sh
+ADD ../proxy.sh /tmp/proxy.sh
 RUN /tmp/proxy.sh
 
 # Add current folder as /app
