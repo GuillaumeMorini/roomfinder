@@ -227,6 +227,7 @@ def find_image(keyword):
     u = "http://api.flickr.com/services/feeds/photos_public.gne?tags="+keyword+"&lang=en-us&format=json"
     page = requests.get(u)
     test=page.text.encode('utf-8').replace('jsonFlickrFeed(','').replace(')','')
+    print "test: "+str(test)
     j=json.loads(test)
     i=random.randrange(0, 20)
     link=j["items"][i]["link"]
