@@ -411,6 +411,9 @@ if __name__ == '__main__':
         "-a", "--app", help="Address of app server", required=False
     )
     parser.add_argument(
+        "-d", "--dir", help="Address of directory server", required=False
+    )
+    parser.add_argument(
         "-u", "--boturl", help="Local Host Address for this Bot", required=False
     )
     parser.add_argument(
@@ -460,6 +463,18 @@ if __name__ == '__main__':
             app_server = get_app_server
     # print "App Server: " + app_server
     sys.stderr.write("Data Server: " + app_server + "\n")
+
+    dir_server = args.dir
+    # print "Arg Dir: " + str(dir_server)
+    if (dir_server == None):
+        dir_server = os.getenv("roomfinder_dir_server")
+        # print "Env Dir: " + str(dir_server)
+        if (dir_server == None):
+            get_dir_server = raw_input("What is the directory server address? ")
+            # print "Input Dir: " + str(get_dir_server)
+            dir_server = get_dir_server
+    # print "Dir Server: " + dir_server
+    sys.stderr.write("Directory Server: " + dir_server + "\n")
 
     spark_token = args.token
     # print "Spark Token: " + str(spark_token)
