@@ -218,11 +218,11 @@ def find_dir(cco):
     u = photo_server + cco + ".jpg"
     with open('output.jpg', 'wb') as handle:
         response = requests.get(u, stream=True)
-        if not response.ok:
-            # Something went wrong
-        for block in response.iter_content(1024):
-            handle.write(block)    
-    return "@output.jpg;type=image/jpg"
+        if response.ok:
+            for block in response.iter_content(1024):
+                handle.write(block)    
+        return "@output.jpg;type=image/jpg"
+    return ""
 
     u = dir_server + cco
     page = requests.get(u)
