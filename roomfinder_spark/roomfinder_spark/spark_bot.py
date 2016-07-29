@@ -194,7 +194,7 @@ def process_demoroom_message(post_data):
         reply=natural_langage_bot(text.lower())
         if reply == "":
             return reply
-    sys.stderr.write("reply: "+reply+"\n")
+    sys.stderr.write("reply: "+str(reply)+"\n")
     send_message_to_room(demo_room_id, reply,message_type)
 
 # Use Program-o API to reply in natural langage
