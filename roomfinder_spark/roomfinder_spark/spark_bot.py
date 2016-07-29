@@ -326,7 +326,8 @@ def post_localfile(roomId, filename, text='', toPersonId='', toPersonEmail=''):
     if toPersonEmail:
         payload['toPersonEmail'] = toPersonEmail
     m = MultipartEncoder(fields=payload)
-    page = requests.request("POST",url=spark_host + "v1/messages", data=m, headers = spark_headers)
+    headers = {'Authorization': "Bearer " + spark_token, 'Content-Type': m.content_type}
+    page = requests.request("POST",url=spark_host + "v1/messages", data=m, headers = headers )
     sys.stderr.write( "page: "+str(page) )
     message=page.json()
     file_dict = json.loads(page.text)
