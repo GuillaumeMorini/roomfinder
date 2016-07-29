@@ -216,12 +216,12 @@ def find_dir(cco):
     print "dir_server: "+dir_server
     print "photo_server: "+dir_server
     u = photo_server + cco + ".jpg"
-    with open('output.jpg', 'wb') as handle:
+    with open('/app/output.jpg', 'wb') as handle:
         response = requests.get(u, stream=True)
         if response.ok:
             for block in response.iter_content(1024):
                 handle.write(block)    
-        return "@output.jpg;type=image/jpg"
+        return "@/app/output.jpg;type=image/jpg"
     return ""
 
     u = dir_server + cco
@@ -331,6 +331,7 @@ def send_message_to_room(room_id, message,message_type):
             "roomId" : room_id,
             "html" : message
         }        
+    print "message_body: "+message_body
     page = requests.post(spark_u, headers = spark_headers, json=message_body)
     message = page.json()
     return message
