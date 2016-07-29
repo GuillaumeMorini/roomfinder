@@ -177,7 +177,10 @@ def process_demoroom_message(post_data):
             cco=cco_list.pop()
         reply = find_dir(cco)
         print "find_dir: "+str(reply)
-        message_type="localfile"
+        if reply == "CCO id not found !":
+            message_type="text"
+        else:
+            message_type="localfile"
     elif text.lower().find("image") > -1:
         # Find the cco id
         keyword_list = re.findall(r'[\w-]+', text)
@@ -228,19 +231,22 @@ def find_dir(cco):
     parsed_html = BeautifulSoup(html)
     name=parsed_html.body.find('span', attrs={'class':'name'})
     sys.stderr.write("name: "+str(name))
-    title=parsed_html.body.find('span', attrs={'class':'title'})
-    sys.stderr.write("title: "+str(title))
-    manager=parsed_html.body.find('a', attrs={'class':'hover-link'})
-    sys.stderr.write("manager: "+str(manager))
-    
-    u = photo_server + cco + ".jpg"
-    with open('/app/output.jpg', 'wb') as handle:
-        response = requests.get(u, stream=True)
-        if response.ok:
-            for block in response.iter_content(1024):
-                handle.write(block)    
-        return name.text,title.text,manager.text,"/app/output.jpg","<a href=\"http://wwwin-tools.cisco.com/dir/details/"+cco+"\">directory link</a>"
-    return ""
+    if name.text==None:
+        return "CCO id not found !"
+    else:
+        title=parsed_html.body.find('span', attrs={'class':'title'})
+        sys.stderr.write("title: "+str(title))
+        manager=parsed_html.body.find('a', attrs={'class':'hover-link'})
+        sys.stderr.write("manager: "+str(manager))
+        
+        u = photo_server + cco + ".jpg"
+        with open('/app/output.jpg', 'wb') as handle:
+            response = requests.get(u, stream=True)
+            if response.ok:
+                for block in response.iter_content(1024):
+                    handle.write(block)    
+            return name.text,title.text,manager.text,"/app/output.jpg","<a href=\"http://wwwin-tools.cisco.com/dir/details/"+cco+"\">directory link</a>"
+        return ""
 
     #return parsed_html.body.find('div', attrs={'id':'showDetail'})
 
