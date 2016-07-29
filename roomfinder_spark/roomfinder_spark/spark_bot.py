@@ -224,7 +224,7 @@ def find_dir(cco):
     u = dir_server + cco
     try:
         page = requests.get(u)
-    except ConnectionError:
+    except requests.exceptions.ConnectionError:
         return 
     try: 
         from BeautifulSoup import BeautifulSoup
