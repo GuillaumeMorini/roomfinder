@@ -522,7 +522,7 @@ if __name__ == '__main__':
     # print "Dir Server: " + dir_server
     sys.stderr.write("Directory Server: " + dir_server + "\n")
 
-    dir_photo_server = args.photo
+    photo_server = args.photo
     # print "Arg Photo: " + str(photo_server)
     if (photo_server == None):
         photo_server = os.getenv("roomfinder_photo_server")
