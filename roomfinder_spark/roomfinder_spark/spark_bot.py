@@ -327,7 +327,13 @@ def post_localfile(roomId, filename, text='', toPersonId='', toPersonEmail=''):
         payload['toPersonEmail'] = toPersonEmail
     m = MultipartEncoder(fields=payload)
     page = requests.request("POST",url=spark_host + "v1/messages", data=m, headers = spark_headers)
-    return page.json()
+    sys.stderr.write( "page: "+str(page) )
+    message=page.json()
+    file_dict = json.loads(resp.text)
+    file_dict['statuscode'] = str(resp.status_code)
+    sys.stderr.write( "statuscode: "+str(file_dict['statuscode']) )
+    sys.stderr.write( "file_dict: "+str(file_dict) )
+    return message
 
 def send_message_to_room(room_id, message,message_type):
     spark_u = spark_host + "v1/messages"
