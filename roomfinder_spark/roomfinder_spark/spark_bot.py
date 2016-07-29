@@ -176,7 +176,7 @@ def process_demoroom_message(post_data):
         while cco.find("dir") > -1:
             cco=cco_list.pop()
         reply = find_dir(cco)
-        print "find_dir: "+reply
+        print "find_dir: "+str(reply)
         message_type="localfile"
     elif text.lower().find("image") > -1:
         # Find the cco id
@@ -217,14 +217,6 @@ def natural_langage_bot(message):
 def find_dir(cco):
     print "dir_server: "+dir_server
     print "photo_server: "+dir_server
-    u = photo_server + cco + ".jpg"
-    with open('/app/output.jpg', 'wb') as handle:
-        response = requests.get(u, stream=True)
-        if response.ok:
-            for block in response.iter_content(1024):
-                handle.write(block)    
-        return "/app/output.jpg"
-    return ""
 
     u = dir_server + cco
     page = requests.get(u)
@@ -234,7 +226,21 @@ def find_dir(cco):
         from bs4 import BeautifulSoup
     html = page.text
     parsed_html = BeautifulSoup(html)
-    return parsed_html.body.find('div', attrs={'id':'showDetail'})
+    name=parsed_html.body.find('span', attrs={'class':'name'})
+    sys.stderr.write("name: "+str(name)
+    title=parsed_html.body.find('span', attrs={'class':'title'})
+    sys.stderr.write("title: "+str(title)
+
+    u = photo_server + cco + ".jpg"
+    with open('/app/output.jpg', 'wb') as handle:
+        response = requests.get(u, stream=True)
+        if response.ok:
+            for block in response.iter_content(1024):
+                handle.write(block)    
+        return name,title,"/app/output.jpg"
+    return ""
+
+    #return parsed_html.body.find('div', attrs={'id':'showDetail'})
 
 def find_image(keyword):
     u = "http://api.flickr.com/services/feeds/photos_public.gne?tags="+keyword+"&lang=en-us&format=json"
@@ -355,7 +361,10 @@ def send_message_to_room(room_id, message,message_type):
             "html" : message
         }        
     else:
-        return post_localfile(room_id,message)
+        name=message[0]
+        title=message[1]
+        photo=message[2]
+        return post_localfile(room_id,photo,text='Name: '+str(name)+' Title: '+str(title))
     sys.stderr.write( "message_body: "+str(message_body) )
     page = requests.post(spark_u, headers = spark_headers, json=message_body)
     message = page.json()
