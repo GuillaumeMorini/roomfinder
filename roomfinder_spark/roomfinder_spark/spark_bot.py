@@ -231,7 +231,7 @@ def find_dir(cco):
     parsed_html = BeautifulSoup(html)
     name=parsed_html.body.find('span', attrs={'class':'name'})
     sys.stderr.write("name: "+str(name))
-    if ! hasattr(name, 'text'):
+    if not hasattr(name, 'text'):
         return "CCO id not found !"
     else:
         title=parsed_html.body.find('span', attrs={'class':'title'})
