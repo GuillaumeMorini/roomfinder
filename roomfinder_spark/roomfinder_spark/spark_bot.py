@@ -177,10 +177,8 @@ def process_demoroom_message(post_data):
             cco=cco_list.pop()
         reply = find_dir(cco)
         print "find_dir: "+str(reply)
-        if reply == "CCO id not found !":
-            message_type="text"
-        else:
-            message_type="localfile"
+        if type(reply) != str and type(reply) != unicode:
+            message_type="localfine"
     elif text.lower().find("image") > -1:
         # Find the cco id
         keyword_list = re.findall(r'[\w-]+', text)
