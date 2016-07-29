@@ -331,7 +331,7 @@ def send_message_to_room(room_id, message,message_type):
             "roomId" : room_id,
             "html" : message
         }        
-    print "message_body: "+str(message_body)
+    sys.stderr.write( "message_body: "+str(message_body) )
     page = requests.post(spark_u, headers = spark_headers, json=message_body)
     message = page.json()
     return message
