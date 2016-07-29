@@ -230,14 +230,16 @@ def find_dir(cco):
     sys.stderr.write("name: "+str(name))
     title=parsed_html.body.find('span', attrs={'class':'title'})
     sys.stderr.write("title: "+str(title))
-
+    manager=parsed_html.body.find('a', attrs={'class':'hover-link'})
+    sys.stderr.write("manager: "+str(manager))
+    
     u = photo_server + cco + ".jpg"
     with open('/app/output.jpg', 'wb') as handle:
         response = requests.get(u, stream=True)
         if response.ok:
             for block in response.iter_content(1024):
                 handle.write(block)    
-        return name,title,"/app/output.jpg"
+        return name.text,title.text,manager.text,"/app/output.jpg","<a href=\"http://wwwin-tools.cisco.com/dir/details/"+cco+"\">directory link</a>"
     return ""
 
     #return parsed_html.body.find('div', attrs={'id':'showDetail'})
@@ -321,12 +323,14 @@ def send_message_to_email(email, message):
     message = page.json()
     return message
 
-def post_localfile(roomId, filename, text='', toPersonId='', toPersonEmail=''):
+def post_localfile(roomId, filename, text='', html='', toPersonId='', toPersonEmail=''):
     openfile = open(filename, 'rb')
     filename = ntpath.basename(filename)
     payload = {'roomId': roomId, 'files': (filename, openfile, 'image/jpg')}
     if text:
         payload['text'] = text
+    if html:
+        payload['html'] = html
     if toPersonId:
         payload['toPersonId'] = toPersonId
     if toPersonEmail:
@@ -363,8 +367,10 @@ def send_message_to_room(room_id, message,message_type):
     else:
         name=message[0]
         title=message[1]
-        photo=message[2]
-        return post_localfile(room_id,photo,text='Name: '+str(name)+' Title: '+str(title))
+        manager=message[2]
+        photo=message[3]
+        dir_url=message[4]
+        return post_localfile(room_id,photo,text='Name: '+str(name)+' \nTitle: '+str(title)+' \nManager: '+str(manager),dir_url)
     sys.stderr.write( "message_body: "+str(message_body) )
     page = requests.post(spark_u, headers = spark_headers, json=message_body)
     message = page.json()
