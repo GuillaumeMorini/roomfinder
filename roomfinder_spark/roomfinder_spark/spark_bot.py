@@ -329,7 +329,7 @@ def post_localfile(roomId, filename, text='', toPersonId='', toPersonEmail=''):
     page = requests.request("POST",url=spark_host + "v1/messages", data=m, headers = spark_headers)
     sys.stderr.write( "page: "+str(page) )
     message=page.json()
-    file_dict = json.loads(resp.text)
+    file_dict = json.loads(page.text)
     file_dict['statuscode'] = str(resp.status_code)
     sys.stderr.write( "statuscode: "+str(file_dict['statuscode']) )
     sys.stderr.write( "file_dict: "+str(file_dict) )
