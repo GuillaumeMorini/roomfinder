@@ -330,7 +330,7 @@ def post_localfile(roomId, filename, text='', toPersonId='', toPersonEmail=''):
     sys.stderr.write( "page: "+str(page) )
     message=page.json()
     file_dict = json.loads(page.text)
-    file_dict['statuscode'] = str(resp.status_code)
+    file_dict['statuscode'] = str(page.status_code)
     sys.stderr.write( "statuscode: "+str(file_dict['statuscode']) )
     sys.stderr.write( "file_dict: "+str(file_dict) )
     return message
