@@ -175,7 +175,7 @@ def process_demoroom_message(post_data):
             cco=cco_list.pop()
         reply = find_dir(cco)
         print "find_dir: "+reply
-        message_type="html"
+        message_type="image"
     elif text.lower().find("image") > -1:
         # Find the cco id
         keyword_list = re.findall(r'[\w-]+', text)
@@ -214,6 +214,16 @@ def natural_langage_bot(message):
 
 def find_dir(cco):
     print "dir_server: "+dir_server
+    print "photo_server: "+dir_server
+    u = photo_server + cco + ".jpg"
+    with open('output.jpg', 'wb') as handle:
+        response = requests.get(u, stream=True)
+        if not response.ok:
+            # Something went wrong
+        for block in response.iter_content(1024):
+            handle.write(block)    
+    return "@output.jpg;type=image/jpg"
+
     u = dir_server + cco
     page = requests.get(u)
     try: 
@@ -447,6 +457,9 @@ if __name__ == '__main__':
         "-d", "--dir", help="Address of directory server", required=False
     )
     parser.add_argument(
+        "-p", "--photo", help="Address of photo directory server", required=False
+    )
+    parser.add_argument(
         "-u", "--boturl", help="Local Host Address for this Bot", required=False
     )
     parser.add_argument(
@@ -508,6 +521,18 @@ if __name__ == '__main__':
             dir_server = get_dir_server
     # print "Dir Server: " + dir_server
     sys.stderr.write("Directory Server: " + dir_server + "\n")
+
+    dir_photo_server = args.photo
+    # print "Arg Photo: " + str(photo_server)
+    if (photo_server == None):
+        photo_server = os.getenv("roomfinder_photo_server")
+        # print "Env Photo: " + str(photo_server)
+        if (photo_server == None):
+            get_photo_server = raw_input("What is the directory photo server address? ")
+            # print "Input Photo: " + str(get_photo_server)
+            photo_server = get_photo_server
+    # print "Photo Server: " + photo_server
+    sys.stderr.write("Directory Photo Server: " + photo_server + "\n")
 
     spark_token = args.token
     # print "Spark Token: " + str(spark_token)
