@@ -326,11 +326,23 @@ def send_message_to_room(room_id, message,message_type):
             "text" : "",
             "files" : [message]
         }        
-    else:
+    elif message_type == "html":
         message_body = {
             "roomId" : room_id,
             "html" : message
         }        
+    else:
+        message_body = {
+            "roomId" : room_id,
+            "text" : "",
+            "files" : [message]
+        }        
+        sys.stderr.write( "message_body: "+str(message_body) )
+        from StringIO import StringIO
+        buff = StringIO("")
+        page = requests.post(spark_u, headers = spark_headers, data=message_body, stream=True, files=buff)
+        message = page.json()
+        return message
     sys.stderr.write( "message_body: "+str(message_body) )
     page = requests.post(spark_u, headers = spark_headers, json=message_body)
     message = page.json()
