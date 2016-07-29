@@ -33,6 +33,8 @@ __author__ = 'gmorini'
 from flask import Flask, request, Response
 import requests, json, re, urllib, random
 import xml.etree.ElementTree as ET
+import ntpath
+from requests_toolbelt.multipart.encoder import MultipartEncoder
 
 app = Flask(__name__)
 
@@ -175,7 +177,7 @@ def process_demoroom_message(post_data):
             cco=cco_list.pop()
         reply = find_dir(cco)
         print "find_dir: "+reply
-        message_type="image"
+        message_type="localfile"
     elif text.lower().find("image") > -1:
         # Find the cco id
         keyword_list = re.findall(r'[\w-]+', text)
@@ -221,7 +223,7 @@ def find_dir(cco):
         if response.ok:
             for block in response.iter_content(1024):
                 handle.write(block)    
-        return "@/app/output.jpg;type=image/jpg"
+        return "/app/output.jpg"
     return ""
 
     u = dir_server + cco
@@ -313,6 +315,20 @@ def send_message_to_email(email, message):
     message = page.json()
     return message
 
+def post_localfile(roomId, filename, text='', toPersonId='', toPersonEmail=''):
+    openfile = open(filename, 'rb')
+    filename = ntpath.basename(filename)
+    payload = {'roomId': roomId, 'files': (filename, openfile, 'image/jpg')}
+    if text:
+        payload['text'] = text
+    if toPersonId:
+        payload['toPersonId'] = toPersonId
+    if toPersonEmail:
+        payload['toPersonEmail'] = toPersonEmail
+    m = MultipartEncoder(fields=payload)
+    page = requests.request("POST",url=spark_u, data=m, headers = spark_headers)
+    return page.json()
+
 def send_message_to_room(room_id, message,message_type):
     spark_u = spark_host + "v1/messages"
     if message_type == "text":
@@ -332,17 +348,7 @@ def send_message_to_room(room_id, message,message_type):
             "html" : message
         }        
     else:
-        message_body = {
-            "roomId" : room_id,
-            "text" : "",
-            "files" : [message]
-        }        
-        sys.stderr.write( "message_body: "+str(message_body) )
-        from StringIO import StringIO
-        buff = StringIO("")
-        page = requests.post(spark_u, headers = spark_headers, data=message_body, stream=True, files=buff)
-        message = page.json()
-        return message
+        return post_localfile(room_id,message)
     sys.stderr.write( "message_body: "+str(message_body) )
     page = requests.post(spark_u, headers = spark_headers, json=message_body)
     message = page.json()
