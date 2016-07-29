@@ -190,7 +190,7 @@ def process_demoroom_message(post_data):
             keyword=keyword_list.pop()
         reply = find_image(keyword)
         print "find_image: "+reply
-        if reply != "Sorry no image found !":
+        if type(reply) != str and type(reply) != unicode:
             message_type="image"
     # If nothing matches, send instructions
     else:
@@ -222,7 +222,10 @@ def find_dir(cco):
     print "photo_server: "+dir_server
 
     u = dir_server + cco
-    page = requests.get(u)
+    try:
+        page = requests.get(u)
+    except ConnectionError:
+        return 
     try: 
         from BeautifulSoup import BeautifulSoup
     except ImportError:
