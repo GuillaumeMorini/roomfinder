@@ -227,9 +227,9 @@ def find_dir(cco):
     html = page.text
     parsed_html = BeautifulSoup(html)
     name=parsed_html.body.find('span', attrs={'class':'name'})
-    sys.stderr.write("name: "+str(name)
+    sys.stderr.write("name: "+str(name))
     title=parsed_html.body.find('span', attrs={'class':'title'})
-    sys.stderr.write("title: "+str(title)
+    sys.stderr.write("title: "+str(title))
 
     u = photo_server + cco + ".jpg"
     with open('/app/output.jpg', 'wb') as handle:
