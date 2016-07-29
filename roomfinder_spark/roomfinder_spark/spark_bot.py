@@ -370,7 +370,7 @@ def send_message_to_room(room_id, message,message_type):
         manager=message[2]
         photo=message[3]
         dir_url=message[4]
-        return post_localfile(room_id,photo,text='Name: '+str(name)+' \nTitle: '+str(title)+' \nManager: '+str(manager),dir_url)
+        return post_localfile(room_id,photo,text='Name: '+str(name)+' \nTitle: '+str(title)+' \nManager: '+str(manager),html=dir_url)
     sys.stderr.write( "message_body: "+str(message_body) )
     page = requests.post(spark_u, headers = spark_headers, json=message_body)
     message = page.json()
