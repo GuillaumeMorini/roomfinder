@@ -1,7 +1,0 @@
-v1.1
-
- - add possibility to sort the list of room in web
- - add no rooms available message on Spark on filtered results (between 10 and 20 seats)
- - add a link to Spark room on web site
- - add unicode support on Spark Bot
- 
