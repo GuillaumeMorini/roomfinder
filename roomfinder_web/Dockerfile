@@ -1,28 +1,22 @@
 FROM python:2-alpine
 EXPOSE 5000
 
+# Proxy setting
+ADD proxy.sh /tmp/proxy.sh
+RUN /tmp/proxy.sh
+
+# Add current folder as /app
+ADD . /app
+WORKDIR /app
+
 # Install basic utilities
-RUN export http_proxy=http://173.38.209.12:80 \
-  && export https_proxy=http://173.38.209.12:80 \
-  && apk add -U \
+RUN apk add -U \
         ca-certificates \
   && rm -rf /var/cache/apk/* \
-  && pip install --no-cache-dir \
-          setuptools \
-          wheel
+  && pip install --no-cache-dir --requirement ./requirements.txt
 
 # This is failing for some odd pip upgrade error commenting out for now
 #RUN pip install --upgrade pip
-
-ADD . /app
-WORKDIR /app
-RUN export http_proxy=http://173.38.209.12:80 \
-  && export https_proxy=http://173.38.209.12:80 \
-  && pip install --requirement ./requirements.txt
-
-ENV http_proxy=http://173.38.209.12:80
-ENV https_proxy=http://173.38.209.12:80
-ENV no_proxy=10*,*.cisco.com,192.168.*,172.*
 
 CMD [ "python", "./roomfinder_web/web_server.py" ]
 

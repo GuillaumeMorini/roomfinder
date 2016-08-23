@@ -1,3 +1,6 @@
 ArgumentParser
 flask
 requests
+BeautifulSoup
+requests-toolbelt
+

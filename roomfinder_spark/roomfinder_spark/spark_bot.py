@@ -31,8 +31,10 @@ __author__ = 'gmorini'
 # ToDo - Method to monitor incoming 1 on 1 messages
 
 from flask import Flask, request, Response
-import requests, json, re, urllib
+import requests, json, re, urllib, random
 import xml.etree.ElementTree as ET
+import ntpath
+from requests_toolbelt.multipart.encoder import MultipartEncoder
 
 app = Flask(__name__)
 
@@ -42,6 +44,8 @@ spark_headers = {}
 spark_headers["Content-type"] = "application/json"
 app_headers = {}
 app_headers["Content-type"] = "application/json"
+google_headers = {}
+google_headers["User-Agent"] = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) AppleWebKit/534.30 (KHTML, like Gecko) Chrome/12.0.742.112 Safari/534.30"
 
 @app.route('/', methods=["POST"])
 def process_webhook():
@@ -96,6 +100,7 @@ def process_demoroom_members():
 
 # Bot functions to process the incoming messages posted by Cisco Spark
 def process_demoroom_message(post_data):
+    message_type="text"
     message_id = post_data["data"]["id"]
     message = get_message(message_id)
     #print(message)
@@ -143,7 +148,7 @@ def process_demoroom_message(post_data):
         else:
             reply = "Sorry, there is currently no available rooms"+reply+"\n"
     # Check if message contains word "options" and if so send options
-    elif text.lower().find("options") > -1:
+    elif text.lower().find("options") > -1 or text.lower().find("help") > -1 or text.lower().find("aide") > -1:
         #options = get_options()
         reply = "The options are limited right now ! This is an alpha release ! \n"
         reply += "  - any sentence with \"dispo\" or \"available\" keyword will display the current available rooms for the next 2 hours timeslot.\n"
@@ -163,19 +168,35 @@ def process_demoroom_message(post_data):
             add_email_demo_room(email, demo_room_id)
             reply += "  - %s \n" % (email)
     # Check if message contains phrase "help" and display generic help message
-    elif text.lower().find("help") > -1 or text.lower().find("aide") > -1:
-        # Reply back to message
-        reply = "Hello, welcome to the Room Finder.\n" \
-                "To find out current available room, ask 'What are the rooms available?'\n" \
-                "To find out the possible options, ask 'What are the options?\n" \
-                '''Or try new things !'''
+    elif text.lower().find("dir") > -1:
+        # Find the cco id
+        cco_list = re.findall(r'[\w-]+', text)
+        print "cco_list= "+str(cco_list)
+        cco=cco_list.pop()
+        while cco.find("dir") > -1:
+            cco=cco_list.pop()
+        reply = find_dir(cco)
+        print "find_dir: "+str(reply)
+        if type(reply) != str and type(reply) != unicode:
+            message_type="localfine"
+    elif text.lower().find("image") > -1:
+        # Find the cco id
+        keyword_list = re.findall(r'[\w-]+', text)
+        print "keyword_list= "+str(keyword_list)
+        keyword=keyword_list.pop()
+        while keyword.find("image") > -1:
+            keyword=keyword_list.pop()
+        reply = find_image(keyword)
+        print "find_image: "+reply
+        if type(reply) != str and type(reply) != unicode:
+            message_type="image"
     # If nothing matches, send instructions
     else:
         reply=natural_langage_bot(text.lower())
         if reply == "":
             return reply
-    sys.stderr.write("reply: "+reply+"\n")
-    send_message_to_room(demo_room_id, reply)
+    sys.stderr.write("reply: "+str(reply)+"\n")
+    send_message_to_room(demo_room_id, reply,message_type)
 
 # Use Program-o API to reply in natural langage
 def natural_langage_bot(message):
@@ -194,6 +215,53 @@ def natural_langage_bot(message):
     except:
         return ""
 
+def find_dir(cco):
+    print "dir_server: "+dir_server
+    print "photo_server: "+dir_server
+
+    u = dir_server + cco
+    try:
+        page = requests.get(u)
+    except requests.exceptions.ConnectionError:
+        return "Connection error to directory server"
+    try: 
+        from BeautifulSoup import BeautifulSoup
+    except ImportError:
+        from bs4 import BeautifulSoup
+    html = page.text
+    parsed_html = BeautifulSoup(html)
+    name=parsed_html.body.find('span', attrs={'class':'name'})
+    sys.stderr.write("name: "+str(name))
+    if not hasattr(name, 'text'):
+        return "CCO id not found !"
+    else:
+        title=parsed_html.body.find('span', attrs={'class':'title'})
+        sys.stderr.write("title: "+str(title))
+        manager=parsed_html.body.find('a', attrs={'class':'hover-link'})
+        sys.stderr.write("manager: "+str(manager))
+        
+        u = photo_server + cco + ".jpg"
+        with open('/app/output.jpg', 'wb') as handle:
+            response = requests.get(u, stream=True)
+            if response.ok:
+                for block in response.iter_content(1024):
+                    handle.write(block)    
+            return name.text,title.text,manager.text,"/app/output.jpg","<a href=\"http://wwwin-tools.cisco.com/dir/details/"+cco+"\">directory link</a>"
+        return ""
+
+    #return parsed_html.body.find('div', attrs={'id':'showDetail'})
+
+def find_image(keyword):
+    u = "http://api.flickr.com/services/feeds/photos_public.gne?tags="+keyword+"&lang=en-us&format=json"
+    page = requests.get(u)
+    test=page.text.encode('utf-8').replace('jsonFlickrFeed(','').replace(')','').replace('\\\'','\\\\\'')
+    j=json.loads(test)
+    if len(j["items"]) > 0 :
+        i=random.randrange(0, len(j["items"]))
+        link=j["items"][i]["media"]["m"]
+        return link
+    else:
+        return "Sorry no image found !"
 
 # Utilities to interact with the Roomfinder-App Server
 def get_available():
@@ -262,12 +330,55 @@ def send_message_to_email(email, message):
     message = page.json()
     return message
 
-def send_message_to_room(room_id, message):
+def post_localfile(roomId, filename, text='', html='', toPersonId='', toPersonEmail=''):
+    openfile = open(filename, 'rb')
+    filename = ntpath.basename(filename)
+    payload = {'roomId': roomId, 'files': (filename, openfile, 'image/jpg')}
+    if text:
+        payload['text'] = text
+    if html:
+        payload['html'] = html
+    if toPersonId:
+        payload['toPersonId'] = toPersonId
+    if toPersonEmail:
+        payload['toPersonEmail'] = toPersonEmail
+    m = MultipartEncoder(fields=payload)
+    headers = {'Authorization': "Bearer " + spark_token, 'Content-Type': m.content_type}
+    page = requests.request("POST",url=spark_host + "v1/messages", data=m, headers = headers )
+    sys.stderr.write( "page: "+str(page) )
+    message=page.json()
+    file_dict = json.loads(page.text)
+    file_dict['statuscode'] = str(page.status_code)
+    sys.stderr.write( "statuscode: "+str(file_dict['statuscode']) )
+    sys.stderr.write( "file_dict: "+str(file_dict) )
+    return message
+
+def send_message_to_room(room_id, message,message_type):
     spark_u = spark_host + "v1/messages"
-    message_body = {
-        "roomId" : room_id,
-        "text" : message
-    }
+    if message_type == "text":
+        message_body = {
+            "roomId" : room_id,
+            "text" : message
+        }
+    elif message_type == "image":
+        message_body = {
+            "roomId" : room_id,
+            "text" : "",
+            "files" : [message]
+        }        
+    elif message_type == "html":
+        message_body = {
+            "roomId" : room_id,
+            "html" : message
+        }        
+    else:
+        name=message[0]
+        title=message[1]
+        manager=message[2]
+        photo=message[3]
+        dir_url=message[4]
+        return post_localfile(room_id,photo,html='Name: '+str(name)+' \nTitle: '+str(title)+' \nManager: '+str(manager)+'\n'+dir_url)
+    sys.stderr.write( "message_body: "+str(message_body) )
     page = requests.post(spark_u, headers = spark_headers, json=message_body)
     message = page.json()
     return message
@@ -391,6 +502,12 @@ if __name__ == '__main__':
         "-a", "--app", help="Address of app server", required=False
     )
     parser.add_argument(
+        "-d", "--dir", help="Address of directory server", required=False
+    )
+    parser.add_argument(
+        "-p", "--photo", help="Address of photo directory server", required=False
+    )
+    parser.add_argument(
         "-u", "--boturl", help="Local Host Address for this Bot", required=False
     )
     parser.add_argument(
@@ -440,6 +557,30 @@ if __name__ == '__main__':
             app_server = get_app_server
     # print "App Server: " + app_server
     sys.stderr.write("Data Server: " + app_server + "\n")
+
+    dir_server = args.dir
+    # print "Arg Dir: " + str(dir_server)
+    if (dir_server == None):
+        dir_server = os.getenv("roomfinder_dir_server")
+        # print "Env Dir: " + str(dir_server)
+        if (dir_server == None):
+            get_dir_server = raw_input("What is the directory server address? ")
+            # print "Input Dir: " + str(get_dir_server)
+            dir_server = get_dir_server
+    # print "Dir Server: " + dir_server
+    sys.stderr.write("Directory Server: " + dir_server + "\n")
+
+    photo_server = args.photo
+    # print "Arg Photo: " + str(photo_server)
+    if (photo_server == None):
+        photo_server = os.getenv("roomfinder_photo_server")
+        # print "Env Photo: " + str(photo_server)
+        if (photo_server == None):
+            get_photo_server = raw_input("What is the directory photo server address? ")
+            # print "Input Photo: " + str(get_photo_server)
+            photo_server = get_photo_server
+    # print "Photo Server: " + photo_server
+    sys.stderr.write("Directory Photo Server: " + photo_server + "\n")
 
     spark_token = args.token
     # print "Spark Token: " + str(spark_token)
