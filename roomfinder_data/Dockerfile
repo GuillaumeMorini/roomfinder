@@ -1,16 +1,14 @@
 FROM python:2-alpine
 EXPOSE 5001
 
-# Proxy setting
-ADD proxy.sh /tmp/proxy.sh
-RUN /tmp/proxy.sh
-
 # Add current folder as /app
 ADD . /app
 WORKDIR /app
 
 # Install basic utilities
-RUN apk add -U \
+RUN export http_proxy=http://173.38.209.12:80 \
+  && export https_proxy=http://173.38.209.12:80 \
+  && apk add -U \
         ca-certificates \
   && rm -rf /var/cache/apk/* \
   && pip install --no-cache-dir --requirement ./requirements.txt
