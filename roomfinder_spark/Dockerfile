@@ -6,9 +6,7 @@ ADD . /app
 WORKDIR /app
 
 # Install basic utilities
-RUN export http_proxy=http://173.38.209.12:80 \
-  && export https_proxy=http://173.38.209.12:80 \
-  && apk add -U \
+RUN apk add -U \
         ca-certificates curl tzdata \
   && rm -rf /var/cache/apk/* \
   && pip install --no-cache-dir --requirement ./requirements.txt
