@@ -47,7 +47,7 @@ def book():
         sys.stderr.write("room_email: "+str(room_email)+"\n")
         if room_email=="":
             return "Sorry "+str(j["room_name"])+" is not available"
-        else
+        else:
             return "Room "+str(j["room_name"])+" booked for "+str(j["user_name"])
     else:
         return "Error should be a POST"
