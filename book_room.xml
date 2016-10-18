@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:m="http://schemas.microsoft.com/exchange/services/2006/messages" 
+       xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Header>
+    <t:RequestServerVersion Version="Exchange2010" />
+    <t:TimeZoneContext>
+      <t:TimeZoneDefinition Id="Central European Standard Time" />
+    </t:TimeZoneContext>
+  </soap:Header>
+  <soap:Body>
+    <m:CreateItem SendMeetingInvitations="SendToAllAndSaveCopy">
+      <m:Items>
+        <t:CalendarItem>
+          <t:Subject>Booked by roomfinder for $user</t:Subject>
+          <t:Body BodyType="HTML">Reserved by roomfinder tool</t:Body>
+          <t:ReminderMinutesBeforeStart>15</t:ReminderMinutesBeforeStart>
+          <t:Start>$starttime</t:Start>
+          <t:End>$endtime</t:End>
+          <t:Location>$room</t:Location>
+          <t:RequiredAttendees>
+            <t:Attendee>
+              <t:Mailbox>
+                <t:EmailAddress>$user_email</t:EmailAddress>
+              </t:Mailbox>
+            </t:Attendee>
+            <t:Attendee>
+              <t:Mailbox>
+                <t:EmailAddress>$room_email</t:EmailAddress>
+              </t:Mailbox>
+            </t:Attendee>
+          </t:RequiredAttendees>
+        </t:CalendarItem>
+      </m:Items>
+    </m:CreateItem>
+  </soap:Body>
+</soap:Envelope>

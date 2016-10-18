@@ -34,6 +34,7 @@ from flask import Flask, request, Response
 import requests, json, re, urllib, random
 import xml.etree.ElementTree as ET
 import ntpath
+import datetime
 from requests_toolbelt.multipart.encoder import MultipartEncoder
 
 app = Flask(__name__)
@@ -118,7 +119,7 @@ def process_demoroom_message(post_data):
         print "number: "+str(number)
         start, end, results = get_available()
         toto=list(results)
-        sys.stderr.write("result: "+str(toto))
+        sys.stderr.write("result: "+str(toto)+"\n")
 
         # Test if there is a criteria on the number of seats
         if number:
@@ -150,8 +151,9 @@ def process_demoroom_message(post_data):
     # Check if message contains word "options" and if so send options
     elif text.lower().find("options") > -1 or text.lower().find("help") > -1 or text.lower().find("aide") > -1:
         #options = get_options()
-        reply = "The options are limited right now ! This is an alpha release ! \n"
+        reply = "The options are limited right now ! This is a beta release ! \n"
         reply += "  - any sentence with \"dispo\" or \"available\" keyword will display the current available rooms for the next 2 hours timeslot.\n"
+        reply += "  - any sentence with \"reserve\" or \"book\" keyword will try to book the room mentionned after the keyword \"book\" or \"reserve\".\n"
         reply += "  - any sentence with \"options\" keyword will display this.\n"
         reply += "  - any sentence with \"add email\" followed by an email will add this email to the Spark room.\n"
         reply += "  - any sentence with \"help\" or \"aide\" will display a helping message to the Spark room.\n"
@@ -190,6 +192,15 @@ def process_demoroom_message(post_data):
         print "find_image: "+reply
         if type(reply) != str and type(reply) != unicode:
             message_type="image"
+    elif text.lower().find("book") > -1 or text.lower().find("reserve") > -1 :
+        # Find the room name
+        keyword_list = re.findall(r'[\w-]+', text)
+        sys.stderr.write("keyword_list= "+str(keyword_list)+"\n")
+        keyword=keyword_list.pop()
+        while keyword.find("book") > -1 or keyword.find("reserve") > -1:
+            keyword=keyword_list.pop()
+        reply = book_room(keyword,message["personEmail"],getDisplayName(message["personId"]))
+        sys.stderr.write("book_room: "+reply+"\n")
     # If nothing matches, send instructions
     else:
         reply=natural_langage_bot(text.lower())
@@ -197,6 +208,33 @@ def process_demoroom_message(post_data):
             return reply
     sys.stderr.write("reply: "+str(reply)+"\n")
     send_message_to_room(demo_room_id, reply,message_type)
+
+def getDisplayName(id):
+    spark_u = spark_host + "v1/people/"+id
+    page = requests.get(spark_u, headers = spark_headers)
+    displayName = page.json()["displayName"]
+    return displayName
+
+
+def book_room(room_name,user_email,user_name):
+    sys.stderr.write("Beginning process to book a room and especially this room: "+room_name+"\n")
+
+    now = datetime.datetime.now().replace(microsecond=0)
+    starttime = now.isoformat()
+    endtime = (now + datetime.timedelta(hours=2)).isoformat()
+
+    u = app_server + "/book"
+    #starttime=start_time,endtime=end_time,user="gmorini",user_email=user,room="ILM-7-HUGO",room_email="CONF_5515@cisco.com"))
+    #request_data = {"starttime": "2016-10-19T14:30:00", "endtime": "2016-10-19T16:30:00", "user_name": "gmorini", "user_email": "gmorini@cisco.com", "room_name": "ILM-7-HUGO", "room_email": "CONF_5515@cisco.com"}
+    request_data = {"starttime": starttime, "endtime": endtime, "user_name": user_name, "user_email": user_email, "room_name": room_name}
+    page = requests.post(u, headers = app_headers,json=request_data)
+    reply = page.text
+    sys.stderr.write("Reply: "+str(reply)+"\n")
+    #tally = sorted(tally.items(), key = lambda (k,v): v, reverse=True)
+    #room_list=(i[1].split()[0]+" "+i[1].split()[1] for i in tally[1] if i[0]=="Free")
+    #start = tally[0][2]
+    #end = tally[0][3]
+    return reply
 
 # Use Program-o API to reply in natural langage
 def natural_langage_bot(message):
@@ -231,14 +269,14 @@ def find_dir(cco):
     html = page.text
     parsed_html = BeautifulSoup(html)
     name=parsed_html.body.find('span', attrs={'class':'name'})
-    sys.stderr.write("name: "+str(name))
+    sys.stderr.write("name: "+str(name)+"\n")
     if not hasattr(name, 'text'):
         return "CCO id not found !"
     else:
         title=parsed_html.body.find('span', attrs={'class':'title'})
-        sys.stderr.write("title: "+str(title))
+        sys.stderr.write("title: "+str(title)+"\n")
         manager=parsed_html.body.find('a', attrs={'class':'hover-link'})
-        sys.stderr.write("manager: "+str(manager))
+        sys.stderr.write("manager: "+str(manager)+"\n")
         
         u = photo_server + cco + ".jpg"
         with open('/app/output.jpg', 'wb') as handle:
@@ -345,12 +383,12 @@ def post_localfile(roomId, filename, text='', html='', toPersonId='', toPersonEm
     m = MultipartEncoder(fields=payload)
     headers = {'Authorization': "Bearer " + spark_token, 'Content-Type': m.content_type}
     page = requests.request("POST",url=spark_host + "v1/messages", data=m, headers = headers )
-    sys.stderr.write( "page: "+str(page) )
+    sys.stderr.write( "page: "+str(page)+"\n" )
     message=page.json()
     file_dict = json.loads(page.text)
     file_dict['statuscode'] = str(page.status_code)
-    sys.stderr.write( "statuscode: "+str(file_dict['statuscode']) )
-    sys.stderr.write( "file_dict: "+str(file_dict) )
+    sys.stderr.write( "statuscode: "+str(file_dict['statuscode'])+"\n" )
+    sys.stderr.write( "file_dict: "+str(file_dict)+"\n" )
     return message
 
 def send_message_to_room(room_id, message,message_type):
@@ -378,7 +416,7 @@ def send_message_to_room(room_id, message,message_type):
         photo=message[3]
         dir_url=message[4]
         return post_localfile(room_id,photo,html='Name: '+str(name)+' \nTitle: '+str(title)+' \nManager: '+str(manager)+'\n'+dir_url)
-    sys.stderr.write( "message_body: "+str(message_body) )
+    sys.stderr.write( "message_body: "+str(message_body)+"\n" )
     page = requests.post(spark_u, headers = spark_headers, json=message_body)
     message = page.json()
     return message
@@ -425,13 +463,13 @@ def delete_webhook(webhook_id):
 
 def setup_webhook(room_id, target, name):
     webhooks = current_webhooks()
-    # pprint(webhooks)
+    pprint(webhooks)
 
     # Look for a Web Hook for the Room
     webhook_id = ""
     for webhook in webhooks:
         if webhook["filter"] == "roomId=" + room_id:
-            # print("Found Webhook")
+            print("Found Webhook")
             webhook_id = webhook["id"]
             break
 
@@ -443,8 +481,8 @@ def setup_webhook(room_id, target, name):
     else:
         webhook = update_webhook(webhook_id, target, name)
 
-    # pprint(webhook)
-    sys.stderr.write("New WebHook Target URL: " + webhook["targetUrl"] + "\n")
+    pprint(webhook)
+    #sys.stderr.write("New WebHook Target URL: " + webhook["targetUrl"] + "\n")
 
     return webhook_id
 
