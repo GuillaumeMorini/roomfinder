@@ -601,10 +601,6 @@ if __name__ == '__main__':
     if (dir_server == None):
         dir_server = os.getenv("roomfinder_dir_server")
         # print "Env Dir: " + str(dir_server)
-        if (dir_server == None):
-            get_dir_server = raw_input("What is the directory server address? ")
-            # print "Input Dir: " + str(get_dir_server)
-            dir_server = get_dir_server
     # print "Dir Server: " + dir_server
     sys.stderr.write("Directory Server: " + dir_server + "\n")
 
@@ -613,10 +609,6 @@ if __name__ == '__main__':
     if (photo_server == None):
         photo_server = os.getenv("roomfinder_photo_server")
         # print "Env Photo: " + str(photo_server)
-        if (photo_server == None):
-            get_photo_server = raw_input("What is the directory photo server address? ")
-            # print "Input Photo: " + str(get_photo_server)
-            photo_server = get_photo_server
     # print "Photo Server: " + photo_server
     sys.stderr.write("Directory Photo Server: " + photo_server + "\n")
 
