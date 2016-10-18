@@ -594,7 +594,7 @@ if __name__ == '__main__':
             # print "Input App: " + str(get_app_server)
             app_server = get_app_server
     # print "App Server: " + app_server
-    sys.stderr.write("Data Server: " + app_server + "\n")
+    sys.stderr.write("Data Server: " + str(app_server) + "\n")
 
     dir_server = args.dir
     # print "Arg Dir: " + str(dir_server)
@@ -602,7 +602,7 @@ if __name__ == '__main__':
         dir_server = os.getenv("roomfinder_dir_server")
         # print "Env Dir: " + str(dir_server)
     # print "Dir Server: " + dir_server
-    sys.stderr.write("Directory Server: " + dir_server + "\n")
+    sys.stderr.write("Directory Server: " + str(dir_server) + "\n")
 
     photo_server = args.photo
     # print "Arg Photo: " + str(photo_server)
@@ -610,7 +610,7 @@ if __name__ == '__main__':
         photo_server = os.getenv("roomfinder_photo_server")
         # print "Env Photo: " + str(photo_server)
     # print "Photo Server: " + photo_server
-    sys.stderr.write("Directory Photo Server: " + photo_server + "\n")
+    sys.stderr.write("Directory Photo Server: " + str(photo_server) + "\n")
 
     spark_token = args.token
     # print "Spark Token: " + str(spark_token)
