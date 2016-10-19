@@ -50,12 +50,10 @@ def add():
 		try:
 			page = requests.post(spark_server+'/demoroom/members',data = {'email':email})
 			options = page.json()
-            sys.stderr.write("reply: "+options+"\n")
+            sys.stderr.write("reply: "+str(options)+"\n")
 			return render_template('added.html', email=email)
 		except KeyError:
 			return render_template('error.html', email=email)
-
-
 
 if __name__ == '__main__':
     from argparse import ArgumentParser
