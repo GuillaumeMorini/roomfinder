@@ -14,12 +14,13 @@ def index():
     if request.method == 'POST':
         room_name = request.form["room_name"]
         room_email = request.form["room_email"]
+        user_email = request.form["user_email"]
 
         now = datetime.datetime.now().replace(microsecond=0)
         start_time = now.isoformat()
         end_time = (now + datetime.timedelta(hours=2)).isoformat()
-        book_room(room_name, room_email, "Roomfinder", "gmorini@cisco.com", start_time, end_time)
-        return "Room "+str(room_name)+" booked from "+str(start_time)+" to "+str(end_time)
+        book_room(room_name, room_email, user_email, user_email, start_time, end_time)
+        return "Room "+str(room_name)+" booked for "+user_email+" from "+str(start_time)+" to "+str(end_time)
     else:
         return "Error should be a POST"
 
