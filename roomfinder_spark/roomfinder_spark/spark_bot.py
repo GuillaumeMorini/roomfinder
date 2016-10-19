@@ -353,6 +353,7 @@ def add_email_demo_room(email, room_id):
     spark_body = {"personEmail": email, "roomId" : room_id}
     page = requests.post(spark_u, headers = spark_headers, json=spark_body)
     membership = page.json()
+    sys.stderr.write("reply: "+membership+"\n")
     return membership
 
 
