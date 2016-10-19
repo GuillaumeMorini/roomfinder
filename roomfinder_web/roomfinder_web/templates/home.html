@@ -38,7 +38,7 @@
             <a href="sip:{{ r[2] }}">{{ r[2] }}</a>
           </td>
           <td bgcolor="#00FF00">
-            <form action="{{ book_url }}">
+            <form action="{{ book_url }}" method="post">
               <input type="hidden" name="room_name" value="{{ r[1] }}">
               <input type="hidden" name="room_email" value="{{ r[2] }}">
               <input type="submit" value="Book this room">
@@ -57,8 +57,8 @@
           <td bgcolor="#FF0000">
             <a href="sip:{{ r[2] }}">{{ r[2] }}</a>
           </td>
-          <td bgcolor="#00FF00">
-            <button type="button" onclick="alert('Hello world!')">Book this room</button>
+          <td bgcolor="#FF0000">
+            Not available
           </td>
         </tr>
       {% endif %}
