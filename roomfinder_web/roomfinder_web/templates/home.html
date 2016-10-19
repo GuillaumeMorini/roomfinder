@@ -40,11 +40,13 @@
             <form action="{{ book_url }}" method="post">
               <input type="hidden" name="room_name" value="{{ r[1] }}">
               <input type="hidden" name="room_email" value="{{ r[2] }}">
-              <button id="book_button" type="button" onclick="div_show()">Book</button>
-              <div id="get_email_form" style="display:none;">              
+              <button id="book_button_{{ loop.index }}" type="button" onclick="div_show('get_email_form_{{ loop.index }}','book_button_{{ loop.index }}')">Book</button>
+              <div id="get_email_form_{{ loop.index }}" style="display:none;">              
                 Your email
                 <input type="text" name="user_email" >
+                <br>
                 <input type="submit" value="Book this room">
+                <button type="button" onclick="div_hide('get_email_form_{{ loop.index }}','book_button_{{ loop.index }}')">Cancel</button>
               </div>
             </form>
           </td>
