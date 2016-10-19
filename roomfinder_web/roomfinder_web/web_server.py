@@ -32,7 +32,7 @@ def index():
 			room_list = options
 		except:
 			room_list=(("Temporary unavailable !"),())
-	return render_template('home.html', room_list=room_list, title="Room Finder Web Application", current_time=datetime.datetime.now())
+	return render_template('home.html', room_list=room_list, title="Room Finder Web Application", current_time=datetime.datetime.now(), book_url=book_url)
 
 @app.route("/about")
 def about():
@@ -64,6 +64,9 @@ if __name__ == '__main__':
     parser.add_argument(
         "-s", "--spark", help="Address of Spark bot server", required=False
     )
+    parser.add_argument(
+        "-b", "--book", help="Address of book room server", required=False
+    )
     args = parser.parse_args()
 
     data_server = args.data
@@ -78,6 +81,16 @@ if __name__ == '__main__':
 
     # print "Data Server: " + data_server
     sys.stderr.write("Data Server: " + data_server + "\n")
+
+    book_url = args.book
+    if (book_url == None):
+        book_url = os.getenv("roomfinder_book_server")
+        if (book_url == None):
+            get_book_url = raw_input("What is the book server address? ")
+            # print "Input Data: " + str(get_data_server)
+            book_url = get_book_url
+
+    sys.stderr.write("Book Server: " + book_url + "\n")
 
     spark_server = args.spark
     # print "Arg Data: " + str(data_server)
