@@ -13,8 +13,8 @@ RUN export http_proxy=http://proxy-wsa.esl.cisco.com:80/ \
   && rm -rf /var/cache/apk/* \
   && pip install --no-cache-dir --requirement ./requirements.txt
 
-# This is failing for some odd pip upgrade error commenting out for now
-#RUN pip install --upgrade pip
+ENV http_proxy=http://proxy-wsa.esl.cisco.com:80
+ENV https_proxy=http://proxy-wsa.esl.cisco.com:80
 
 CMD [ "python", "./roomfinder_web/web_server.py" ]
 
