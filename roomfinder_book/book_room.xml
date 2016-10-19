@@ -28,6 +28,11 @@
                 <t:EmailAddress>$room_email</t:EmailAddress>
               </t:Mailbox>
             </t:Attendee>
+            <t:Attendee>
+              <t:Mailbox>
+                <t:EmailAddress>gmorini@cisco.com</t:EmailAddress>
+              </t:Mailbox>
+            </t:Attendee>
           </t:RequiredAttendees>
         </t:CalendarItem>
       </m:Items>
