@@ -1,6 +1,5 @@
 {% extends "layout.html" %}
 
-
 {% block content %}
   <h3 align="center"> 
     {% for r in room_list[0] %}
@@ -41,7 +40,12 @@
             <form action="{{ book_url }}" method="post">
               <input type="hidden" name="room_name" value="{{ r[1] }}">
               <input type="hidden" name="room_email" value="{{ r[2] }}">
-              <input type="submit" value="Book this room">
+              <button id="book_button" type="button" onclick="div_show()">Book</button>
+              <div id="get_email_form" style="display:none;">              
+                Your email
+                <input type="text" name="user_email" >
+                <input type="submit" value="Book this room">
+              </div>
             </form>
           </td>
         </tr>
