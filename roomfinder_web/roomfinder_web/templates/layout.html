@@ -11,9 +11,13 @@
     <script src="http://www.kryogenix.org/code/browser/sorttable/sorttable.js"></script>
     <script>
       //Function To Display Popup
-      function div_show() {
-        document.getElementById('get_email_form').style.display = "block";
-        document.getElementById('book_button').style.display = "none";
+      function div_show(id1,id2) {
+        document.getElementById(id1).style.display = "block";
+        document.getElementById(id2).style.display = "none";
+      }
+      function div_hide(id1,id2) {
+        document.getElementById(id1).style.display = "none";
+        document.getElementById(id2).style.display = "block";
       }
     </script>
     <style type="text/css">
