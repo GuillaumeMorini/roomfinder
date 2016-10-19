@@ -1,19 +1,26 @@
 #!/usr/bin/env python2.7
 
 from flask import Flask, request
-import json
+import json, datetime
 import sys, os
+from string import Template
+import xml.etree.ElementTree as ET
 
 app = Flask(__name__)
 
-def book_room(room_name, room_email, user_name, user_email, start_time, end_time):
-    xml_template = open("book_room.xml", "r").read()
-    xml = Template(xml_template)
-    data = unicode(xml.substitute(starttime=start_time,endtime=end_time,user=user_name,user_email=user_email,room=room_name,room_email=room_email))
-    header = "\"content-type: text/xml;charset=utf-8\""
-    command = "curl --silent --header " + header +" --data '" + data + "' --ntlm "+ "-u "+ user+":"+password+" "+ url
-    response = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True).communicate()[0]
-    return str(response)
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    if request.method == 'POST':
+        room_name = request.form["room_name"]
+        room_email = request.form["room_email"]
+
+        now = datetime.datetime.now().replace(microsecond=0)
+        start_time = now.isoformat()
+        end_time = (now + datetime.timedelta(hours=2)).isoformat()
+        book_room(room_name, room_email, "Roomfinder", "gmorini@cisco.com", start_time, end_time)
+        return "Room "+str(room_name)+" booked from "+str(start_time)+" to "+str(end_time)
+    else:
+        return "Error should be a POST"
 
 @app.route('/book', methods=['GET', 'POST'])
 def book():
@@ -43,20 +50,14 @@ def book():
     else:
         return "Error should be a POST"
    
-@app.route('/', methods=['GET', 'POST'])
-def index():
-    if request.method == 'POST':
-        room_name = request.form["room_name"]
-        room_email = request.form["room_email"]
-
-        now = datetime.datetime.now().replace(microsecond=0)
-        start_time = now.isoformat()
-        end_time = (now + datetime.timedelta(hours=2)).isoformat()
-        book_room(room_name, room_email, "Roomfinder", "gmorini@cisco.com", start_time, end_time)
-        return "Room "+str(room_name)+" booked from "+str(start_time)+" to "+str(end_time)
-    else:
-        return "Error should be a POST"
-   
+def book_room(room_name, room_email, user_name, user_email, start_time, end_time):
+    xml_template = open("book_room.xml", "r").read()
+    xml = Template(xml_template)
+    data = unicode(xml.substitute(starttime=start_time,endtime=end_time,user=user_name,user_email=user_email,room=room_name,room_email=room_email))
+    header = "\"content-type: text/xml;charset=utf-8\""
+    command = "curl --silent --header " + header +" --data '" + data + "' --ntlm "+ "-u "+ user+":"+password+" "+ url
+    response = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True).communicate()[0]
+    return str(response)   
 
 if __name__ == '__main__':
     from argparse import ArgumentParser
