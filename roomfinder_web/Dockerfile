@@ -6,7 +6,9 @@ ADD . /app
 WORKDIR /app
 
 # Install basic utilities
-RUN apk add -U \
+RUN export http_proxy=http://proxy-wsa.esl.cisco.com:80/ \
+  && export https_proxy=http://proxy-wsa.esl.cisco.com:80/ \ 
+  && apk add -U \
         ca-certificates \
   && rm -rf /var/cache/apk/* \
   && pip install --no-cache-dir --requirement ./requirements.txt
