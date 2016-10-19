@@ -153,7 +153,7 @@ def process_demoroom_message(post_data):
         #options = get_options()
         reply = "The options are limited right now ! This is a beta release ! \n"
         reply += "  - any sentence with \"dispo\" or \"available\" keyword will display the current available rooms for the next 2 hours timeslot.\n"
-        reply += "  - any sentence with \"reserve\" or \"book\" keyword will try to book the room mentionned after the keyword \"book\" or \"reserve\".\n"
+#        reply += "  - any sentence with \"reserve\" or \"book\" keyword will try to book the room mentionned after the keyword \"book\" or \"reserve\".\n"
         reply += "  - any sentence with \"options\" keyword will display this.\n"
         reply += "  - any sentence with \"add email\" followed by an email will add this email to the Spark room.\n"
         reply += "  - any sentence with \"help\" or \"aide\" will display a helping message to the Spark room.\n"
