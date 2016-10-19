@@ -20,6 +20,9 @@
      <th bgcolor="#000">
        <font color="#9d9d9d">Email</font>
      </th>
+     <th bgcolor="#000">
+       <font color="#9d9d9d">Book</font>
+     </th>
     </tr>
     {% for r in room_list[1] %}
       {% if r[0] == "Free" %}
@@ -34,6 +37,13 @@
           <td bgcolor="#00FF00">
             <a href="sip:{{ r[2] }}">{{ r[2] }}</a>
           </td>
+          <td bgcolor="#00FF00">
+            <form action="{{ book_url }}">
+              <input type="hidden" name="room_name" value="{{ r[1] }}">
+              <input type="hidden" name="room_email" value="{{ r[2] }}">
+              <input type="submit" value="Book this room">
+            </form>
+          </td>
         </tr>
       {% else %}
         <tr>
@@ -46,6 +56,9 @@
           </td>
           <td bgcolor="#FF0000">
             <a href="sip:{{ r[2] }}">{{ r[2] }}</a>
+          </td>
+          <td bgcolor="#00FF00">
+            <button type="button" onclick="alert('Hello world!')">Book this room</button>
           </td>
         </tr>
       {% endif %}
