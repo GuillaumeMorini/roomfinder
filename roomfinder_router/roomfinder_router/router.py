@@ -13,8 +13,9 @@ def callback(ch, method, properties, body):
     sys.stderr.write("Data: {}\n".format(request_data))      
 
     if cmd == "book":
-        sys.stderr.write("Request booking of a room\n")  
-    	page = requests.post(book_server+'/book',data = request_data)
+        sys.stderr.write("Request booking of a room to %s\n" % book_server)  
+        headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
+    	page = requests.post(book_server+'/book',data = json.dumps(request_data),headers=headers)
         txt=page.text
         sys.stderr.write("txt: {}\n".format(txt))     
         return txt
@@ -28,6 +29,7 @@ if __name__ == '__main__':
     parser = ArgumentParser("Room Finder Router Service")
     parser.add_argument("-r","--rabbitmq", help="IP or hostname for rabbitmq server, e.g. 'rabbit.domain.com'.")
     parser.add_argument("-p","--port", help="tcp port for rabitmq server, e.g. '2765'.")
+    parser.add_argument("-b","--book", help="URL for roomfinder book server, e.g. 'http://book.domain.com:1234'.")
 #    parser.add_argument("-p","--password", help="password for exchange server.")
     args = parser.parse_args()
 
@@ -44,6 +46,13 @@ if __name__ == '__main__':
         if (rabbitmq_port == None):
             get_rabbitmq_port = raw_input("What is the rabbitmq TCP port? ")
             rabbitmq_port = get_rabbitmq_port
+
+    book_server = args.book
+    if (book_server == None):
+        book_server = os.getenv("roomfinder_book_server")
+        if (book_server == None):
+            get_book_server = raw_input("What is the book server URL? ")
+            book_server = get_book_server
 
     sys.stderr.write("Connecting to "+rabbitmq+" on port "+rabbitmq_port+"\n")
     connection = pika.BlockingConnection(pika.ConnectionParameters(
