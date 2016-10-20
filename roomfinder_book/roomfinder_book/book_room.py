@@ -7,6 +7,8 @@ from string import Template
 import xml.etree.ElementTree as ET
 import subprocess
 
+FILE="available_rooms.json"
+
 app = Flask(__name__)
 
 @app.route('/', methods=['GET', 'POST'])
