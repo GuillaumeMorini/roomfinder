@@ -200,7 +200,7 @@ def process_demoroom_message(post_data):
         keyword=keyword_list.pop()
         while keyword.find("book") > -1 or keyword.find("reserve") > -1:
             keyword=keyword_list.pop()
-        reply = book_room(keyword,message["personEmail"],getDisplayName(message["personId"]))
+        reply = book_room(keyword.upper(),message["personEmail"].lower(),getDisplayName(message["personId"]))
         sys.stderr.write("book_room: "+reply+"\n")
     # If nothing matches, send instructions
     else:
