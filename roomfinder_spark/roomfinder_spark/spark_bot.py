@@ -36,6 +36,7 @@ import xml.etree.ElementTree as ET
 import ntpath
 import datetime
 from requests_toolbelt.multipart.encoder import MultipartEncoder
+import pika  
 
 app = Flask(__name__)
 
@@ -223,18 +224,21 @@ def book_room(room_name,user_email,user_name):
     starttime = now.isoformat()
     endtime = (now + datetime.timedelta(hours=2)).isoformat()
 
-    u = app_server + "/book"
-    #starttime=start_time,endtime=end_time,user="gmorini",user_email=user,room="ILM-7-HUGO",room_email="CONF_5515@cisco.com"))
-    #request_data = {"starttime": "2016-10-19T14:30:00", "endtime": "2016-10-19T16:30:00", "user_name": "gmorini", "user_email": "gmorini@cisco.com", "room_name": "ILM-7-HUGO", "room_email": "CONF_5515@cisco.com"}
-    request_data = {"starttime": starttime, "endtime": endtime, "user_name": user_name, "user_email": user_email, "room_name": room_name}
-    page = requests.post(u, headers = app_headers,json=request_data)
-    reply = page.text
-    sys.stderr.write("Reply: "+str(reply)+"\n")
-    #tally = sorted(tally.items(), key = lambda (k,v): v, reverse=True)
-    #room_list=(i[1].split()[0]+" "+i[1].split()[1] for i in tally[1] if i[0]=="Free")
-    #start = tally[0][2]
-    #end = tally[0][3]
-    return reply
+
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host="37.187.22.103",port=2765))  
+    channel = connection.channel()
+    channel.queue_declare(queue="hello") 
+
+    data = {  
+        "cmd": "book",         
+        "data": {"starttime": starttime, "endtime": endtime, "user_name": user_name, "user_email": user_email, "room_name": room_name}
+    }    
+    message = json.dumps(data)  
+    channel.basic_publish(exchange='', routing_key="hello", body=message) 
+    print(" [x] Sent data to RabbitMQ")   
+    connection.close()
+
+    return "Room booked"
 
 # Use Program-o API to reply in natural langage
 def natural_langage_bot(message):
