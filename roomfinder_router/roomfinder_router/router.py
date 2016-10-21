@@ -2,7 +2,7 @@
 
 import pika, os, sys, json, requests
 
-def on_request(ch, method, properties, body):
+def on_request(ch, method, props, body):
     sys.stderr.write(" [x] Received %r\n" % body)
     #sys.stderr.write("Method: {}\n".format(method))     
     #sys.stderr.write("Properties: {}\n".format(properties))     
