@@ -248,8 +248,8 @@ def book_room(room_name,user_email,user_name):
                             routing_key="rpc_queue",
                             properties=pika.BasicProperties(
                                          reply_to = callback_queue,
-                                         correlation_id = corr_id,
-                            body=message) )
+                                         correlation_id = corr_id),
+                            body=message)
 
     print(" [x] Sent data to RabbitMQ")   
 
