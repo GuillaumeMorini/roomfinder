@@ -249,7 +249,7 @@ def book_room(room_name,user_email,user_name):
                             properties=pika.BasicProperties(
                                          reply_to = callback_queue,
                                          correlation_id = self.corr_id,
-                            body=message)
+                            body=message) )
 
     print(" [x] Sent data to RabbitMQ")   
 
