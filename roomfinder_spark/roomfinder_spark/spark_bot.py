@@ -248,15 +248,15 @@ def book_room(room_name,user_email,user_name):
                             routing_key="rpc_queue",
                             properties=pika.BasicProperties(
                                          reply_to = callback_queue,
-                                         correlation_id = self.corr_id,
+                                         correlation_id = corr_id,
                             body=message) )
 
     print(" [x] Sent data to RabbitMQ")   
 
-    while self.response is None:
-        self.connection.process_data_events()
+    while response is None:
+        connection.process_data_events()
     print(" [x] Get response from RabbitMQ")   
-    return str(self.response)
+    return str(response)
 
 # Use Program-o API to reply in natural langage
 def natural_langage_bot(message):
