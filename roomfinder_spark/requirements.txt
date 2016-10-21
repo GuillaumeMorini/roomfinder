@@ -4,3 +4,4 @@ requests
 BeautifulSoup
 requests-toolbelt
 pika
+uuid

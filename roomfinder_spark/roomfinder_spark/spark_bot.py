@@ -37,6 +37,7 @@ import ntpath
 import datetime
 from requests_toolbelt.multipart.encoder import MultipartEncoder
 import pika  
+import uuid
 
 app = Flask(__name__)
 
@@ -216,29 +217,46 @@ def getDisplayName(id):
     displayName = page.json()["displayName"]
     return displayName
 
+def on_response(self, ch, method, props, body):
+    global corr_id
+    global response
+    if corr_id == props.correlation_id:
+        response = body
 
 def book_room(room_name,user_email,user_name):
+    global corr_id
+    global response
+    global connection
+    global channel
+    global callback_queue
+
     sys.stderr.write("Beginning process to book a room and especially this room: "+room_name+"\n")
 
     now = datetime.datetime.now().replace(microsecond=0)
     starttime = now.isoformat()
     endtime = (now + datetime.timedelta(hours=2)).isoformat()
 
-
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host="37.187.22.103",port=2765))  
-    channel = connection.channel()
-    channel.queue_declare(queue="hello") 
-
     data = {  
         "cmd": "book",         
         "data": {"starttime": starttime, "endtime": endtime, "user_name": user_name, "user_email": user_email, "room_name": room_name}
     }    
     message = json.dumps(data)  
-    channel.basic_publish(exchange='', routing_key="hello", body=message) 
-    print(" [x] Sent data to RabbitMQ")   
-    connection.close()
 
-    return "Room booked"
+    response = None
+    corr_id =  str(uuid.uuid4())
+    channel.basic_publish(  exchange='',
+                            routing_key="rpc_queue",
+                            properties=pika.BasicProperties(
+                                         reply_to = callback_queue,
+                                         correlation_id = self.corr_id,
+                            body=message)
+
+    print(" [x] Sent data to RabbitMQ")   
+
+    while self.response is None:
+        self.connection.process_data_events()
+    print(" [x] Get response from RabbitMQ")   
+    return str(self.response)
 
 # Use Program-o API to reply in natural langage
 def natural_langage_bot(message):
@@ -665,5 +683,13 @@ if __name__ == '__main__':
     if demo_email:
         sys.stderr.write("Adding " + demo_email + " to the demo room.\n")
         add_email_demo_room(demo_email, demo_room_id)
+
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host="37.187.22.103",port=2765))  
+    channel = connection.channel()
+    result=channel.queue_declare(exclusive=True)
+    callback_queue = result.method.queue
+    channel.basic_consume(on_response, no_ack=True,
+                                   queue=callback_queue)
+    corr_id=str(uuid.uuid4())
 
     app.run(debug=True, host='0.0.0.0', port=int("5000"))
