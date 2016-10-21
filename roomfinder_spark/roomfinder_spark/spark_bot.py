@@ -217,7 +217,7 @@ def getDisplayName(id):
     displayName = page.json()["displayName"]
     return displayName
 
-def on_response(self, ch, method, props, body):
+def on_response(ch, method, props, body):
     global corr_id
     global response
     if corr_id == props.correlation_id:
