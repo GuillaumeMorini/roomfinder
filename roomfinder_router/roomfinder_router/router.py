@@ -2,7 +2,7 @@
 
 import pika, os, sys, json, requests
 
-def callback(ch, method, properties, body):
+def on_request(ch, method, properties, body):
     sys.stderr.write(" [x] Received %r\n" % body)
     #sys.stderr.write("Method: {}\n".format(method))     
     #sys.stderr.write("Properties: {}\n".format(properties))     
@@ -17,12 +17,18 @@ def callback(ch, method, properties, body):
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
     	page = requests.post(book_server+'/book',data = json.dumps(request_data),headers=headers)
         txt=page.text
-        sys.stderr.write("txt: {}\n".format(txt))     
-        return txt
+        sys.stderr.write("txt: {}\n".format(txt))    
     elif cmd == "dir":
         pass
     elif cmd == "sr":
         pass
+    ch.basic_publish(exchange='',
+                     routing_key=props.reply_to,
+                     properties=pika.BasicProperties(correlation_id = \
+                                                         props.correlation_id),
+                     body=str(txt))
+    ch.basic_ack(delivery_tag = method.delivery_tag)
+    return txt
 
 if __name__ == '__main__':
     from argparse import ArgumentParser
@@ -58,10 +64,9 @@ if __name__ == '__main__':
     connection = pika.BlockingConnection(pika.ConnectionParameters(
         host="localhost" ))
     channel = connection.channel()
-    channel.queue_declare(queue='hello')
-    channel.basic_consume(callback,
-        queue='hello',
-        no_ack=True)
+    channel.queue_declare(queue='rpc_queue')
+    channel.basic_qos(prefetch_count=1)
+    channel.basic_consume(on_request, queue='rpc_queue')
     sys.stderr.write(' [*] Waiting for messages. To exit press CTRL+C\n')
     channel.start_consuming()
 
