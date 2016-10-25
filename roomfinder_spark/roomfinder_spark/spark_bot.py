@@ -685,7 +685,7 @@ if __name__ == '__main__':
         add_email_demo_room(demo_email, demo_room_id)
 
     response=None
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host="37.187.22.103",port=2765,heartbeat=30))  
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host="37.187.22.103",port=2765,heartbeat_interval=30))  
     channel = connection.channel()
     result=channel.queue_declare(exclusive=True)
     callback_queue = result.method.queue
