@@ -242,6 +242,15 @@ def book_room(room_name,user_email,user_name):
     }    
     message = json.dumps(data)  
 
+    response=None
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host="37.187.22.103",port=2765,heartbeat_interval=30))  
+    channel = connection.channel()
+    result=channel.queue_declare(exclusive=True)
+    callback_queue = result.method.queue
+    channel.basic_consume(on_response, no_ack=True,
+                                   queue=callback_queue)
+    corr_id=str(uuid.uuid4())
+
     response = None
     corr_id =  str(uuid.uuid4())
     channel.basic_publish(  exchange='',
@@ -684,13 +693,10 @@ if __name__ == '__main__':
         sys.stderr.write("Adding " + demo_email + " to the demo room.\n")
         add_email_demo_room(demo_email, demo_room_id)
 
+    corr_id=None
     response=None
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host="37.187.22.103",port=2765,heartbeat_interval=30))  
-    channel = connection.channel()
-    result=channel.queue_declare(exclusive=True)
-    callback_queue = result.method.queue
-    channel.basic_consume(on_response, no_ack=True,
-                                   queue=callback_queue)
-    corr_id=str(uuid.uuid4())
+    connection=None
+    channel=None
+    callback_queue=None
 
     app.run(debug=True, host='0.0.0.0', port=int("5000"))
