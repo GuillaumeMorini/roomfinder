@@ -378,11 +378,14 @@ def send_message_to_email(email, message):
     message = page.json()
     return message
 
-def post_localfile(roomId, filename, text='', html='', toPersonId='', toPersonEmail=''):
-    #openfile = open(filename, 'rb')
-    #filename = ntpath.basename(filename)
-    #payload = {'roomId': roomId, 'files': (filename, openfile, 'image/jpg')}
-    payload = {'roomId': roomId}
+def post_localfile(roomId, encoded_photo, text='', html='', toPersonId='', toPersonEmail=''):
+    filename='/app/output.jpg'
+    with open(filename, 'wb') as handle:
+        handle.write(encoded_photo.decode('base64'))    
+    openfile = open(filename, 'rb')
+    filename = ntpath.basename(filename)
+    payload = {'roomId': roomId, 'files': (filename, openfile, 'image/jpg')}
+    #payload = {'roomId': roomId}
     if text:
         payload['text'] = text
     if html:
