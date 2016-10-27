@@ -1,6 +1,7 @@
 #!/usr/bin/env python2.7
 
 import pika, os, sys, json, requests
+import base64
 
 def on_request(ch, method, props, body):
     sys.stderr.write(" [x] Received %r\n" % body)
@@ -53,13 +54,9 @@ def on_request(ch, method, props, body):
             sys.stderr.write("manager: "+str(manager)+"\n")
             
             u = photo_server + cco + ".jpg"
-            txt=""
-            with open('/app/output.jpg', 'wb') as handle:
-                response = requests.get(u, stream=True)
-                if response.ok:
-                    for block in response.iter_content(1024):
-                        handle.write(block)    
-                txt=name.text+";"+title.text+";"+manager.text+";"+"/app/output.jpg"+";"+"<a href=\"http://wwwin-tools.cisco.com/dir/details/"+cco+"\">directory link</a>"
+            response = requests.get(u, stream=True)
+            encoded_string = base64.b64encode(response.read())
+            txt=name.text+";"+title.text.replace('.',' ')+";"+manager.text+";"+encoded_string+";"+"<a href=\"http://wwwin-tools.cisco.com/dir/details/"+cco+"\">directory link</a>"
         sys.stderr.write("txt: {}\n".format(txt))    
     elif cmd == "sr":
         pass
