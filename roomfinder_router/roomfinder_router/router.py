@@ -20,27 +20,34 @@ def on_request(ch, method, props, body):
         sys.stderr.write("txt: {}\n".format(txt))    
     elif cmd == "dir":
         cco= request_data["cco"]
-        sys.stderr.write("Request directory entry in %s for %s\n" % dir_server, cco)  
+        sys.stderr.write("Request directory entry in %s for %s\n" % (dir_server, cco))  
         print "dir_server: "+dir_server
         print "photo_server: "+photo_server
 
         u = dir_server + cco
+        r=None
         try:
-            page = requests.get(u)
+            s  = requests.Session()
+            r=s.get(u)
+            print(r.text)
+            headers={'Content-type': 'application/x-www-form-urlencoded'}
+            data="userid="+dir_user+"&password="+dir_pass+"&target=&smauthreason=&smquerydata=&smagentname=&postpreservationdata=&SMENC=&SMLOCALE="
+            r=s.post(sso_url,data,headers)
         except requests.exceptions.ConnectionError:
             return "Connection error to directory server"
         try: 
             from BeautifulSoup import BeautifulSoup
         except ImportError:
             from bs4 import BeautifulSoup
-        html = page.text
+        html = r.text
+        sys.stderr.write("html: "+str(html)+"\n")
         parsed_html = BeautifulSoup(html)
-        name=parsed_html.body.find('span', attrs={'class':'name'})
+        name=parsed_html.body.find('h2', attrs={'class':'userName'})
         sys.stderr.write("name: "+str(name)+"\n")
         if not hasattr(name, 'text'):
             return "CCO id not found !"
         else:
-            title=parsed_html.body.find('span', attrs={'class':'title'})
+            title=parsed_html.body.find('p', attrs={'class':'des'})
             sys.stderr.write("title: "+str(title)+"\n")
             manager=parsed_html.body.find('a', attrs={'class':'hover-link'})
             sys.stderr.write("manager: "+str(manager)+"\n")
@@ -76,6 +83,9 @@ if __name__ == '__main__':
     parser.add_argument(
         "-i", "--photo", help="Address of photo directory server", required=False
     )
+    parser.add_argument("-u","--user", help="URL for user of directory server.")
+    parser.add_argument("-k","--password", help="URL for password of directory server.")
+    parser.add_argument("-s","--sso", help="URL for SSO.")
 #    parser.add_argument("-p","--password", help="password for exchange server.")
     args = parser.parse_args()
 
@@ -108,6 +118,16 @@ if __name__ == '__main__':
     # print "Dir Server: " + dir_server
     sys.stderr.write("Directory Server: " + str(dir_server) + "\n")
 
+    dir_user = args.user
+    if (dir_user == None):
+        dir_user = os.getenv("roomfinder_dir_user")
+    sys.stderr.write("Directory User: " + str(dir_user) + "\n")
+
+    dir_pass = args.password
+    if (dir_pass == None):
+        dir_pass = os.getenv("roomfinder_dir_pass")
+    sys.stderr.write("Directory Password " + str(dir_pass) + "\n")
+
     photo_server = args.photo
     # print "Arg Photo: " + str(photo_server)
     if (photo_server == None):
@@ -115,6 +135,11 @@ if __name__ == '__main__':
         # print "Env Photo: " + str(photo_server)
     # print "Photo Server: " + photo_server
     sys.stderr.write("Directory Photo Server: " + str(photo_server) + "\n")
+
+    sso_url = args.sso
+    if (sso_url == None):
+        sso_url = os.getenv("roomfinder_sso_url")
+    sys.stderr.write("SSO URL: " + str(sso_url) + "\n")
 
     sys.stderr.write("Connecting to "+rabbitmq+" on port "+rabbitmq_port+"\n")
     connection = pika.BlockingConnection(pika.ConnectionParameters(
