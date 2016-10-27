@@ -46,7 +46,7 @@ def on_request(ch, method, props, body):
         name=parsed_html.body.find('h2', attrs={'class':'userName'})
         sys.stderr.write("name: "+str(name)+"\n")
         if not hasattr(name, 'text'):
-            return "CCO id not found !"
+            txt="CCO id not found !"
         else:
             title=parsed_html.body.find('p', attrs={'class':'des'})
             sys.stderr.write("title: "+str(title)+"\n")
@@ -55,7 +55,7 @@ def on_request(ch, method, props, body):
             
             u = photo_server + cco + ".jpg"
             response = requests.get(u, stream=True)
-            encoded_string = base64.b64encode(response.read())
+            encoded_string = base64.b64encode(response.raw.read())
             txt=name.text+";"+title.text.replace('.',' ')+";"+manager.text+";"+encoded_string+";"+"<a href=\"http://wwwin-tools.cisco.com/dir/details/"+cco+"\">directory link</a>"
         sys.stderr.write("txt: {}\n".format(txt))    
     elif cmd == "sr":

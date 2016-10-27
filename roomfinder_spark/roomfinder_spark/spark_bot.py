@@ -156,6 +156,7 @@ def process_demoroom_message(post_data):
         reply = "The options are limited right now ! This is a beta release ! \n"
         reply += "  - any sentence with \"dispo\" or \"available\" keyword will display the current available rooms for the next 2 hours timeslot.\n"
         reply += "  - any sentence with \"reserve\" or \"book\" keyword will try to book the room mentionned after the keyword \"book\" or \"reserve\".\n"
+        reply += "  - any sentence with \"dir\" keyword will display the directory entry for the person mentionned after the keyword \"dir\".\n"
         reply += "  - any sentence with \"options\" keyword will display this.\n"
         reply += "  - any sentence with \"add email\" followed by an email will add this email to the Spark room.\n"
         reply += "  - any sentence with \"help\" or \"aide\" will display a helping message to the Spark room.\n"
@@ -295,8 +296,11 @@ def find_dir(cco):
     }    
     message = json.dumps(data)  
     reply=send_message_to_queue(message)
-    tab = reply.split(';')
-    return tab[0],tab[1],tab[2],tab[3],tab[4] 
+    if reply.find(";") == -1 :
+        return reply
+    else:
+        tab = reply.split(';')
+        return tab[0],tab[1],tab[2],tab[3],tab[4] 
 
 def find_image(keyword):
     u = "http://api.flickr.com/services/feeds/photos_public.gne?tags="+keyword+"&lang=en-us&format=json"
