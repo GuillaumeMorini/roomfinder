@@ -19,7 +19,8 @@ def on_request(ch, method, props, body):
         txt=page.text
         sys.stderr.write("txt: {}\n".format(txt))    
     elif cmd == "dir":
-        sys.stderr.write("Request directory entry in %s\n" % dir_server)  
+        cco= request_data["cco"]
+        sys.stderr.write("Request directory entry in %s for %s\n" % dir_server, cco)  
         print "dir_server: "+dir_server
         print "photo_server: "+photo_server
 
