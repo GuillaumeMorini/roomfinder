@@ -10,6 +10,7 @@ RUN export http_proxy=http://proxy-wsa.esl.cisco.com:80/ \
   && apk add -U \
         ca-certificates curl tzdata \
   && rm -rf /var/cache/apk/* \
+  && cp /usr/share/zoneinfo/Europe/Paris /etc/localtime \
   && pip install --no-cache-dir --requirement ./requirements.txt
 
 # This is failing for some odd pip upgrade error commenting out for now
