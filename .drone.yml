@@ -8,3 +8,16 @@ build:
         commands:
             - pip install -r roomfinder_web/requirements.txt
             - python testing.py
+publish:
+    docker:
+        repo: $$DOCKER_USERNAME/roomfinder_web
+        tag: latest
+        username: $$DOCKER_USERNAME
+        password: $$DOCKER_PASSWORD
+        email: $$DOCKER_EMAIL 
+notify:
+    spark:
+        image: hpreston/drone-spark
+        auth_token: $$SPARK_TOKEN
+        roomId: $$SPARK_ROOM            
+
