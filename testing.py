@@ -23,6 +23,11 @@ class FlaskTestCase(unittest.TestCase):
         resp = self.app.get('/form')
         self.assertEquals(resp.status_code, 200)
 
+    def test_false_correct_http_response(self):
+        sys.stderr.write('Test HTTP GET /false == 200.')
+        resp = self.app.get('/false')
+        self.assertEquals(resp.status_code, 200)
+
     # def test_correct_content(self):
     #     resp = self.app.get('/hello/world')
     #     self.assertEquals(resp.data, '"Hello World!"\n')
