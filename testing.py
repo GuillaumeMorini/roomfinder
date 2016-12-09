@@ -8,7 +8,7 @@ class FlaskTestCase(unittest.TestCase):
     def setUp(self):
         web_server.app.config['TESTING'] = True
         self.app = demoapp.app.test_client()
-
+ 
     def test_correct_http_response(self):
         resp = self.app.get('/')
         self.assertEquals(resp.status_code, 200)
