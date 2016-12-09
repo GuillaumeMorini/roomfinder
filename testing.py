@@ -6,16 +6,20 @@ import web_server
 class FlaskTestCase(unittest.TestCase):
 
     def setUp(self):
+        sys.stderr.write('Setup testing.')
         web_server.app.config['TESTING'] = True
         self.app = demoapp.app.test_client()
  
     def test_correct_http_response(self):
+        sys.stderr.write('Test HTTP GET / == 200.')
         resp = self.app.get('/')
         self.assertEquals(resp.status_code, 200)
     def test_about_correct_http_response(self):
+        sys.stderr.write('Test HTTP GET /about == 200.')
         resp = self.app.get('/about')
         self.assertEquals(resp.status_code, 200)
     def test_form_correct_http_response(self):
+        sys.stderr.write('Test HTTP GET /form == 200.')
         resp = self.app.get('/form')
         self.assertEquals(resp.status_code, 200)
 
