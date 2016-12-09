@@ -8,6 +8,7 @@ class FlaskTestCase(unittest.TestCase):
     def setUp(self):
         sys.stderr.write('Setup testing.')
         web_server.app.config['TESTING'] = True
+        web_server.data_server=sys.argv[1]
         self.app = web_server.app.test_client()
  
     def test_correct_http_response(self):
@@ -21,11 +22,6 @@ class FlaskTestCase(unittest.TestCase):
     def test_form_correct_http_response(self):
         sys.stderr.write('Test HTTP GET /form == 200.')
         resp = self.app.get('/form')
-        self.assertEquals(resp.status_code, 200)
-
-    def test_false_correct_http_response(self):
-        sys.stderr.write('Test HTTP GET /false == 200.')
-        resp = self.app.get('/false')
         self.assertEquals(resp.status_code, 200)
 
     # def test_correct_content(self):
