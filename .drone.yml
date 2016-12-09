@@ -15,6 +15,7 @@ publish:
         storage_driver: vfs
         repo: $$DOCKER_USERNAME/roomfinder_web
         file: roomfinder_web/Dockerfile
+        context: roomfinder_web
         tag: latest
         username: $$DOCKER_USERNAME
         password: $$DOCKER_PASSWORD
