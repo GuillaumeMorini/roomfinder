@@ -8,7 +8,6 @@ class FlaskTestCase(unittest.TestCase):
     def setUp(self):
         sys.stderr.write('Setup testing.')
         web_server.app.config['TESTING'] = True
-        web_server.data_server=sys.argv[1]
         self.app = web_server.app.test_client()
  
     def test_correct_http_response(self):
