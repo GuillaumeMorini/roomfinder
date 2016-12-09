@@ -10,8 +10,8 @@ build:
             - python testing.py
 publish:
     docker:
-	environment:
-      	- DOCKER_LAUNCH_DEBUG=true
+        environment:
+            - DOCKER_LAUNCH_DEBUG=true
         repo: $$DOCKER_USERNAME/roomfinder_web
         tag: latest
         username: $$DOCKER_USERNAME
