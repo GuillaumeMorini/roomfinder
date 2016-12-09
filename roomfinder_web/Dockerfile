@@ -6,15 +6,10 @@ ADD . /app
 WORKDIR /app
 
 # Install basic utilities
-RUN export http_proxy=http://proxy-wsa.esl.cisco.com:80/ \
-  && export https_proxy=http://proxy-wsa.esl.cisco.com:80/ \ 
-  && apk add -U \
+RUN apk add -U \
         ca-certificates \
   && rm -rf /var/cache/apk/* \
   && pip install --no-cache-dir --requirement ./requirements.txt
-
-ENV http_proxy=http://proxy-wsa.esl.cisco.com:80
-ENV https_proxy=http://proxy-wsa.esl.cisco.com:80
 
 CMD [ "python", "./roomfinder_web/web_server.py" ]
 
