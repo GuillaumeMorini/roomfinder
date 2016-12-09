@@ -9,6 +9,7 @@ class FlaskTestCase(unittest.TestCase):
     def setUp(self):
         sys.stderr.write('Setup testing.')
         web_server.data_server = os.getenv("roomfinder_data_server")
+        web_server.book_url = os.getenv("roomfinder_book_server")
         web_server.app.config['TESTING'] = True
         self.app = web_server.app.test_client()
  
