@@ -8,7 +8,7 @@ class FlaskTestCase(unittest.TestCase):
     def setUp(self):
         sys.stderr.write('Setup testing.')
         web_server.app.config['TESTING'] = True
-        self.app = demoapp.app.test_client()
+        self.app = web_server.app.test_client()
  
     def test_correct_http_response(self):
         sys.stderr.write('Test HTTP GET / == 200.')
