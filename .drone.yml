@@ -12,6 +12,7 @@ publish:
     docker:
         environment:
             - DOCKER_LAUNCH_DEBUG=true
+        storage_driver: vfs
         repo: $$DOCKER_USERNAME/roomfinder_web
         tag: latest
         username: $$DOCKER_USERNAME
