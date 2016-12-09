@@ -19,7 +19,6 @@ class FlaskTestCase(unittest.TestCase):
         resp = self.app.get('/form')
         self.assertEquals(resp.status_code, 200)
 
-
     # def test_correct_content(self):
     #     resp = self.app.get('/hello/world')
     #     self.assertEquals(resp.data, '"Hello World!"\n')
