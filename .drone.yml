@@ -5,9 +5,11 @@ build:
       - echo "Beginning new build"
   run_tests:
     image: python:2-alpine
+    environment:
+      - ROOMFINDER_DATA_SERVER=$$ROOMFINDER_DATA_SERVER
     commands:
       - pip install -r roomfinder_web/requirements.txt
-      - python testing.py $$ROOMFINDER_DATA_SERVER
+      - python testing.py
 publish:
     docker:
         environment:
