@@ -11,6 +11,14 @@ FILE="available_rooms.json"
 
 app = Flask(__name__)
 
+def is_available(r):
+    page=requests.get(roomfinder_data_server+'/')
+    rooms=page.json()
+    for i in rooms[1]:
+        if i[1].find(r)>-1:
+            return (i[0]=="Free")
+    return False
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
@@ -21,8 +29,11 @@ def index():
         now = datetime.datetime.now().replace(microsecond=0)
         start_time = now.isoformat()
         end_time = (now + datetime.timedelta(hours=2)).isoformat()
-        book_room(room_name, room_email, user_email, user_email, start_time, end_time)
-        return "Room "+str(room_name)+" booked for "+user_email+" from "+str(start_time)+" to "+str(end_time)
+        if is_available(room_name):
+            book_room(room_name, room_email, user_email, user_email, start_time, end_time)
+            return "Room "+str(room_name)+" booked for "+user_email+" from "+str(start_time)+" to "+str(end_time)
+        else:
+            return "Sorry, room "+str(room_name)+" not available !"
     else:
         return "Error should be a POST"
 
@@ -47,10 +58,13 @@ def book():
                 room_email=i[2]
         sys.stderr.write("room_email: "+str(room_email)+"\n")
         if room_email=="":
-            return "Sorry "+str(j["room_name"])+" is not available"
+            return "Sorry, "+str(j["room_name"])+" does not exists !"
         else:
-            book_room(str(j["room_name"]), room_email, str(j["user_name"]), str(j["user_email"]), str(j["starttime"]), str(j["endtime"]))
-            return "Room "+str(j["room_name"])+" booked for "+str(j["user_name"]+" from "+str(j["starttime"])+" to "+str(j["endtime"]))
+            if is_available(room_name):
+                book_room(str(j["room_name"]), room_email, str(j["user_name"]), str(j["user_email"]), str(j["starttime"]), str(j["endtime"]))
+                return "Room "+str(j["room_name"])+" booked for "+str(j["user_name"]+" from "+str(j["starttime"])+" to "+str(j["endtime"]))
+            else:
+                return "Sorry, room "+str(j["room_name"])+" not available !"
     else:
         return "Error should be a POST"
    
@@ -67,6 +81,7 @@ if __name__ == '__main__':
     from argparse import ArgumentParser
     parser = ArgumentParser("Room Finder Book Room Service")
     parser.add_argument("-url","--url", help="url for exchange server, e.g. 'https://mail.domain.com/ews/exchange.asmx'.")
+    parser.add_argument("-d","--data", help="url for data server, e.g. 'http://data.domain.com:5000'.")
     parser.add_argument("-u","--user", help="user for exchange server, e.g. 'toto@toto.com'.")
     parser.add_argument("-p","--password", help="password for exchange server.")
     args = parser.parse_args()
@@ -82,6 +97,18 @@ if __name__ == '__main__':
             url = get_exchange_server
 
     # sys.stderr.write("Exchange URL: " + url + "\n")
+
+    data = args.data
+
+    if (data == None):
+        data = os.getenv("roomfinder_data_server")
+        # print "Exchange URL: " + str(url)
+        if (data == None):
+            get_data_server = raw_input("What is the Data server URL? ")
+            # print "Input URL: " + str(get_exchange_server)
+            data = get_data_server
+
+    # sys.stderr.write("Data server URL: " + data + "\n")
 
     user = args.user
 
