@@ -114,6 +114,10 @@ def process_demoroom_message(post_data):
     if message["personEmail"] == bot_email:
         return ""
 
+    # If someone is mentioned, do not answer
+    if 'mentionedPeople' in message:
+        return ""
+
     sys.stderr.write("message="+str(message)+"\n")
 
     text=message["text"].encode("utf-8")
