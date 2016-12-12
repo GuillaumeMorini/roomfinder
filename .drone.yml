@@ -1,0 +1,31 @@
+build:
+  build_starting:
+    image: python:2
+    commands:
+      - echo "Beginning new build"
+  run_tests:
+    image: python:2-alpine
+    environment:
+      - roomfinder_data_server=$$ROOMFINDER_DATA_SERVER
+      - roomfinder_book_server=$$ROOMFINDER_BOOK_SERVER
+    commands:
+      - pip install -r roomfinder_web/requirements.txt
+      - python testing.py
+publish:
+    docker:
+        environment:
+            - DOCKER_LAUNCH_DEBUG=true
+        storage_driver: vfs
+        repo: $$DOCKER_USERNAME/roomfinder_web
+        file: roomfinder_web/Dockerfile
+        context: roomfinder_web
+        tag: latest
+        username: $$DOCKER_USERNAME
+        password: $$DOCKER_PASSWORD
+        email: $$DOCKER_EMAIL 
+notify:
+    spark:
+        image: hpreston/drone-spark
+        auth_token: $$SPARK_TOKEN
+        roomId: $$SPARK_ROOM            
+
