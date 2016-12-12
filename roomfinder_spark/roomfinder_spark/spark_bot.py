@@ -103,6 +103,8 @@ def process_demoroom_members():
 
 # Bot functions to process the incoming messages posted by Cisco Spark
 def process_demoroom_message(post_data):
+    sys.stderr.write("Beginning of process_demoroom_message\n")
+    sys.stderr.write("post_data="+str(post_data)+"\n")
     message_type="text"
     message_id = post_data["data"]["id"]
     message = get_message(message_id)
