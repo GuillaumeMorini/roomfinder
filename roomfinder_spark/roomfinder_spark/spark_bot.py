@@ -114,6 +114,8 @@ def process_demoroom_message(post_data):
     if message["personEmail"] == bot_email:
         return ""
 
+    sys.stderr.write("message="+str(message)+"\n")
+
     text=message["text"].encode("utf-8")
     sys.stderr.write("Incoming Room Message\tmessage: "+text+"\t")
 
