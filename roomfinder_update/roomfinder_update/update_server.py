@@ -114,7 +114,7 @@ if __name__ == '__main__':
     i=1
     l=len(rooms)
     for room in rooms:
-        print "Rooms: "+str(i)+"/"+str(l)
+        print str(now.isoformat())+": Rooms: "+str(i)+"/"+str(l)
         i+=1
 
         data = unicode(xml.substitute(email=room,starttime=start_time,endtime=end_time))

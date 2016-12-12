@@ -12,7 +12,4 @@ RUN export http_proxy=http://proxy-wsa.esl.cisco.com:80/ \
   && rm -rf /var/cache/apk/* \
   && pip install --no-cache-dir --requirement ./requirements.txt
 
-#ENV http_proxy=http://proxy-wsa.esl.cisco.com:80
-#ENV https_proxy=http://proxy-wsa.esl.cisco.com:80
-#ENV no_proxy=192.168.7.222
 CMD [ "./roomfinder_router/router.sh" ]
