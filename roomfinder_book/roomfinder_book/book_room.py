@@ -60,11 +60,11 @@ def book():
         if room_email=="":
             return "Sorry, "+str(j["room_name"])+" does not exists !"
         else:
-            if is_available(room_name):
+            if is_available(str(j["room_name"])):
                 book_room(str(j["room_name"]), room_email, str(j["user_name"]), str(j["user_email"]), str(j["starttime"]), str(j["endtime"]))
                 return "Room "+str(j["room_name"])+" booked for "+str(j["user_name"]+" from "+str(j["starttime"])+" to "+str(j["endtime"]))
             else:
-                return "Sorry, room "+str(j["room_name"])+" not available !"
+                return "Sorry, room "+str(j["room_name"])+" not free !"
     else:
         return "Error should be a POST"
    
