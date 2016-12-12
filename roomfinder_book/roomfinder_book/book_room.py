@@ -65,7 +65,7 @@ def book():
                 book_room(str(j["room_name"]), room_email, str(j["user_name"]), str(j["user_email"]), str(j["starttime"]), str(j["endtime"]))
                 return "Room "+str(j["room_name"])+" booked for "+str(j["user_name"]+" from "+str(j["starttime"])+" to "+str(j["endtime"]))
             else:
-                return "Sorry, room "+str(j["room_name"])+" not free !"
+                return "Sorry, room "+str(j["room_name"])+" is busy !"
     else:
         return "Error should be a POST"
    
