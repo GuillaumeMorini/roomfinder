@@ -6,6 +6,7 @@ import sys, os
 from string import Template
 import xml.etree.ElementTree as ET
 import subprocess
+import requests
 
 FILE="available_rooms.json"
 
