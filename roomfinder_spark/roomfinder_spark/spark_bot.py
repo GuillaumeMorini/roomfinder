@@ -103,6 +103,8 @@ def process_demoroom_members():
 
 # Bot functions to process the incoming messages posted by Cisco Spark
 def process_demoroom_message(post_data):
+    sys.stderr.write("Beginning of process_demoroom_message\n")
+    sys.stderr.write("post_data="+str(post_data)+"\n")
     message_type="text"
     message_id = post_data["data"]["id"]
     message = get_message(message_id)
@@ -111,6 +113,12 @@ def process_demoroom_message(post_data):
     # First make sure not processing a message from the bot
     if message["personEmail"] == bot_email:
         return ""
+
+    # If someone is mentioned, do not answer
+    if 'mentionedPeople' in message:
+        return ""
+
+    sys.stderr.write("message="+str(message)+"\n")
 
     text=message["text"].encode("utf-8")
     sys.stderr.write("Incoming Room Message\tmessage: "+text+"\t")
@@ -156,6 +164,7 @@ def process_demoroom_message(post_data):
         reply = "The options are limited right now ! This is a beta release ! \n"
         reply += "  - any sentence with \"dispo\" or \"available\" keyword will display the current available rooms for the next 2 hours timeslot.\n"
         reply += "  - any sentence with \"reserve\" or \"book\" keyword will try to book the room mentionned after the keyword \"book\" or \"reserve\".\n"
+        reply += "  - any sentence with \"dir\" keyword will display the directory entry for the CCO id mentionned after the keyword \"dir\".\n"
         reply += "  - any sentence with \"options\" keyword will display this.\n"
         reply += "  - any sentence with \"add email\" followed by an email will add this email to the Spark room.\n"
         reply += "  - any sentence with \"help\" or \"aide\" will display a helping message to the Spark room.\n"
@@ -223,24 +232,12 @@ def on_response(ch, method, props, body):
     if corr_id == props.correlation_id:
         response = body
 
-def book_room(room_name,user_email,user_name):
+def send_message_to_queue(message):
     global corr_id
     global response
     global connection
     global channel
     global callback_queue
-
-    sys.stderr.write("Beginning process to book a room and especially this room: "+room_name+"\n")
-
-    now = datetime.datetime.now().replace(microsecond=0)
-    starttime = now.isoformat()
-    endtime = (now + datetime.timedelta(hours=2)).isoformat()
-
-    data = {  
-        "cmd": "book",         
-        "data": {"starttime": starttime, "endtime": endtime, "user_name": user_name, "user_email": user_email, "room_name": room_name}
-    }    
-    message = json.dumps(data)  
 
     response=None
     connection = pika.BlockingConnection(pika.ConnectionParameters(host="37.187.22.103",port=2765,heartbeat_interval=30))  
@@ -265,7 +262,21 @@ def book_room(room_name,user_email,user_name):
     while response is None:
         connection.process_data_events()
     print(" [x] Get response from RabbitMQ")   
-    return str(response)
+    return str(response)    
+
+def book_room(room_name,user_email,user_name):
+    sys.stderr.write("Beginning process to book a room and especially this room: "+room_name+"\n")
+
+    now = datetime.datetime.now().replace(microsecond=0)
+    starttime = now.isoformat()
+    endtime = (now + datetime.timedelta(hours=2)).isoformat()
+
+    data = {  
+        "cmd": "book",         
+        "data": {"starttime": starttime, "endtime": endtime, "user_name": user_name, "user_email": user_email, "room_name": room_name}
+    }    
+    message = json.dumps(data)  
+    return send_message_to_queue(message)
 
 # Use Program-o API to reply in natural langage
 def natural_langage_bot(message):
@@ -285,40 +296,19 @@ def natural_langage_bot(message):
         return ""
 
 def find_dir(cco):
-    print "dir_server: "+dir_server
-    print "photo_server: "+dir_server
+    sys.stderr.write("Beginning process to find someone in the directory and especially this person: "+cco+"\n")
 
-    u = dir_server + cco
-    try:
-        page = requests.get(u)
-    except requests.exceptions.ConnectionError:
-        return "Connection error to directory server"
-    try: 
-        from BeautifulSoup import BeautifulSoup
-    except ImportError:
-        from bs4 import BeautifulSoup
-    html = page.text
-    parsed_html = BeautifulSoup(html)
-    name=parsed_html.body.find('span', attrs={'class':'name'})
-    sys.stderr.write("name: "+str(name)+"\n")
-    if not hasattr(name, 'text'):
-        return "CCO id not found !"
+    data = {  
+        "cmd": "dir",         
+        "data": {"cco": cco}
+    }    
+    message = json.dumps(data)  
+    reply=send_message_to_queue(message)
+    if reply.find(";") == -1 :
+        return reply
     else:
-        title=parsed_html.body.find('span', attrs={'class':'title'})
-        sys.stderr.write("title: "+str(title)+"\n")
-        manager=parsed_html.body.find('a', attrs={'class':'hover-link'})
-        sys.stderr.write("manager: "+str(manager)+"\n")
-        
-        u = photo_server + cco + ".jpg"
-        with open('/app/output.jpg', 'wb') as handle:
-            response = requests.get(u, stream=True)
-            if response.ok:
-                for block in response.iter_content(1024):
-                    handle.write(block)    
-            return name.text,title.text,manager.text,"/app/output.jpg","<a href=\"http://wwwin-tools.cisco.com/dir/details/"+cco+"\">directory link</a>"
-        return ""
-
-    #return parsed_html.body.find('div', attrs={'id':'showDetail'})
+        tab = reply.split(';')
+        return tab[0],tab[1],tab[2],tab[3],tab[4] 
 
 def find_image(keyword):
     u = "http://api.flickr.com/services/feeds/photos_public.gne?tags="+keyword+"&lang=en-us&format=json"
@@ -400,10 +390,14 @@ def send_message_to_email(email, message):
     message = page.json()
     return message
 
-def post_localfile(roomId, filename, text='', html='', toPersonId='', toPersonEmail=''):
+def post_localfile(roomId, encoded_photo, text='', html='', toPersonId='', toPersonEmail=''):
+    filename='/app/output.jpg'
+    with open(filename, 'wb') as handle:
+        handle.write(encoded_photo.decode('base64'))    
     openfile = open(filename, 'rb')
     filename = ntpath.basename(filename)
     payload = {'roomId': roomId, 'files': (filename, openfile, 'image/jpg')}
+    #payload = {'roomId': roomId}
     if text:
         payload['text'] = text
     if html:
@@ -627,22 +621,6 @@ if __name__ == '__main__':
             app_server = get_app_server
     # print "App Server: " + app_server
     sys.stderr.write("Data Server: " + str(app_server) + "\n")
-
-    dir_server = args.dir
-    # print "Arg Dir: " + str(dir_server)
-    if (dir_server == None):
-        dir_server = os.getenv("roomfinder_dir_server")
-        # print "Env Dir: " + str(dir_server)
-    # print "Dir Server: " + dir_server
-    sys.stderr.write("Directory Server: " + str(dir_server) + "\n")
-
-    photo_server = args.photo
-    # print "Arg Photo: " + str(photo_server)
-    if (photo_server == None):
-        photo_server = os.getenv("roomfinder_photo_server")
-        # print "Env Photo: " + str(photo_server)
-    # print "Photo Server: " + photo_server
-    sys.stderr.write("Directory Photo Server: " + str(photo_server) + "\n")
 
     spark_token = args.token
     # print "Spark Token: " + str(spark_token)
