@@ -13,7 +13,7 @@ FILE="available_rooms.json"
 app = Flask(__name__)
 
 def is_available(r):
-    page=requests.get(roomfinder_data_server+'/')
+    page=requests.get(data+'/')
     rooms=page.json()
     for i in rooms[1]:
         if i[1].find(r)>-1:
