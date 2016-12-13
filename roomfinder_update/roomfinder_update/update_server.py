@@ -4,16 +4,52 @@ import sys
 reload(sys)
 sys.setdefaultencoding("utf-8")
 
-import subprocess
-#import getpass
 from string import Template
 import xml.etree.ElementTree as ET
-import csv, codecs
+import csv, codecs, os
 import argparse
 import datetime
 import json
 import requests
-import os
+from requests_ntlm import HttpNtlmAuth
+from threading import Thread
+from Queue import Queue
+
+def doWork():
+    while True:
+        data = q.get()
+        response = send_request(data)
+        doSomethingWithResult(response)
+        q.task_done()
+
+def send_request(data):
+    try:
+        headers = {}
+        headers["Content-type"] = "text/xml; charset=utf-8"
+        response=requests.post(url,headers = headers, data= data, auth= HttpNtlmAuth(user,password))
+        return response
+    except:
+        return None
+
+def doSomethingWithResult(response):
+    if response is None:
+        return "KO"
+    else:
+        tree = ET.fromstring(response.text)
+
+        status = "Free"
+        # arrgh, namespaces!!
+        elems=tree.findall(".//{http://schemas.microsoft.com/exchange/services/2006/types}BusyType")
+        for elem in elems:
+            status=elem.text
+
+        tree2=ET.fromstring(response.request.body)
+        elems=tree2.findall(".//{http://schemas.microsoft.com/exchange/services/2006/types}Address")
+        for e in elems:
+            room=e.text
+
+        sys.stderr.write(str(now.isoformat())+": Status for room: "+str(room)+" => "+status+"\n")
+        result.append((status, rooms[room], room))
 
 if __name__ == '__main__':
     now = datetime.datetime.now().replace(microsecond=0)
@@ -111,30 +147,24 @@ if __name__ == '__main__':
     xml_template = open("getavailibility_template.xml", "r").read()
     xml = Template(xml_template)
     result=list()
-    i=1
-    l=len(rooms)
-    for room in rooms:
-        print str(now.isoformat())+": Rooms: "+str(i)+"/"+str(l)
-        i+=1
 
-        data = unicode(xml.substitute(email=room,starttime=start_time,endtime=end_time))
-
-        header = "\"content-type: text/xml;charset=utf-8\""
-        command = "curl --silent --header " + header +" --data '" + data + "' --ntlm "+ "-u "+ user+":"+password+" "+ url
-        #print "command: "+command
-        response = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True).communicate()[0]
-
-        tree = ET.fromstring(response)
-
-        status = "Free"
-        # arrgh, namespaces!!
-        elems=tree.findall(".//{http://schemas.microsoft.com/exchange/services/2006/types}BusyType")
-        for elem in elems:
-            status=elem.text
-
-        result.append((status, rooms[room], room))
+    concurrent=31
+    q = Queue(concurrent * 2)
+    for i in range(concurrent):
+        t = Thread(target=doWork)
+        t.daemon = True
+        t.start()
+    sys.stderr.write(str(now.isoformat())+": End of init of Thread start\n")
+    try:
+        for room in rooms:
+            q.put(unicode(xml.substitute(email=room,starttime=start_time,endtime=end_time)).strip())
+        sys.stderr.write(str(now.isoformat())+": End of send data to process to Thread\n")
+        q.join()
+        sys.stderr.write(str(now.isoformat())+": End of join Thread\n")
+    except KeyboardInterrupt:
+        sys.exit(1)
 
     # Post json object out to data_server URL
     u = data_server + "/post"
     r = requests.post(u,json=json.dumps(((("List of rooms status","for ILM building","from " + start_time,"to " + end_time),sorted(result, key=lambda tup: tup[1])))))
-    print r.text
+    sys.stderr.write(str(now.isoformat())+": Response of Post to data server: "+r.text+"\n")
