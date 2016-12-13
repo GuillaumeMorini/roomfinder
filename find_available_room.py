@@ -21,8 +21,9 @@ end_time_default = None
 parser = argparse.ArgumentParser()
 parser.add_argument("-url","--url", help="url for exhange server, e.g. 'https://mail.domain.com/ews/exchange.asmx'.",required=True)
 parser.add_argument("-u","--user", help="user name for exchange/outlook",required=True)
+parser.add_argument("-p","--password", help="password for exchange/outlook", required=True)
 parser.add_argument("-start","--starttime", help="Starttime e.g. 2014-07-02T11:00:00 (default = now)", default=starttime_default)
-parser.add_argument("-end","--endtime", help="Endtime e.g. 2014-07-02T12:00:00 (default = now+1h)", default=end_time_default)
+parser.add_argument("-end","--endtime", help="Endtime e.g. 2014-07-02T12:00:00 (default = now+2h)", default=end_time_default)
 #parser.add_argument("-n","--now", help="Will set starttime to now and endtime to now+1h", action="store_true")
 parser.add_argument("-f","--file", help="csv filename with rooms to check (default=rooms.csv). Format: Name,email",default="rooms.csv")
 
@@ -42,8 +43,8 @@ if not args.endtime:
 else:
 	end_time = args.endtime
 
-user = "gmorini@cisco.com"
-password = "pine90.,"
+user = args.user
+password = args.password
 
 xml_template = open("getavailibility_template.xml", "r").read()
 xml = Template(xml_template)
