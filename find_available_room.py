@@ -13,6 +13,47 @@ import csv, codecs
 import argparse
 import datetime
 import json
+import requests
+from requests_ntlm import HttpNtlmAuth
+import grequests
+from threading import Thread
+from Queue import Queue
+
+def doWork():
+    while True:
+        data = q.get()
+        response = send_request(data)
+        doSomethingWithResult(response)
+        q.task_done()
+
+def send_request(data):
+    try:
+        headers = {}
+        headers["Content-type"] = "text/xml; charset=utf-8"
+        response=requests.post(url,headers = headers, data= data, auth= HttpNtlmAuth(user,password))
+        return response
+    except:
+        return None
+
+def doSomethingWithResult(response):
+    if response is None:
+        return "KO"
+    else:
+        tree = ET.fromstring(response.text)
+
+        status = "Free"
+        # arrgh, namespaces!!
+        elems=tree.findall(".//{http://schemas.microsoft.com/exchange/services/2006/types}BusyType")
+        for elem in elems:
+            status=elem.text
+
+        tree2=ET.fromstring(response.request.body)
+        elems=tree2.findall(".//{http://schemas.microsoft.com/exchange/services/2006/types}Address")
+        for e in elems:
+            room=e.text
+
+        print "Status for room: "+str(room)+" => "+status
+        result.append((status, rooms[room], room))
 
 now = datetime.datetime.now().replace(microsecond=0)
 starttime_default = now.isoformat()
@@ -34,37 +75,40 @@ url = args.url
 rooms={}
 reader = csv.reader(codecs.open(args.file, 'r', encoding='utf-8')) 
 for row in reader: 
-	rooms[unicode(row[1])]=unicode(row[0])
+    rooms[unicode(row[1])]=unicode(row[0])
+
+print "Rooms: "+str(rooms)
 
 start_time = args.starttime
 if not args.endtime:
-	start = datetime.datetime.strptime( start_time, "%Y-%m-%dT%H:%M:%S" )
-	end_time = (start + datetime.timedelta(hours=2)).isoformat()
+    start = datetime.datetime.strptime( start_time, "%Y-%m-%dT%H:%M:%S" )
+    end_time = (start + datetime.timedelta(hours=2)).isoformat()
 else:
-	end_time = args.endtime
+    end_time = args.endtime
 
 user = args.user
 password = args.password
 
 xml_template = open("getavailibility_template.xml", "r").read()
 xml = Template(xml_template)
+
 result=list()
-for room in rooms:
-	data = unicode(xml.substitute(email=room,starttime=start_time,endtime=end_time))
 
-	header = "\"content-type: text/xml;charset=utf-8\""
-	command = "curl --silent --header " + header +" --data '" + data + "' --ntlm "+ "-u "+ user+":"+password+" "+ url
-	response = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True).communicate()[0]
-
-	tree = ET.fromstring(response)
-
-	status = "Free"
-	# arrgh, namespaces!!
-	elems=tree.findall(".//{http://schemas.microsoft.com/exchange/services/2006/types}BusyType")
-	for elem in elems:
-		status=elem.text
-
-	result.append((status, rooms[room], room))
+concurrent=31
+q = Queue(concurrent * 2)
+for i in range(concurrent):
+    t = Thread(target=doWork)
+    t.daemon = True
+    t.start()
+print "End of init of Thread start"
+try:
+    for room in rooms:
+        q.put(unicode(xml.substitute(email=room,starttime=start_time,endtime=end_time)).strip())
+    print "End of send data to process to Thread"
+    q.join()
+    print "End of join Thread"
+except KeyboardInterrupt:
+    sys.exit(1)
 
 import json
 with open('available_rooms.json', 'w') as outfile:
