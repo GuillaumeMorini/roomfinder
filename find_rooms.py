@@ -39,7 +39,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("prefix", nargs='+',help="A list of prefixes to search for. E.g. 'conference confi'")
 parser.add_argument("-url","--url", help="url for exhange server, e.g. 'https://mail.domain.com/ews/exchange.asmx'.",required=True)
 parser.add_argument("-u","--user", help="user name for exchange/outlook", required=True)
-parser.add_argument("-p","--pass", help="password  for exchange/outlook", required=True)
+parser.add_argument("-p","--password", help="password for exchange/outlook", required=True)
 parser.add_argument("-d","--deep", help="Attemp a deep search (takes longer).", action="store_true")
 args=parser.parse_args()
 
