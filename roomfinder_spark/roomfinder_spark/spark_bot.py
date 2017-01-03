@@ -210,7 +210,7 @@ def process_demoroom_message(post_data):
         keyword_list = re.findall(r'[\w-]+', text)
         sys.stderr.write("keyword_list= "+str(keyword_list)+"\n")
         keyword_list.reverse()
-        keyword=keyword_list.reverse().pop()
+        keyword=keyword_list.pop()
         while keyword.find("book") > -1 or keyword.find("reserve") > -1:
             keyword=keyword_list.pop()
         reply = book_room(keyword.upper(),message["personEmail"].lower(),getDisplayName(message["personId"]))
