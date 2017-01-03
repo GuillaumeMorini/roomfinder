@@ -185,6 +185,7 @@ def process_demoroom_message(post_data):
         # Find the cco id
         cco_list = re.findall(r'[\w-]+', text)
         print "cco_list= "+str(cco_list)
+        cco_list.reverse()
         cco=cco_list.pop()
         while cco.find("dir") > -1:
             cco=cco_list.pop()
@@ -196,6 +197,7 @@ def process_demoroom_message(post_data):
         # Find the cco id
         keyword_list = re.findall(r'[\w-]+', text)
         print "keyword_list= "+str(keyword_list)
+        keyword_list.reverse()
         keyword=keyword_list.pop()
         while keyword.find("image") > -1:
             keyword=keyword_list.pop()
@@ -207,7 +209,8 @@ def process_demoroom_message(post_data):
         # Find the room name
         keyword_list = re.findall(r'[\w-]+', text)
         sys.stderr.write("keyword_list= "+str(keyword_list)+"\n")
-        keyword=keyword_list.pop()
+        keyword_list.reverse()
+        keyword=keyword_list.reverse().pop()
         while keyword.find("book") > -1 or keyword.find("reserve") > -1:
             keyword=keyword_list.pop()
         reply = book_room(keyword.upper(),message["personEmail"].lower(),getDisplayName(message["personId"]))
