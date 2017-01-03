@@ -270,16 +270,24 @@ def send_message_to_queue(message):
 def book_room(room_name,user_email,user_name):
     sys.stderr.write("Beginning process to book a room and especially this room: "+room_name+"\n")
 
-    now = datetime.datetime.now().replace(microsecond=0)
-    starttime = now.isoformat()
-    endtime = (now + datetime.timedelta(hours=2)).isoformat()
+    start, end, results = get_available()
+    dispo_list=[r.split(' ')[0] for r in results]
+    if room_name in dispo_list:
+        print "Room booked is available"
 
-    data = {  
-        "cmd": "book",         
-        "data": {"starttime": starttime, "endtime": endtime, "user_name": user_name, "user_email": user_email, "room_name": room_name}
-    }    
-    message = json.dumps(data)  
-    return send_message_to_queue(message)
+        now = datetime.datetime.now().replace(microsecond=0)
+        starttime = now.isoformat()
+        endtime = (now + datetime.timedelta(hours=2)).isoformat()
+
+        data = {  
+            "cmd": "book",         
+            "data": {"starttime": starttime, "endtime": endtime, "user_name": user_name, "user_email": user_email, "room_name": room_name}
+        }    
+        message = json.dumps(data)  
+        return send_message_to_queue(message)
+    else:
+        print "Room booked is not available"
+        return "Room "+str(room_name)+", you are trying to book, is not available !"
 
 # Use Program-o API to reply in natural langage
 def natural_langage_bot(message):
