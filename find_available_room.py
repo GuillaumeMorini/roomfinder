@@ -15,7 +15,6 @@ import datetime
 import json
 import requests
 from requests_ntlm import HttpNtlmAuth
-import grequests
 from threading import Thread
 from Queue import Queue
 
