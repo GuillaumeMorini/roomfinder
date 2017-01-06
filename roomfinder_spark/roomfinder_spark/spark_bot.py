@@ -205,6 +205,16 @@ def process_demoroom_message(post_data):
         print "find_image: "+reply
         if type(reply) != str and type(reply) != unicode:
             message_type="image"
+    elif text.lower().find("plan") > -1 or text.lower().find("map") > -1 :
+        # Find the floor
+        keyword_list = re.findall(r'ILM-[1-7]', text) + re.findall(r'[1-7]', text)
+        print "keyword_list= "+str(keyword_list)
+        keyword_list.reverse()
+        floor=keyword_list.pop()
+        reply = display_map(floor)
+        print "display_map: "+floor
+        if type(reply) != str and type(reply) != unicode:
+            message_type="image"
     elif text.lower().find("book") > -1 or text.lower().find("reserve") > -1 :
         # Find the room name
         keyword_list = re.findall(r'[\w-]+', text)
@@ -320,6 +330,20 @@ def find_dir(cco):
     else:
         tab = reply.split(';')
         return tab[0],tab[1],tab[2],tab[3],tab[4] 
+
+
+def display_map(floor):
+    sys.stderr.write("Display map of floor: "+floor+"\n")
+
+    t=re.search(r'ILM-[1-7]',floor)
+    if t is not None:
+        return "http://www.guismo.fr.eu.org/plan/"+t+".jpg"
+    else:
+        t=re.search(r'[1-7]',floor)
+        if t is not None:
+            return "http://www.guismo.fr.eu.org/plan/ILM-"+t+".jpg"
+        else:
+            return "Floor "+ floor + " not known"
 
 def find_image(keyword):
     u = "http://api.flickr.com/services/feeds/photos_public.gne?tags="+keyword+"&lang=en-us&format=json"
