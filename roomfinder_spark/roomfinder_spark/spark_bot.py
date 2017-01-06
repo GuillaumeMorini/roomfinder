@@ -164,6 +164,7 @@ def process_demoroom_message(post_data):
         reply = "The options are limited right now ! This is a beta release ! \n"
         reply += "  - any sentence with \"dispo\" or \"available\" keyword will display the current available rooms for the next 2 hours timeslot.\n"
         reply += "  - any sentence with \"reserve\" or \"book\" keyword will try to book the room mentionned after the keyword \"book\" or \"reserve\".\n"
+        reply += "  - any sentence with \"plan\" or \"map\" keyword will display the map of the floor mentionned after the keyword \"plan\" or \"map\".\n"
         reply += "  - any sentence with \"dir\" keyword will display the directory entry for the CCO id mentionned after the keyword \"dir\".\n"
         reply += "  - any sentence with \"options\" keyword will display this.\n"
         reply += "  - any sentence with \"add email\" followed by an email will add this email to the Spark room.\n"
@@ -213,8 +214,7 @@ def process_demoroom_message(post_data):
         floor=keyword_list.pop()
         reply = display_map(floor)
         print "display_map: "+floor
-        if type(reply) != str and type(reply) != unicode:
-            message_type="image"
+        message_type="image"
     elif text.lower().find("book") > -1 or text.lower().find("reserve") > -1 :
         # Find the room name
         keyword_list = re.findall(r'[\w-]+', text)
@@ -337,11 +337,11 @@ def display_map(floor):
 
     t=re.search(r'ILM-[1-7]',floor)
     if t is not None:
-        return "http://www.guismo.fr.eu.org/plan/"+t+".jpg"
+        return "http://www.guismo.fr.eu.org/plan/"+t.group(0)+".PNG"
     else:
         t=re.search(r'[1-7]',floor)
         if t is not None:
-            return "http://www.guismo.fr.eu.org/plan/ILM-"+t+".jpg"
+            return "http://www.guismo.fr.eu.org/plan/ILM-"+t.group(0)+".PNG"
         else:
             return "Floor "+ floor + " not known"
 
