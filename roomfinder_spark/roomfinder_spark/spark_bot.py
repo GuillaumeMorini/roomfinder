@@ -204,7 +204,7 @@ def process_demoroom_message(post_data):
             keyword=keyword_list.pop()
         reply = find_image(keyword)
         print "find_image: "+reply
-        if reply != "Sorry no image found !":
+        if reply.startswith('http'):
             message_type="image"
     elif text.lower().find("plan") > -1 or text.lower().find("map") > -1 :
         # Find the floor
@@ -221,7 +221,7 @@ def process_demoroom_message(post_data):
         sys.stderr.write("keyword_list= "+str(keyword_list)+"\n")
         keyword_list.reverse()
         keyword=keyword_list.pop()
-        while keyword.find("book") > -1 or keyword.find("reserve") > -1:
+        while keyword.lower().find("book") > -1 or keyword.lower().find("reserve") > -1:
             keyword=keyword_list.pop()
         reply = book_room(keyword.upper(),message["personEmail"].lower(),getDisplayName(message["personId"]))
         sys.stderr.write("book_room: "+reply+"\n")
