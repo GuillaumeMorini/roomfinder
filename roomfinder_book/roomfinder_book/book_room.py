@@ -10,6 +10,7 @@ import requests
 from requests_ntlm import HttpNtlmAuth
 from threading import Thread
 from Queue import Queue
+import argparse
 
 def doWork():
     while True:
@@ -44,6 +45,7 @@ def doSomethingWithResult(response):
         for e in elems:
             room=e.text
 
+        now = datetime.datetime.now().replace(microsecond=0)
         sys.stderr.write(str(now.isoformat())+": Status for room: "+str(room)+" => "+status+"\n")
         result.append((status, rooms[room], room))
 
@@ -111,20 +113,22 @@ def book():
 @app.route('/dispo', methods=['POST'])
 def dispo():
     j = request.get_json()
+    if "key" not in j:
+        return "Sorry, no building where specified !"
     sys.stderr.write("key: "+str(j["key"])+"\n")
     key=str(j["key"])
-    if key is None or key == "" :
-        return "Sorry, no building where specified !"
-    else:
-        start=str(j["start"])
+    if "start" not in j:
+        return dispo_building(key)
+    start=str(j["start"])
+    end=None
+    if "end" in j:
         end=str(j["end"])
-        if start is None or start == "" or end is None or end == "" : 
-            return dispo_building(key)
-        else:
-            return dispo_building(key,start,end)
+    return dispo_building(key,start,end)
 
 def findRooms(prefix):
-    rooms={}
+    xml_template = open("resolvenames_template.xml", "r").read()
+    xml = Template(xml_template)
+
     data = unicode(xml.substitute(name=prefix))
 
     header = "\"content-type: text/xml;charset=utf-8\""
@@ -152,13 +156,13 @@ def dispo_building(b,start=None, end=None):
         end = (start + datetime.timedelta(hours=2)).isoformat()
 
     rooms=findRooms(b)
+    sys.stderr.write("List of rooms: "+str(rooms)+"\n")
 
     xml_template = open("getavailibility_template.xml", "r").read()
     xml = Template(xml_template)
-    result=list()
 
-    concurrent=31
-    q = Queue(concurrent * 2)
+    #concurrent=31
+    #q = Queue(concurrent * 2)
     for i in range(concurrent):
         t = Thread(target=doWork)
         t.daemon = True
@@ -174,7 +178,8 @@ def dispo_building(b,start=None, end=None):
         sys.exit(1)
 
     sys.stderr.write(str(now.isoformat())+": Response of Post to data server: "+str(result)+"\n")
-    return str(sorted(result, key=lambda tup: tup[1]))
+    toto=(("List of rooms status","for "+str(b)+" building","from " + str(start),"to " + str(end)),sorted(result, key=lambda tup: tup[1]))
+    return json.dumps(toto)
    
 def book_room(room_name, room_email, user_name, user_email, start_time, end_time):
     xml_template = open("book_room.xml", "r").read()
@@ -242,6 +247,10 @@ if __name__ == '__main__':
 
     # sys.stderr.write("Exchange password: " + password + "\n")
 
+    concurrent=31
+    q = Queue(concurrent * 2)
+    result=list()
+    rooms={}
     try:
     	app.run(debug=True, host='0.0.0.0', port=int("5000"))
     except:
