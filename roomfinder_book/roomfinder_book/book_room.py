@@ -126,6 +126,7 @@ def dispo():
     return dispo_building(key,start,end)
 
 def findRooms(prefix):
+    rooms={}
     xml_template = open("resolvenames_template.xml", "r").read()
     xml = Template(xml_template)
 
