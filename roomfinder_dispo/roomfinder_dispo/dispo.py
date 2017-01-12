@@ -13,12 +13,37 @@ import errno
 
 app = Flask(__name__)
 
+@app.route("/book", methods=["GET"])
+def book():
+    starttime=request.args.get('starttime', '')
+    endtime=request.args.get('endtime', '')
+    user_name=request.args.get('user_name', '')
+    user_email=request.args.get('user_email', '')
+    room_name=request.args.get('room_name', '')
+
+    return "no parameter provided to book request\n"
+
+    data = {  
+            "cmd": "book",         
+            "data": {"starttime": starttime, "endtime": endtime, "user_name": user_name, "user_email": user_email, "room_name": room_name}
+    }    
+    message = json.dumps(data)  
+    return send_message_to_queue(message)
+
+
 
 @app.route("/dispo", methods=["GET"])
 def dispo():
     key=request.args.get('key', '')
-    sys.stderr.write( "key: "+str(key))
-
+    sys.stderr.write( "key: "+str(key)+'\r\n')
+    if key is not None and str(key) is not "":
+        data = {  
+            "cmd": "dispo",         
+            "data": {"key": key}
+        }    
+        message = json.dumps(data)  
+        return send_message_to_queue(message)
+    return "no parameter provided to dispo request\n"
 
 def on_response(ch, method, props, body):
     global corr_id
@@ -57,7 +82,7 @@ def send_message_to_queue(message):
     while response is None:
         connection.process_data_events()
     print(" [x] Get response from RabbitMQ")   
-    return str(response)    
+    return response    
 
 
 
