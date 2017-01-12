@@ -10,6 +10,7 @@ import os, sys
 import requests
 from socket import error as SocketError
 import errno
+import json
 
 app = Flask(__name__)
 
@@ -21,8 +22,8 @@ def book():
     user_email=request.args.get('user_email', '')
     room_name=request.args.get('room_name', '')
 
-    return "no parameter provided to book request\n"
-
+    if starttime is None or endtime is None or user_name is None or user_email is None or room_name is None:
+        return "no parameter provided to book request\n"
     data = {  
             "cmd": "book",         
             "data": {"starttime": starttime, "endtime": endtime, "user_name": user_name, "user_email": user_email, "room_name": room_name}
