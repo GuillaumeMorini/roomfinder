@@ -84,6 +84,19 @@ if __name__ == '__main__':
     # print "Data Server: " + data_server
     # sys.stderr.write("Data Server: " + data_server + "\n")
 
+    # book_server = args.book
+    # # print "Arg Book: " + str(book_server)
+    # if (book_server == None):
+    #     book_server = os.getenv("roomfinder_book_server")
+    #     # print "Env Book: " + str(book_server)
+    #     if (book_server == None):
+    #         get_book_server = raw_input("What is the book server address? ")
+    #         # print "Input Book: " + str(get_book_server)
+    #         book_server = get_book_server
+
+    # # print "Book Server: " + book_server
+    # # sys.stderr.write("Book Server: " + book_server + "\n")
+
     url = args.url
 
     if (url == None):
@@ -143,6 +156,9 @@ if __name__ == '__main__':
         end_time = (start + datetime.timedelta(hours=2)).isoformat()
     else:
         end_time = args.endtime
+
+    # page = requests.get(book_server+'/dispo') # find how to send the list of rooms read from previous file
+    # result = page.text() # format result
 
     xml_template = open("getavailibility_template.xml", "r").read()
     xml = Template(xml_template)
