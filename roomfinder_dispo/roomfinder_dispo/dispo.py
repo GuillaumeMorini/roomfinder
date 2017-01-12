@@ -63,7 +63,7 @@ def send_message_to_queue(message):
     global callback_queue
 
     response=None
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq,port=rabbitmq_port,heartbeat_interval=30))  
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq,port=int(rabbitmq_port),heartbeat_interval=30))  
     channel = connection.channel()
     result=channel.queue_declare(exclusive=True)
     callback_queue = result.method.queue
