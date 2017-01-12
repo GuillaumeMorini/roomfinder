@@ -146,7 +146,7 @@ def findRooms(prefix):
     for elem in elems:
         email = elem.findall(".//{http://schemas.microsoft.com/exchange/services/2006/types}EmailAddress")
         name = elem.findall(".//{http://schemas.microsoft.com/exchange/services/2006/types}DisplayName")
-        if len(email) > 0 and len(name) > 0 and name.startswith(prefix):
+        if len(email) > 0 and len(name) > 0 and name[0].text.startswith(prefix):
             rooms[email[0].text] = name[0].text
     return rooms        
 
