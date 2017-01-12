@@ -85,6 +85,7 @@ def send_message_to_queue(message):
     while response is None:
         connection.process_data_events()
     print(" [x] Get response from RabbitMQ")   
+    print "response: "+str(response)
     return response    
 
 
