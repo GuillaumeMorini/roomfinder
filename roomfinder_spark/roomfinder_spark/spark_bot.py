@@ -142,7 +142,7 @@ def process_demoroom_message(post_data):
 
         else:
             start, end, results = get_available()
-        number = re.findall(r' [0-9]+ ', text)
+        number = re.findall(r' [0-9]+', text)
         print "number: "+str(number)
         toto=list(results)
         sys.stderr.write("result: "+str(toto)+"\n")
