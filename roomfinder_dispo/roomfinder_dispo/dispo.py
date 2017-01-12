@@ -11,6 +11,8 @@ import requests
 from socket import error as SocketError
 import errno
 import json
+import pika  
+import uuid
 
 app = Flask(__name__)
 
