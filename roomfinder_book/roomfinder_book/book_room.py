@@ -152,6 +152,8 @@ def findRooms(prefix):
 
 
 def dispo_building(b,start=None, end=None):
+    global result
+    result=list()
     now = datetime.datetime.now().replace(microsecond=0)
     if start is None:
         start = now
@@ -164,8 +166,8 @@ def dispo_building(b,start=None, end=None):
     xml_template = open("getavailibility_template.xml", "r").read()
     xml = Template(xml_template)
 
-    #concurrent=31
-    #q = Queue(concurrent * 2)
+    concurrent=31
+    q = Queue(concurrent * 2)
     for i in range(concurrent):
         t = Thread(target=doWork)
         t.daemon = True
