@@ -7,6 +7,45 @@ from string import Template
 import xml.etree.ElementTree as ET
 import subprocess
 import requests
+from requests_ntlm import HttpNtlmAuth
+from threading import Thread
+from Queue import Queue
+
+def doWork():
+    while True:
+        data = q.get()
+        response = send_request(data)
+        doSomethingWithResult(response)
+        q.task_done()
+
+def send_request(data):
+    try:
+        headers = {}
+        headers["Content-type"] = "text/xml; charset=utf-8"
+        response=requests.post(url,headers = headers, data= data, auth= HttpNtlmAuth(user,password))
+        return response
+    except:
+        return None
+
+def doSomethingWithResult(response):
+    if response is None:
+        return "KO"
+    else:
+        tree = ET.fromstring(response.text)
+
+        status = "Free"
+        # arrgh, namespaces!!
+        elems=tree.findall(".//{http://schemas.microsoft.com/exchange/services/2006/types}BusyType")
+        for elem in elems:
+            status=elem.text
+
+        tree2=ET.fromstring(response.request.body)
+        elems=tree2.findall(".//{http://schemas.microsoft.com/exchange/services/2006/types}Address")
+        for e in elems:
+            room=e.text
+
+        sys.stderr.write(str(now.isoformat())+": Status for room: "+str(room)+" => "+status+"\n")
+        result.append((status, rooms[room], room))
 
 FILE="available_rooms.json"
 
@@ -68,6 +107,74 @@ def book():
                 return "Sorry, room "+str(j["room_name"])+" is busy !"
     else:
         return "Error should be a POST"
+   
+@app.route('/dispo', methods=['POST'])
+def dispo():
+    j = request.get_json()
+    sys.stderr.write("key: "+str(j["key"])+"\n")
+    key=str(j["key"])
+    if key is None or key == "" :
+        return "Sorry, no building where specified !"
+    else:
+        start=str(j["start"])
+        end=str(j["end"])
+        if start is None or start == "" or end is None or end == "" : 
+            return dispo_building(key)
+        else:
+            return dispo_building(key,start,end)
+
+def findRooms(prefix):
+    rooms={}
+    data = unicode(xml.substitute(name=prefix))
+
+    header = "\"content-type: text/xml;charset=utf-8\""
+    #command = "curl --silent --header " + header +" --data '" + data + "' --ntlm "+"--negotiate "+ "-u "+ user+":"+password+" "+ url
+    command = "curl --silent --header " + header +" --data '" + data + "' --ntlm "+ "-u "+ user+":"+password+" "+ url
+    #print "command: "+str(command)
+    response = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True).communicate()[0]
+    #print "response: "+str(response)
+    tree = ET.fromstring(response)
+
+    elems=tree.findall(".//{http://schemas.microsoft.com/exchange/services/2006/types}Resolution")
+    for elem in elems:
+        email = elem.findall(".//{http://schemas.microsoft.com/exchange/services/2006/types}EmailAddress")
+        name = elem.findall(".//{http://schemas.microsoft.com/exchange/services/2006/types}DisplayName")
+        if len(email) > 0 and len(name) > 0:
+            rooms[email[0].text] = name[0].text
+    return rooms        
+
+
+def dispo_building(b,start=None, end=None):
+    now = datetime.datetime.now().replace(microsecond=0)
+    if start is None:
+        start = now
+    if end is None:
+        end = (start + datetime.timedelta(hours=2)).isoformat()
+
+    rooms=findRooms(b)
+
+    xml_template = open("getavailibility_template.xml", "r").read()
+    xml = Template(xml_template)
+    result=list()
+
+    concurrent=31
+    q = Queue(concurrent * 2)
+    for i in range(concurrent):
+        t = Thread(target=doWork)
+        t.daemon = True
+        t.start()
+    sys.stderr.write(str(now.isoformat())+": End of init of Thread start\n")
+    try:
+        for room in rooms:
+            q.put(unicode(xml.substitute(email=room,starttime=start,endtime=end)).strip())
+        sys.stderr.write(str(now.isoformat())+": End of send data to process to Thread\n")
+        q.join()
+        sys.stderr.write(str(now.isoformat())+": End of join Thread\n")
+    except KeyboardInterrupt:
+        sys.exit(1)
+
+    sys.stderr.write(str(now.isoformat())+": Response of Post to data server: "+str(result)+"\n")
+    return str(sorted(result, key=lambda tup: tup[1]))
    
 def book_room(room_name, room_email, user_name, user_email, start_time, end_time):
     xml_template = open("book_room.xml", "r").read()
