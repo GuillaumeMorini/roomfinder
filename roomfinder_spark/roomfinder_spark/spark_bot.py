@@ -126,7 +126,7 @@ def process_demoroom_message(post_data):
     # Check if message contains word "dispo" and if so send results
     if text.lower().find("dispo") > -1 or text.lower().find("available") > -1:
         building = re.findall(r' [a-zA-Z\-]+ ', text)
-        sys.stderr.write('Building founds: '+len(building))
+        sys.stderr.write('Building founds: '+str(len(building))
         for b in building:
             sys.stderr.write(' - '+str(b))
         if len(building) > 0 :
