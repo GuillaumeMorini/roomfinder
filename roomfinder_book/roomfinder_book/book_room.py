@@ -126,6 +126,8 @@ def dispo():
     return dispo_building(key,start,end)
 
 def findRooms(prefix):
+    global rooms
+
     rooms={}
     xml_template = open("resolvenames_template.xml", "r").read()
     xml = Template(xml_template)
@@ -156,7 +158,7 @@ def dispo_building(b,start=None, end=None):
     if end is None:
         end = (start + datetime.timedelta(hours=2)).isoformat()
 
-    rooms=findRooms(b)
+    findRooms(b)
     sys.stderr.write("List of rooms: "+str(rooms)+"\n")
 
     xml_template = open("getavailibility_template.xml", "r").read()
