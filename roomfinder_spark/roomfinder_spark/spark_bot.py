@@ -289,6 +289,9 @@ def book_room(room_name,user_email,user_name):
         starttime = now.isoformat()
         endtime = (now + datetime.timedelta(hours=2)).isoformat()
 
+        # page = requests.get(book_server+'/book?starttime='+starttime+'&endtime='+endtime+'&user_name='+user_name+'&user_email'+user_email+'&room_name='+room_name) # find how to send the list of rooms read from previous file
+        # return page.text() # format result
+        # Previous 2 lines should replace next 6 lines
         data = {  
             "cmd": "book",         
             "data": {"starttime": starttime, "endtime": endtime, "user_name": user_name, "user_email": user_email, "room_name": room_name}
