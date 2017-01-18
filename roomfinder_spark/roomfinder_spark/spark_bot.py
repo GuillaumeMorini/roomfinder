@@ -198,14 +198,9 @@ def process_demoroom_message(post_data):
             add_email_demo_room(email, demo_room_id)
             reply += "  - %s \n" % (email)
     # Check if message contains phrase "help" and display generic help message
-    elif text.lower().find("dir") > -1:
+    elif text.lower().startswith("dir"):
         # Find the cco id
-        cco_list = re.findall(r'[\w ]+', text)
-        print "cco_list= "+str(cco_list)
-        cco_list.reverse()
-        cco=cco_list.pop()
-        while cco.find("dir") > -1:
-            cco=cco_list.pop()
+        cco=text.lower().replace('dir ','')
         reply = find_dir(cco)
         print "find_dir: "+str(reply)
         if type(reply) != str and type(reply) != unicode:
