@@ -348,7 +348,7 @@ def find_dir(cco):
         return reply
     else:
         tab = reply.split(';')
-        return tab[0],tab[1],tab[2],tab[3],tab[4] 
+        return tab[0],tab[1],tab[2],tab[3],tab[4],tab[5]
 
 
 def display_map(floor):
@@ -493,9 +493,10 @@ def send_message_to_room(room_id, message,message_type):
         name=message[0]
         title=message[1]
         manager=message[2]
-        photo=message[3]
-        dir_url=message[4]
-        return post_localfile(room_id,photo,html='Name: '+str(name)+' \nTitle: '+str(title)+' \nManager: '+str(manager)+'\n'+dir_url)
+        phone=message[3]
+        photo=message[4]
+        dir_url=message[5]
+        return post_localfile(room_id,photo,html='Name: '+str(name)+' \nTitle: '+str(title)+' \nManager: '+str(manager)+'\n'+str(phone)+dir_url)
     sys.stderr.write( "message_body: "+str(message_body)+"\n" )
     page = requests.post(spark_u, headers = spark_headers, json=message_body)
     message = page.json()
