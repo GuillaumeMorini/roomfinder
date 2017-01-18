@@ -24,7 +24,6 @@ def on_request(ch, method, props, body):
         sys.stderr.write("Request directory entry in %s for %s\n" % (dir_server, cco))  
         print "dir_server: "+dir_server
         print "photo_server: "+photo_server
-
         u = dir_server + cco
         r=None
         try:
@@ -38,29 +37,38 @@ def on_request(ch, method, props, body):
             return "Connection error to directory server"
         try: 
             from BeautifulSoup import BeautifulSoup
+            from HTMLParser import HTMLParser
         except ImportError:
             from bs4 import BeautifulSoup
-        html = r.text
-        sys.stderr.write("html: "+str(html)+"\n")
+            from html.parser import HTMLParser
+        html = HTMLParser().unescape(r.text)
+        sys.stderr.write("html: "+str(html.encode('utf-8'))+"\n")
         parsed_html = BeautifulSoup(html)
-        name=parsed_html.body.find('h2', attrs={'class':'userName'})
-        sys.stderr.write("name: "+str(name)+"\n")
-        if not hasattr(name, 'text'):
-            txt="CCO id not found !"
+        table=parsed_html.body.find('table', attrs={'id':'resultsTable'})
+        if table is not None:
+            result_list=[unicodedata.normalize('NFKD',i.text) for i in table.findAll('a',attrs={'class':'hover-link'})]
+            txt="Are you looking for one of these people:"
+            for i in result_list:
+                txt+="\n"+str(i)
         else:
-            title=parsed_html.body.find('p', attrs={'class':'des'})
-            sys.stderr.write("title: "+str(title)+"\n")
-            manager=parsed_html.body.find('a', attrs={'class':'hover-link'})
-            sys.stderr.write("manager: "+str(manager)+"\n")
-            phone_text=""
-            phone=parsed_html.body.find('div', attrs={'id':'dir_phone_links'})
-            for p in phone.findAll('p'):
-                if p.text.find("Work") > -1 or p.text.find("Mobile") > -1 :
-                    phone_text+=str(p.text)+"\n"
-            u = photo_server + cco + ".jpg"
-            response = requests.get(u, stream=True)
-            encoded_string = base64.b64encode(response.raw.read())
-            txt=name.text+";"+title.text.replace('.',' ')+";"+manager.text+";"+phone_text+";"+encoded_string+";"+"<a href=\"http://wwwin-tools.cisco.com/dir/details/"+cco+"\">directory link</a>"
+            name=parsed_html.body.find('h2', attrs={'class':'userName'})
+            sys.stderr.write("name: "+str(name)+"\n")
+            if not hasattr(name, 'text'):
+                txt="CCO id not found !"
+            else:
+                title=parsed_html.body.find('p', attrs={'class':'des'})
+                sys.stderr.write("title: "+str(title)+"\n")
+                manager=parsed_html.body.find('a', attrs={'class':'hover-link'})
+                sys.stderr.write("manager: "+str(manager)+"\n")
+                phone_text=""
+                phone=parsed_html.body.find('div', attrs={'id':'dir_phone_links'})
+                for p in phone.findAll('p'):
+                    if p.text.find("Work") > -1 or p.text.find("Mobile") > -1 :
+                        phone_text+=str(p.text)+"\n"
+                u = photo_server + cco + ".jpg"
+                response = requests.get(u, stream=True)
+                encoded_string = base64.b64encode(response.raw.read())
+                txt=name.text+";"+title.text.replace('.',' ')+";"+manager.text+";"+phone_text+";"+encoded_string+";"+"<a href=\"http://wwwin-tools.cisco.com/dir/details/"+cco+"\">directory link</a>"
         sys.stderr.write("txt: {}\n".format(txt))    
     elif cmd == "sr":
         pass
