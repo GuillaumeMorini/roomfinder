@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.7
 
 import pika, os, sys, json, requests
-import base64
+import base64, urllib, unicodedata
 
 def on_request(ch, method, props, body):
     sys.stderr.write(" [x] Received %r\n" % body)
@@ -24,7 +24,8 @@ def on_request(ch, method, props, body):
         sys.stderr.write("Request directory entry in %s for %s\n" % (dir_server, cco))  
         print "dir_server: "+dir_server
         print "photo_server: "+photo_server
-        u = dir_server + cco
+        f = { 'q' : user }
+        u = dir_server + urllib.urlencode(f)
         r=None
         try:
             s  = requests.Session()
