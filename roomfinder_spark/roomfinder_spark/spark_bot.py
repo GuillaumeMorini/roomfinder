@@ -200,7 +200,7 @@ def process_demoroom_message(post_data):
     # Check if message contains phrase "help" and display generic help message
     elif text.lower().find("dir") > -1:
         # Find the cco id
-        cco_list = re.findall(r'[\w-]+', text)
+        cco_list = re.findall(r'[\w ]+', text)
         print "cco_list= "+str(cco_list)
         cco_list.reverse()
         cco=cco_list.pop()
