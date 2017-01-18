@@ -24,7 +24,7 @@ def on_request(ch, method, props, body):
         sys.stderr.write("Request directory entry in %s for %s\n" % (dir_server, cco))  
         print "dir_server: "+dir_server
         print "photo_server: "+photo_server
-        f = { 'q' : user }
+        f = { 'q' : cco }
         u = dir_server + urllib.urlencode(f)
         r=None
         try:
@@ -66,7 +66,7 @@ def on_request(ch, method, props, body):
                 for p in phone.findAll('p'):
                     if p.text.find("Work") > -1 or p.text.find("Mobile") > -1 :
                         phone_text+=str(p.text)+"\n"
-                u = photo_server + cco + ".jpg"
+                u = str(parsed_html.body.find('div',attrs={'class':'profImg'}).find('img')['src'])
                 response = requests.get(u, stream=True)
                 encoded_string = base64.b64encode(response.raw.read())
                 txt=name.text+";"+title.text.replace('.',' ')+";"+manager.text+";"+phone_text+";"+encoded_string+";"+"<a href=\"http://wwwin-tools.cisco.com/dir/details/"+cco+"\">directory link</a>"
