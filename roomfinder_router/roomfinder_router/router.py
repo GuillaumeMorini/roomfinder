@@ -52,7 +52,10 @@ def on_request(ch, method, props, body):
             sys.stderr.write("title: "+str(title)+"\n")
             manager=parsed_html.body.find('a', attrs={'class':'hover-link'})
             sys.stderr.write("manager: "+str(manager)+"\n")
-            
+            phone=parsed_html.body.find('div', attrs={'id':'dir_phone_links'})
+            for p in phone.findAll('p'):
+                if p.text.find("Work") > -1 or p.text.find("Mobile") > -1 :
+                    print p.text
             u = photo_server + cco + ".jpg"
             response = requests.get(u, stream=True)
             encoded_string = base64.b64encode(response.raw.read())
