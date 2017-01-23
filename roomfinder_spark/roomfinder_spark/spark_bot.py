@@ -544,10 +544,11 @@ def setup_webhook(room_id, target, name):
     # Look for a Web Hook for the Room
     webhook_id = ""
     for webhook in webhooks:
-        if webhook["filter"] == "roomId=" + room_id:
-            print("Found Webhook")
-            webhook_id = webhook["id"]
-            break
+        if webhook.has_key("filter"):
+            if webhook["filter"] == "roomId=" + room_id:
+                print("Found Webhook")
+                webhook_id = webhook["id"]
+                break
 
     # If Web Hook not found, create it
     if webhook_id == "":
