@@ -50,7 +50,7 @@ def on_request(ch, method, props, body):
             result_list=[unicodedata.normalize('NFKD',i.text) for i in table.findAll('a',attrs={'class':'hover-link'})]
             txt="Are you looking for one of these people:"
             for i in result_list:
-                txt+="\n"+str(i)
+                txt+="\n * "+str(i)
         else:
             name=parsed_html.body.find('h2', attrs={'class':'userName'})
             sys.stderr.write("name: "+str(name)+"\n")
