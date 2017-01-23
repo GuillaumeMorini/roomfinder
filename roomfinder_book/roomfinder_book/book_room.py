@@ -89,20 +89,28 @@ def book():
         sys.stderr.write("user_email: "+str(j["user_email"])+"\n")
         sys.stderr.write("start_time: "+str(j["starttime"])+"\n")
         sys.stderr.write("end_time: "+str(j["endtime"])+"\n")
-
         sys.stderr.write("room_name: "+str(j["room_name"])+"\n")
 
-        file = open(FILE, 'r')
-        room_email=""
-        x = json.load(file)
-        for i in x[1]:
-            if i[1].find(str(j["room_name"]))>-1:
-                room_email=i[2]
+        xml_template = open("resolvenames_template.xml", "r").read()
+        xml = Template(xml_template)
+        data = unicode(xml.substitute(name=str(j["room_name"])))
+        header = "\"content-type: text/xml;charset=utf-8\""
+        command = "curl --silent --header " + header +" --data '" + data + "' --ntlm "+ "-u "+ user+":"+password+" "+ url
+        #print "command: "+str(command)
+        response = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True).communicate()[0]
+        #print "response: "+str(response)
+        tree = ET.fromstring(response)
+
+        elems=tree.findall(".//{http://schemas.microsoft.com/exchange/services/2006/types}Resolution")
+        for elem in elems:
+            room_email = elem.findall(".//{http://schemas.microsoft.com/exchange/services/2006/types}EmailAddress")[0].text
+            room_name = elem.findall(".//{http://schemas.microsoft.com/exchange/services/2006/types}DisplayName")[0].text
+
         sys.stderr.write("room_email: "+str(room_email)+"\n")
         if room_email=="":
             return "Sorry, "+str(j["room_name"])+" does not exists !"
         else:
-            if is_available(str(j["room_name"])):
+            if is_available(str(j["room_name"])) or not str(j["room_name"]).startswith('ILM-'):
                 book_room(str(j["room_name"]), room_email, str(j["user_name"]), str(j["user_email"]), str(j["starttime"]), str(j["endtime"]))
                 return "Room "+str(j["room_name"])+" booked for "+str(j["user_name"]+" from "+str(j["starttime"])+" to "+str(j["endtime"]))
             else:
