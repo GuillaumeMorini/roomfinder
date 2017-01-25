@@ -58,6 +58,7 @@ def is_available(room_email):
     headers = {}
     headers["Content-type"] = "text/xml; charset=utf-8"
     data=unicode(xml.substitute(email=room_email,starttime=start_time,endtime=end_time)).strip()
+    sys.stderr.write('data: '+str(data)+'\n')
     response=requests.post(url,headers = headers, data= data, auth= HttpNtlmAuth(user,password))
     tree = ET.fromstring(response.text)
     status = "Occupied"
@@ -147,8 +148,6 @@ def findRooms(prefix):
     xml = Template(xml_template)
 
     data = unicode(xml.substitute(name=prefix))
-
-    sys.stderr.write('data: '+str(data)+'\n')
 
     header = "\"content-type: text/xml;charset=utf-8\""
     #command = "curl --silent --header " + header +" --data '" + data + "' --ntlm "+"--negotiate "+ "-u "+ user+":"+password+" "+ url
