@@ -23,6 +23,7 @@ def send_request(data):
     try:
         headers = {}
         headers["Content-type"] = "text/xml; charset=utf-8"
+        sys.stderr.write('data='+str(data)+'\n')
         response=requests.post(url,headers = headers, data= data, auth= HttpNtlmAuth(user,password))
         return response
     except:
@@ -58,7 +59,6 @@ def is_available(room_email):
     headers = {}
     headers["Content-type"] = "text/xml; charset=utf-8"
     data=unicode(xml.substitute(email=room_email,starttime=start_time,endtime=end_time)).strip()
-    sys.stderr.write('data: '+str(data)+'\n')
     response=requests.post(url,headers = headers, data= data, auth= HttpNtlmAuth(user,password))
     tree = ET.fromstring(response.text)
     status = "Occupied"
@@ -190,7 +190,8 @@ def dispo_building(b,start=None, end=None):
     sys.stderr.write(str(datetime.datetime.now().isoformat())+": End of init of Thread start\n")
     try:
         for room in rooms:
-            q.put(unicode(xml.substitute(email=room,starttime=start,endtime=end)).strip())
+            data=unicode(xml.substitute(email=room,starttime=start,endtime=end)).strip()
+            q.put(data)
         sys.stderr.write(str(datetime.datetime.now().isoformat())+": End of send data to process to Thread\n")
         q.join()
         sys.stderr.write(str(datetime.datetime.now().isoformat())+": End of join Thread\n")
