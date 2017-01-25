@@ -35,7 +35,7 @@ def doSomethingWithResult(response):
     else:
         tree = ET.fromstring(response.text)
 
-        status = "Occupied"
+        status = "Free"
         # arrgh, namespaces!!
         elems=tree.findall(".//{http://schemas.microsoft.com/exchange/services/2006/types}BusyType")
         for elem in elems:
@@ -61,7 +61,7 @@ def is_available(room_email):
     data=unicode(xml.substitute(email=room_email,starttime=start_time,endtime=end_time)).strip()
     response=requests.post(url,headers = headers, data= data, auth= HttpNtlmAuth(user,password))
     tree = ET.fromstring(response.text)
-    status = "Occupied"
+    status = "Free"
     # arrgh, namespaces!!
     elems=tree.findall(".//{http://schemas.microsoft.com/exchange/services/2006/types}BusyType")
     for elem in elems:
