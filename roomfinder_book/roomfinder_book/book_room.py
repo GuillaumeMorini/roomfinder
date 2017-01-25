@@ -171,9 +171,9 @@ def dispo_building(b,start=None, end=None):
     result=list()
     now = datetime.datetime.now().replace(microsecond=0)
     if start is None:
-        start = now.isoformat()
+        start = now
     if end is None:
-        end = (start + datetime.timedelta(hours=2)).isoformat()
+        end = (start + datetime.timedelta(hours=2))
 
     findRooms(b)
     sys.stderr.write("List of rooms: "+str(rooms)+"\n")
@@ -190,7 +190,7 @@ def dispo_building(b,start=None, end=None):
     sys.stderr.write(str(datetime.datetime.now().isoformat())+": End of init of Thread start\n")
     try:
         for room in rooms:
-            data=unicode(xml.substitute(email=room,starttime=start,endtime=end)).strip()
+            data=unicode(xml.substitute(email=room,starttime=start.isoformat(),endtime=end.isoformat())).strip()
             q.put(data)
         sys.stderr.write(str(datetime.datetime.now().isoformat())+": End of send data to process to Thread\n")
         q.join()
