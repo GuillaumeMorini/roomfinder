@@ -721,7 +721,7 @@ if __name__ == '__main__':
 
 
     # Setup The MyHereo Spark Demo Room
-    demo_room_id = setup_demo_room()
+    demo_room_id = "Y2lzY29zcGFyazovL3VzL1JPT00vYjhjNTNmMjAtM2QzZS0xMWU2LTg2YmEtMmIwOTZhNmZiZDkw"
     sys.stderr.write("Roomfinder Demo Room ID: " + demo_room_id + "\n")
 
     # Setup Web Hook to process demo room messages
