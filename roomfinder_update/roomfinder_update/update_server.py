@@ -26,6 +26,7 @@ def send_request(data):
     try:
         headers = {}
         headers["Content-type"] = "text/xml; charset=utf-8"
+        sys.stderr.write('data='+str(data))
         response=requests.post(url,headers = headers, data= data, auth= HttpNtlmAuth(user,password))
         return response
     except:
