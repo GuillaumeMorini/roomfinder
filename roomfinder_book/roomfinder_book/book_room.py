@@ -148,6 +148,8 @@ def findRooms(prefix):
 
     data = unicode(xml.substitute(name=prefix))
 
+    sys.stderr.write('data: '+str(data)+'\n')
+
     header = "\"content-type: text/xml;charset=utf-8\""
     #command = "curl --silent --header " + header +" --data '" + data + "' --ntlm "+"--negotiate "+ "-u "+ user+":"+password+" "+ url
     command = "curl --silent --header " + header +" --data '" + data + "' --ntlm "+ "-u "+ user+":"+password+" "+ url
