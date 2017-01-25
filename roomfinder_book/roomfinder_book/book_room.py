@@ -45,7 +45,7 @@ def doSomethingWithResult(response):
         for e in elems:
             room=e.text
 
-        sys.stderr.write(str(now.isoformat())+": Status for room: "+str(room)+" => "+status+"\n")
+        sys.stderr.write(str(datetime.datetime.now().isoformat())+": Status for room: "+str(room)+" => "+status+"\n")
         result.append((status, rooms[room], room))
 
 FILE="available_rooms.json"
@@ -186,17 +186,17 @@ def dispo_building(b,start=None, end=None):
         t = Thread(target=doWork)
         t.daemon = True
         t.start()
-    sys.stderr.write(str(now.isoformat())+": End of init of Thread start\n")
+    sys.stderr.write(str(datetime.datetime.now().isoformat())+": End of init of Thread start\n")
     try:
         for room in rooms:
             q.put(unicode(xml.substitute(email=room,starttime=start,endtime=end)).strip())
-        sys.stderr.write(str(now.isoformat())+": End of send data to process to Thread\n")
+        sys.stderr.write(str(datetime.datetime.now().isoformat())+": End of send data to process to Thread\n")
         q.join()
-        sys.stderr.write(str(now.isoformat())+": End of join Thread\n")
+        sys.stderr.write(str(datetime.datetime.now().isoformat())+": End of join Thread\n")
     except KeyboardInterrupt:
         sys.exit(1)
 
-    sys.stderr.write(str(now.isoformat())+": Response of Post to data server: "+str(result)+"\n")
+    sys.stderr.write(str(datetime.datetime.now().isoformat())+": Response of Post to data server: "+str(result)+"\n")
     toto=(("List of rooms status","for "+str(b)+" building","from " + str(start),"to " + str(end)),sorted(result, key=lambda tup: tup[1]))
     return json.dumps(toto)
    
