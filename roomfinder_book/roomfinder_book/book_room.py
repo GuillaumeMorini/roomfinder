@@ -171,7 +171,7 @@ def dispo_building(b,start=None, end=None):
     result=list()
     now = datetime.datetime.now().replace(microsecond=0)
     if start is None:
-        start = now
+        start = now.isoformat()
     if end is None:
         end = (start + datetime.timedelta(hours=2)).isoformat()
 
