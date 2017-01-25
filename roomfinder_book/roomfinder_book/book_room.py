@@ -53,7 +53,7 @@ FILE="available_rooms.json"
 
 app = Flask(__name__)
 
-def is_available(room_email):
+def is_available(room_email,start_time,end_time):
     xml_template = open("getavailibility_template.xml", "r").read()
     xml = Template(xml_template)
     headers = {}
