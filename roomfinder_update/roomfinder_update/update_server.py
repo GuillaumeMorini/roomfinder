@@ -37,7 +37,7 @@ def doSomethingWithResult(response):
     else:
         tree = ET.fromstring(response.text)
 
-        status = "Free"
+        status = "Occupied"
         # arrgh, namespaces!!
         elems=tree.findall(".//{http://schemas.microsoft.com/exchange/services/2006/types}BusyType")
         for elem in elems:
