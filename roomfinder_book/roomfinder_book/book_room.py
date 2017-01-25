@@ -106,7 +106,7 @@ def book():
         #print "command: "+str(command)
         response = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True).communicate()[0]
         #print "response: "+str(response)
-        tree = ET.fromstring(response.text.encode('utf-8'))
+        tree = ET.fromstring(response.encode('utf-8'))
 
         elems=tree.findall(".//{http://schemas.microsoft.com/exchange/services/2006/types}Resolution")
         for elem in elems:
