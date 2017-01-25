@@ -13,7 +13,4 @@ RUN export http_proxy=http://proxy-wsa.esl.cisco.com:80/ \
   && cp /usr/share/zoneinfo/Europe/Paris /etc/localtime \
   && pip install --no-cache-dir --requirement ./requirements.txt
 
-ENV http_proxy=http://proxy-wsa.esl.cisco.com:80
-ENV https_proxy=http://proxy-wsa.esl.cisco.com:80
-
 CMD [ "python", "./roomfinder_book/book_room.py" ]
