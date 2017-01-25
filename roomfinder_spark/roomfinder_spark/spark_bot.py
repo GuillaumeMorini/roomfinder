@@ -68,7 +68,7 @@ def process_webhook():
     # If not the demo room, assume its a user individual message
     else:
         # print("Incoming Individual Message.")
-        sys.stderr.write("Incoming Individual Message\n")
+        sys.stderr.write("Incoming Individual Message on room "+str(post_data["data"]["roomId"])+"\n")
 
     return ""
 
