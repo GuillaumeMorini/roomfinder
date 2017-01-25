@@ -20,11 +20,13 @@ def doWork():
         q.task_done()
 
 def send_request(data):
-    headers = {}
-    headers["Content-type"] = "text/xml; charset=utf-8"
-    response=requests.post(url,headers = headers, data= data, auth= HttpNtlmAuth(user,password))
-    sys.stderr.write("response: "+str(response)+"\n")
-    return response
+    try:
+        headers = {}
+        headers["Content-type"] = "text/xml; charset=utf-8"
+        response=requests.post(url,headers = headers, data= data, auth= HttpNtlmAuth(user,password))
+        return response
+    except:
+        return None
 
 def doSomethingWithResult(response):
     if response is None:
@@ -32,7 +34,7 @@ def doSomethingWithResult(response):
     else:
         tree = ET.fromstring(response.text)
 
-        status = "Bidon"
+        status = "Occupied"
         # arrgh, namespaces!!
         elems=tree.findall(".//{http://schemas.microsoft.com/exchange/services/2006/types}BusyType")
         for elem in elems:
@@ -43,7 +45,6 @@ def doSomethingWithResult(response):
         for e in elems:
             room=e.text
 
-        now = datetime.datetime.now().replace(microsecond=0)
         sys.stderr.write(str(now.isoformat())+": Status for room: "+str(room)+" => "+status+"\n")
         result.append((status, rooms[room], room))
 
@@ -51,13 +52,20 @@ FILE="available_rooms.json"
 
 app = Flask(__name__)
 
-def is_available(r):
-    page=requests.get(data+'/')
-    rooms=page.json()
-    for i in rooms[1]:
-        if i[1].find(r)>-1:
-            return (i[0]=="Free")
-    return False
+def is_available(room_email):
+    xml_template = open("getavailibility_template.xml", "r").read()
+    xml = Template(xml_template)
+    headers = {}
+    headers["Content-type"] = "text/xml; charset=utf-8"
+    data=unicode(xml.substitute(email=room_email,starttime=start_time,endtime=end_time)).strip()
+    response=requests.post(url,headers = headers, data= data, auth= HttpNtlmAuth(user,password))
+    tree = ET.fromstring(response.text)
+    status = "Occupied"
+    # arrgh, namespaces!!
+    elems=tree.findall(".//{http://schemas.microsoft.com/exchange/services/2006/types}BusyType")
+    for elem in elems:
+        status=elem.text
+    return (status == "Free")
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -69,7 +77,7 @@ def index():
         now = datetime.datetime.now().replace(microsecond=0)
         start_time = now.isoformat()
         end_time = (now + datetime.timedelta(hours=2)).isoformat()
-        if is_available(room_name):
+        if is_available(room_email):
             book_room(room_name, room_email, user_email, user_email, start_time, end_time)
             return "Room "+str(room_name)+" booked for "+user_email+" from "+str(start_time)+" to "+str(end_time)
         else:
@@ -108,7 +116,7 @@ def book():
         if room_email=="":
             return "Sorry, "+str(j["room_name"])+" does not exists !"
         else:
-            if is_available(str(j["room_name"])) or not str(j["room_name"]).startswith('ILM-'):
+            if is_available(room_email) or not str(j["room_name"]).startswith('ILM-'):
                 book_room(str(j["room_name"]), room_email, str(j["user_name"]), str(j["user_email"]), str(j["starttime"]), str(j["endtime"]))
                 return "Room "+str(j["room_name"])+" booked for "+str(j["user_name"]+" from "+str(j["starttime"])+" to "+str(j["endtime"]))
             else:
