@@ -33,7 +33,7 @@ def doSomethingWithResult(response):
     if response is None:
         return "KO"
     else:
-        tree = ET.fromstring(response.text)
+        tree = ET.fromstring(response.text.encode('utf-8'))
 
         status = "Free"
         # arrgh, namespaces!!
@@ -41,7 +41,7 @@ def doSomethingWithResult(response):
         for elem in elems:
             status=elem.text
 
-        tree2=ET.fromstring(response.request.body)
+        tree2=ET.fromstring(response.request.body.encode('utf-8'))
         elems=tree2.findall(".//{http://schemas.microsoft.com/exchange/services/2006/types}Address")
         for e in elems:
             room=e.text
@@ -60,7 +60,7 @@ def is_available(room_email):
     headers["Content-type"] = "text/xml; charset=utf-8"
     data=unicode(xml.substitute(email=room_email,starttime=start_time,endtime=end_time)).strip()
     response=requests.post(url,headers = headers, data= data, auth= HttpNtlmAuth(user,password))
-    tree = ET.fromstring(response.text)
+    tree = ET.fromstring(response.text.encode('utf-8'))
     status = "Free"
     # arrgh, namespaces!!
     elems=tree.findall(".//{http://schemas.microsoft.com/exchange/services/2006/types}BusyType")
@@ -106,7 +106,7 @@ def book():
         #print "command: "+str(command)
         response = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True).communicate()[0]
         #print "response: "+str(response)
-        tree = ET.fromstring(response)
+        tree = ET.fromstring(response.text.encode('utf-8'))
 
         elems=tree.findall(".//{http://schemas.microsoft.com/exchange/services/2006/types}Resolution")
         for elem in elems:
@@ -155,7 +155,7 @@ def findRooms(prefix):
     #print "command: "+str(command)
     response = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True).communicate()[0]
     #print "response: "+str(response)
-    tree = ET.fromstring(response)
+    tree = ET.fromstring(response.text.encode('utf-8'))
 
     elems=tree.findall(".//{http://schemas.microsoft.com/exchange/services/2006/types}Resolution")
     for elem in elems:
