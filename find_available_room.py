@@ -26,12 +26,13 @@ def doWork():
         q.task_done()
 
 def send_request(data):
-    try:
-        headers = {}
-        headers["Content-type"] = "text/xml; charset=utf-8"
-        response=requests.post(url,headers = headers, data= data, auth= HttpNtlmAuth(user,password))
+    headers = {}
+    headers["Content-type"] = "text/xml; charset=utf-8"
+    response=requests.post(url,headers = headers, data= data, auth= HttpNtlmAuth(user,password))
+    sys.stderr.write("response: "+str(response)+"\n")
+    if response.status_code == 200:
         return response
-    except:
+    else:
         return None
 
 def doSomethingWithResult(response):
@@ -40,7 +41,7 @@ def doSomethingWithResult(response):
     else:
         tree = ET.fromstring(response.text)
 
-        status = "Free"
+        status = "Bidon"
         # arrgh, namespaces!!
         elems=tree.findall(".//{http://schemas.microsoft.com/exchange/services/2006/types}BusyType")
         for elem in elems:
