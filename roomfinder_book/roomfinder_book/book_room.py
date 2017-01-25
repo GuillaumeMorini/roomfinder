@@ -117,7 +117,7 @@ def book():
         if room_email=="":
             return "Sorry, "+str(j["room_name"])+" does not exists !"
         else:
-            if is_available(room_email,str(j["starttime"]), str(j["endtime"])) or not str(j["room_name"]).startswith('ILM-'):
+            if is_available(room_email,str(j["starttime"]), str(j["endtime"])):
                 book_room(str(j["room_name"]), room_email, str(j["user_name"]), str(j["user_email"]), str(j["starttime"]), str(j["endtime"]))
                 return "Room "+str(j["room_name"])+" booked for "+str(j["user_name"]+" from "+str(j["starttime"])+" to "+str(j["endtime"]))
             else:
