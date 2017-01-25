@@ -78,7 +78,7 @@ def index():
         now = datetime.datetime.now().replace(microsecond=0)
         start_time = now.isoformat()
         end_time = (now + datetime.timedelta(hours=2)).isoformat()
-        if is_available(room_email):
+        if is_available(room_email, start_time, end_time):
             book_room(room_name, room_email, user_email, user_email, start_time, end_time)
             return "Room "+str(room_name)+" booked for "+user_email+" from "+str(start_time)+" to "+str(end_time)
         else:
@@ -117,7 +117,7 @@ def book():
         if room_email=="":
             return "Sorry, "+str(j["room_name"])+" does not exists !"
         else:
-            if is_available(room_email) or not str(j["room_name"]).startswith('ILM-'):
+            if is_available(room_email,str(j["starttime"]), str(j["endtime"])) or not str(j["room_name"]).startswith('ILM-'):
                 book_room(str(j["room_name"]), room_email, str(j["user_name"]), str(j["user_email"]), str(j["starttime"]), str(j["endtime"]))
                 return "Room "+str(j["room_name"])+" booked for "+str(j["user_name"]+" from "+str(j["starttime"])+" to "+str(j["endtime"]))
             else:
