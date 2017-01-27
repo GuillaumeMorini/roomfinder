@@ -13,7 +13,7 @@ from Queue import Queue
 import argparse
 
 def doWork():
-    while True:
+    # while True:
         data = q.get()
         response = send_request(data)
         doSomethingWithResult(response)
@@ -48,6 +48,7 @@ def doSomethingWithResult(response):
 
         sys.stderr.write(str(datetime.datetime.now().isoformat())+": Status for room: "+str(room)+" => "+status+"\n")
         result.append((status, rooms[room], room))
+        return "OK"
 
 FILE="available_rooms.json"
 
@@ -168,6 +169,7 @@ def findRooms(prefix):
 
 def dispo_building(b,start=None, end=None):
     global result
+    global q
     result=list()
     now = datetime.datetime.now().replace(microsecond=0)
     if start is None:
@@ -181,15 +183,13 @@ def dispo_building(b,start=None, end=None):
     xml_template = open("getavailibility_template.xml", "r").read()
     xml = Template(xml_template)
 
-    #concurrent=31
-    #q = Queue(concurrent * 2)
-    for i in range(concurrent):
-        t = Thread(target=doWork)
-        t.daemon = True
-        t.start()
-    sys.stderr.write(str(datetime.datetime.now().isoformat())+": End of init of Thread start\n")
+    q = Queue(len(rooms) * 2 + 2)
     try:
         for room in rooms:
+            t = Thread(target=doWork)
+            t.daemon = True
+            t.start()
+            sys.stderr.write(str(datetime.datetime.now().isoformat())+": End of init of Thread start\n")
             data=unicode(xml.substitute(email=room,starttime=start.isoformat(),endtime=end.isoformat())).strip()
             q.put(data)
         sys.stderr.write(str(datetime.datetime.now().isoformat())+": End of send data to process to Thread\n")
@@ -268,8 +268,7 @@ if __name__ == '__main__':
 
     # sys.stderr.write("Exchange password: " + password + "\n")
 
-    concurrent=31
-    q = Queue(concurrent * 2)
+    q = None
     result=list()
     rooms={}
     try:
