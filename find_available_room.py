@@ -19,7 +19,7 @@ from threading import Thread
 from Queue import Queue
 
 def doWork():
-    while True:
+    # while True:
         data = q.get()
         response = send_request(data)
         doSomethingWithResult(response)
@@ -36,6 +36,7 @@ def send_request(data):
         return None
 
 def doSomethingWithResult(response):
+    global result
     if response is None:
         return "KO"
     else:
@@ -54,6 +55,7 @@ def doSomethingWithResult(response):
 
         print "Status for room: "+str(room)+" => "+status
         result.append((status, rooms[room], room))
+        return "OK"
 
 now = datetime.datetime.now().replace(microsecond=0)
 starttime_default = now.isoformat()
@@ -91,25 +93,29 @@ password = args.password
 
 xml_template = open("getavailibility_template.xml", "r").read()
 xml = Template(xml_template)
-
-result=list()
-
-concurrent=31
-q = Queue(concurrent * 2)
-for i in range(concurrent):
-    t = Thread(target=doWork)
-    t.daemon = True
-    t.start()
-print "End of init of Thread start"
-try:
-    for room in rooms:
-        q.put(unicode(xml.substitute(email=room,starttime=start_time,endtime=end_time)).strip())
-    print "End of send data to process to Thread"
-    q.join()
-    print "End of join Thread"
-except KeyboardInterrupt:
-    sys.exit(1)
-
-import json
-with open('available_rooms.json', 'w') as outfile:
-    json.dump(("List of rooms status <br> for ILM building <br> from " + start_time + " <br> to " + end_time + ":",sorted(result, key=lambda tup: tup[1])), outfile)
+for j in range(1,31):
+    result=list()
+    s=raw_input("avant")
+    concurrent=len(rooms)+1
+    threads=[]
+    try:
+        print "Init of Thread start"
+        q = Queue(concurrent * 2)
+        for room in rooms:
+            t = Thread(target=doWork)
+            threads.append(t)
+            t.daemon = True
+            t.start()
+            print "End of init of Thread start"
+            q.put(unicode(xml.substitute(email=room,starttime=start_time,endtime=end_time)).strip())
+        print "End of send data to process to Thread"
+        q.join()
+        # for t in threads:
+        #     t.join()
+        print "End of join Thread"
+    except KeyboardInterrupt:
+        sys.exit(1)
+    import json
+    with open('available_rooms.json', 'w') as outfile:
+        json.dump(("List of rooms status <br> for ILM building <br> from " + start_time + " <br> to " + end_time + ":",sorted(result, key=lambda tup: tup[1])), outfile)
+    s=raw_input("apres")
