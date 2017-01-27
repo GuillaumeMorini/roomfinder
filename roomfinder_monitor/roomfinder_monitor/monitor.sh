@@ -41,5 +41,5 @@ do
 			fi
 		done
 	fi
-	sleep 30
+	sleep 300
 done
