@@ -1,7 +1,74 @@
 #!/usr/bin/env python2.7
 
 import pika, os, sys, json, requests
-import base64, urllib, unicodedata
+import base64, urllib, unicodedata, re
+
+def find_dir(cco):
+    f = { 'q' : cco }
+    u = dir_server + urllib.urlencode(f)
+    r = None
+    try:
+        s = requests.Session()
+        r=s.get(u)
+        print(r.text)
+        headers={'Content-type': 'application/x-www-form-urlencoded'}
+        data="userid="+dir_user+"&password="+dir_pass+"&target=&smauthreason=&smquerydata=&smagentname=&postpreservationdata=&SMENC=&SMLOCALE="
+        r=s.post(sso_url,data,headers)
+    except requests.exceptions.ConnectionError:
+        return "Connection error to directory server"
+    try: 
+        from BeautifulSoup import BeautifulSoup
+        from HTMLParser import HTMLParser
+    except ImportError:
+        from bs4 import BeautifulSoup
+        from html.parser import HTMLParser
+    html = HTMLParser().unescape(r.text)
+    sys.stderr.write("html: "+str(html.encode('utf-8'))+"\n")
+    parsed_html = BeautifulSoup(html)
+    table=parsed_html.body.find('table', attrs={'id':'resultsTable'})
+    if table is not None:
+        result_list=[unicodedata.normalize('NFKD',i.text) for i in table.findAll('a',attrs={'class':'hover-link'})]
+        found=False
+        for n in result_list:
+            m = re.search(r"\(([A-Za-z0-9]+)\)", n)
+            if m.group(1) == cco:
+                u=dir_detail_server+cco
+                r=s.get(u)
+                print(r.text)
+                html = HTMLParser().unescape(r.text)
+                sys.stderr.write("html: "+str(html.encode('utf-8'))+"\n")
+                parsed_html = BeautifulSoup(html)
+                found=True
+                print("Found!")
+        if not found:
+            txt="Are you looking for one of these people:"
+            for i in result_list:
+                txt+="\n * "+str(i)
+            return txt
+    name=parsed_html.body.find('h2', attrs={'class':'userName'})
+    sys.stderr.write("name: "+str(name)+"\n")
+    if not hasattr(name, 'text'):
+        return "CCO id not found !"
+    else:
+        tmp=parsed_html.body.find('p', attrs={'class':'userId'})
+        print("tmp: "+str(tmp))
+        m=re.search(r"\(([A-Za-z0-9]+)\)", str(tmp))
+        print("m: "+str(m))
+        real_cco=str(m.group(1))
+        sys.stderr.write("real_cco: "+str(real_cco)+"\n")
+        title=parsed_html.body.find('p', attrs={'class':'des'})
+        sys.stderr.write("title: "+str(title)+"\n")
+        manager=parsed_html.body.find('a', attrs={'class':'hover-link'})
+        sys.stderr.write("manager: "+str(manager)+"\n")
+        phone_text=""
+        phone=parsed_html.body.find('div', attrs={'id':'dir_phone_links'})
+        for p in phone.findAll('p'):
+            if p.text.find("Work") > -1 or p.text.find("Mobile") > -1 :
+                phone_text+=str(p.text)+"<br>"
+        u = str(parsed_html.body.find('div',attrs={'class':'profImg'}).find('img')['src'])
+        response = requests.get(u, stream=True)
+        encoded_string = base64.b64encode(response.raw.read())
+        return name.text+"<br>;"+title.text.replace('.',' ')+"<br>;"+manager.text+"<br>;"+phone_text+";"+encoded_string+";"+"<a href=\"http://wwwin-tools.cisco.com/dir/details/"+real_cco+"\">directory link</a>"
 
 def on_request(ch, method, props, body):
     sys.stderr.write(" [x] Received %r\n" % body)
@@ -23,54 +90,8 @@ def on_request(ch, method, props, body):
         cco= request_data["cco"]
         sys.stderr.write("Request directory entry in %s for %s\n" % (dir_server, cco))  
         print "dir_server: "+dir_server
-        print "photo_server: "+photo_server
-        f = { 'q' : cco }
-        u = dir_server + urllib.urlencode(f)
-        r=None
-        try:
-            s  = requests.Session()
-            r=s.get(u)
-            print(r.text)
-            headers={'Content-type': 'application/x-www-form-urlencoded'}
-            data="userid="+dir_user+"&password="+dir_pass+"&target=&smauthreason=&smquerydata=&smagentname=&postpreservationdata=&SMENC=&SMLOCALE="
-            r=s.post(sso_url,data,headers)
-        except requests.exceptions.ConnectionError:
-            return "Connection error to directory server"
-        try: 
-            from BeautifulSoup import BeautifulSoup
-            from HTMLParser import HTMLParser
-        except ImportError:
-            from bs4 import BeautifulSoup
-            from html.parser import HTMLParser
-        html = HTMLParser().unescape(r.text)
-        sys.stderr.write("html: "+str(html.encode('utf-8'))+"\n")
-        parsed_html = BeautifulSoup(html)
-        table=parsed_html.body.find('table', attrs={'id':'resultsTable'})
-        if table is not None:
-            result_list=[unicodedata.normalize('NFKD',i.text) for i in table.findAll('a',attrs={'class':'hover-link'})]
-            txt="Are you looking for one of these people:"
-            for i in result_list:
-                txt+="\n * "+str(i)
-        else:
-            name=parsed_html.body.find('h2', attrs={'class':'userName'})
-            sys.stderr.write("name: "+str(name)+"\n")
-            if not hasattr(name, 'text'):
-                txt="CCO id not found !"
-            else:
-                title=parsed_html.body.find('p', attrs={'class':'des'})
-                sys.stderr.write("title: "+str(title)+"\n")
-                manager=parsed_html.body.find('a', attrs={'class':'hover-link'})
-                sys.stderr.write("manager: "+str(manager)+"\n")
-                phone_text=""
-                phone=parsed_html.body.find('div', attrs={'id':'dir_phone_links'})
-                for p in phone.findAll('p'):
-                    if p.text.find("Work") > -1 or p.text.find("Mobile") > -1 :
-                        phone_text+=str(p.text)+"\n"
-                u = str(parsed_html.body.find('div',attrs={'class':'profImg'}).find('img')['src'])
-                response = requests.get(u, stream=True)
-                encoded_string = base64.b64encode(response.raw.read())
-                txt=name.text+";"+title.text.replace('.',' ')+";"+manager.text+";"+phone_text+";"+encoded_string+";"+"<a href=\"http://wwwin-tools.cisco.com/dir/details/"+cco+"\">directory link</a>"
-        sys.stderr.write("txt: {}\n".format(txt))    
+        txt=find_dir(cco)
+        sys.stderr.write("txt: {}\n".format(txt))
     elif cmd == "sr":
         pass
     elif cmd == "dispo":
@@ -93,9 +114,8 @@ if __name__ == '__main__':
     parser.add_argument("-r","--rabbitmq", help="IP or hostname for rabbitmq server, e.g. 'rabbit.domain.com'.")
     parser.add_argument("-p","--port", help="tcp port for rabitmq server, e.g. '2765'.")
     parser.add_argument("-b","--book", help="URL for roomfinder book server, e.g. 'http://book.domain.com:1234'.")
-    parser.add_argument(
-        "-d", "--dir", help="Address of directory server", required=False
-    )
+    parser.add_argument("-d", "--dir", help="Address of directory server", required=False)
+    parser.add_argument("-e", "--dir-detail", help="Address of detailed directory server", required=False)
     parser.add_argument(
         "-i", "--photo", help="Address of photo directory server", required=False
     )
@@ -134,6 +154,11 @@ if __name__ == '__main__':
     # print "Dir Server: " + dir_server
     sys.stderr.write("Directory Server: " + str(dir_server) + "\n")
 
+
+    dir_detail_server = args.dir_detail
+    if (dir_detail_server == None):
+        dir_detail_server = os.getenv("roomfinder_dir_detail_server")
+
     dir_user = args.user
     if (dir_user == None):
         dir_user = os.getenv("roomfinder_dir_user")
@@ -143,14 +168,6 @@ if __name__ == '__main__':
     if (dir_pass == None):
         dir_pass = os.getenv("roomfinder_dir_pass")
     sys.stderr.write("Directory Password " + str(dir_pass) + "\n")
-
-    photo_server = args.photo
-    # print "Arg Photo: " + str(photo_server)
-    if (photo_server == None):
-        photo_server = os.getenv("roomfinder_photo_server")
-        # print "Env Photo: " + str(photo_server)
-    # print "Photo Server: " + photo_server
-    sys.stderr.write("Directory Photo Server: " + str(photo_server) + "\n")
 
     sso_url = args.sso
     if (sso_url == None):
