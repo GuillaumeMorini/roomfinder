@@ -99,7 +99,13 @@ def on_request(ch, method, props, body):
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
         page = requests.post(book_server+'/dispo',data = json.dumps(request_data),headers=headers)
         txt=page.text
-        sys.stderr.write("txt: {}\n".format(txt))    
+        sys.stderr.write("txt: {}\n".format(txt))
+    elif cmd == "where":
+        sys.stderr.write("Request where is a room to %s\n" % book_server)  
+        headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
+        page = requests.post(book_server+'/where',data = json.dumps(request_data),headers=headers)
+        txt=page.text
+        sys.stderr.write("txt: {}\n".format(txt))
     ch.basic_publish(exchange='',
                      routing_key=props.reply_to,
                      properties=pika.BasicProperties(correlation_id = \
