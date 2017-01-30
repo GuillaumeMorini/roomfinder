@@ -141,7 +141,29 @@ def dispo():
         end=str(j["end"])
     return dispo_building(key,start,end)
 
-def findRooms(prefix):
+@app.route('/where', methods=['POST'])
+def where():
+    j = request.get_json()
+    if "room" not in j:
+        return "Sorry, no room where specified !"
+    room=str(j["room"])
+    sys.stderr.write("room: "+room+"\n")
+    rooms=findRooms(prefix=room,anywhere=True)
+    sys.stderr.write("rooms: "+str(rooms)+"\n")
+    # if len(rooms)==1:
+    #     reply="Here is the full name of the room: \n * "+str(rooms.items()[0][1])
+    # else:
+    #     reply="Do you mean:\n"
+    #     for r in rooms:
+    #         reply+="* "+str(rooms[r])+"\n"
+    reply=""
+    if len(rooms)==0:
+        return "Sorry, no room with this name found !"
+    for r in rooms:
+        reply+=str(rooms[r])+";"
+    return reply[0:len(reply)-1]
+
+def findRooms(prefix=None,anywhere=False):
     global rooms
 
     rooms={}
@@ -162,8 +184,11 @@ def findRooms(prefix):
     for elem in elems:
         email = elem.findall(".//{http://schemas.microsoft.com/exchange/services/2006/types}EmailAddress")
         name = elem.findall(".//{http://schemas.microsoft.com/exchange/services/2006/types}DisplayName")
-        if len(email) > 0 and len(name) > 0 and name[0].text.startswith(prefix):
-            rooms[email[0].text] = name[0].text
+        if prefix is not None:
+            if len(email) > 0 and len(name) > 0 :
+                if email[0].text.startswith("conf_") or email[0].text.startswith("CONF_"):
+                    if name[0].text.startswith(prefix) or anywhere:
+                        rooms[email[0].text] = name[0].text
     return rooms        
 
 
