@@ -4,7 +4,7 @@ import pika, os, sys, json, requests
 import base64, urllib, unicodedata, re
 
 def find_dir(cco):
-    f = { 'q' : cco }
+    f = { 'q' : cco.encode('utf-8') }
     u = dir_server + urllib.urlencode(f)
     r = None
     try:
@@ -62,9 +62,10 @@ def find_dir(cco):
         sys.stderr.write("manager: "+str(manager)+"\n")
         phone_text=""
         phone=parsed_html.body.find('div', attrs={'id':'dir_phone_links'})
-        for p in phone.findAll('p'):
-            if p.text.find("Work") > -1 or p.text.find("Mobile") > -1 :
-                phone_text+=str(p.text)+"<br>"
+        if phone is not None:
+            for p in phone.findAll('p'):
+                if p.text.find("Work") > -1 or p.text.find("Mobile") > -1 :
+                    phone_text+=str(p.text)+"<br>"
         u = str(parsed_html.body.find('div',attrs={'class':'profImg'}).find('img')['src'])
         response = requests.get(u, stream=True)
         encoded_string = base64.b64encode(response.raw.read())
@@ -88,7 +89,7 @@ def on_request(ch, method, props, body):
         sys.stderr.write("txt: {}\n".format(txt))    
     elif cmd == "dir":
         cco= request_data["cco"]
-        sys.stderr.write("Request directory entry in %s for %s\n" % (dir_server, cco))  
+        sys.stderr.write("Request directory entry in %s for %s\n" % (str(dir_server.encode('utf-8')), str(cco.encode('utf-8'))))  
         print "dir_server: "+dir_server
         txt=find_dir(cco)
         sys.stderr.write("txt: {}\n".format(txt))
