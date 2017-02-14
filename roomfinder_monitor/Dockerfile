@@ -16,6 +16,6 @@ COPY msmtprc /etc/msmtprc
 
 ENV http_proxy=http://proxy-wsa.esl.cisco.com:80/
 ENV https_proxy=http://proxy-wsa.esl.cisco.com:80/
-ENV no_proxy=172.17.0.1,192.168.7.234
+ENV no_proxy=172.17.0.1,10.60.7.20
 
 CMD [ "./roomfinder_monitor/monitor.sh" ]
