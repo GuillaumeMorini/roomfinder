@@ -49,7 +49,7 @@ def doSomethingWithResult(response):
         for e in elems:
             room=e.text
 
-        sys.stderr.write(str(now.isoformat())+": Status for room: "+str(room)+" => "+status+"\n")
+        sys.stderr.write(str(now.isoformat())+": Status for room "+str(rooms[room])+": "+str(room)+" => "+status+"\n")
         result.append((status, rooms[room], room))
 
 if __name__ == '__main__':
@@ -157,6 +157,8 @@ if __name__ == '__main__':
         end_time = (start + datetime.timedelta(hours=2)).isoformat()
     else:
         end_time = args.endtime
+
+    sys.stderr.write(str(now.isoformat())+": Lookup for availability from "+str(start_time)+" to "+str(end_time)+"\n")
 
     # page = requests.get(book_server+'/dispo') # find how to send the list of rooms read from previous file
     # result = page.text() # format result
