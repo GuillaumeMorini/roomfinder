@@ -6,6 +6,7 @@ echo "$IPADDR     $WEB_URL" >> /etc/hosts
 
 while true
 do
+	date
 	curl -s $DATA_URL > /dev/null 2>&1
 	if [ $? -ne 0 ]
 	then
