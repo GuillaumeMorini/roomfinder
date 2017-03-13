@@ -10,7 +10,7 @@ def find_dir(cco):
     try:
         s = requests.Session()
         r=s.get(u)
-        print(r.text)
+        print(str(r.text.encode('utf-8')))
         headers={'Content-type': 'application/x-www-form-urlencoded'}
         data="userid="+dir_user+"&password="+dir_pass+"&target=&smauthreason=&smquerydata=&smagentname=&postpreservationdata=&SMENC=&SMLOCALE="
         r=s.post(sso_url,data,headers)
