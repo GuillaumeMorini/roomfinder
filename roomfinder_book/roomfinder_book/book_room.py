@@ -109,10 +109,14 @@ def book():
         #print "response: "+str(response)
         tree = ET.fromstring(response.encode('utf-8'))
 
+        room_name=""
+        room_email=""
         elems=tree.findall(".//{http://schemas.microsoft.com/exchange/services/2006/types}Resolution")
         for elem in elems:
-            room_email = elem.findall(".//{http://schemas.microsoft.com/exchange/services/2006/types}EmailAddress")[0].text
-            room_name = elem.findall(".//{http://schemas.microsoft.com/exchange/services/2006/types}DisplayName")[0].text
+            tmp = elem.findall(".//{http://schemas.microsoft.com/exchange/services/2006/types}EmailAddress")[0].text
+            if tmp.startswith("CONF_"):
+                room_email = tmp
+                room_name = elem.findall(".//{http://schemas.microsoft.com/exchange/services/2006/types}DisplayName")[0].text
 
         sys.stderr.write("room_email: "+str(room_email)+"\n")
         if room_email=="":
