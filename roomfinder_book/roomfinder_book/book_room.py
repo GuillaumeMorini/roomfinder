@@ -50,8 +50,6 @@ def doSomethingWithResult(response):
         result.append((status, rooms[room], room))
         return "OK"
 
-FILE="available_rooms.json"
-
 app = Flask(__name__)
 
 def is_available(room_email,start_time,end_time):
