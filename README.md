@@ -18,24 +18,7 @@ The application has to be deployed on at least 2 hosts with different network re
 
 Here is the Roomfinder micro-services architecture:
 
-       spark                    tropo                    web
-		⎿________________________⏊______________________⏌
-                                  │
-                                 api
-                                  │
-     ⎾‾‾‾‾‾‾⏉‾‾‾‾‾⏉‾‾‾‾⏉‾‾‾‾‾⏉‾‾‾‾‾‾‾‾‾⏉‾‾‾‾⏉‾‾‾⏉‾‾‾‾‾‾‾⏉‾‾‾‾⏉‾‾‾⏋
- advertise  stats  help  add  available  book  plan  inside  find  dir  parking
-	                            ⎿_________⏊____⏊___⏊_______⏊____⏌   ⎿__ to external parking API
-			                                  │
-			                               router_out
-			                                  │
-			                               router_in
-			                                  │
-                      ⎾‾‾‾‾‾‾‾‾‾⏉‾‾‾‾‾‾⏉‾‾‾‾‾‾‾⏉‾‾‾‾‾‾‾‾‾⏉‾‾‾‾‾‾‾‾⏋
-                available_in  book_in  plan_in  inside_in  find_in  dir_in
-	                  ⎿_________⏌ 	    ⎿_______⏊_________⏌         │
-                            │                    │                    │
-                         EWS API           Internal website          LDAP
+(pictures/architecture.png "Micro Services Architecture")
 
 
 
