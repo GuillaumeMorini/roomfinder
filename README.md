@@ -18,7 +18,7 @@ The application has to be deployed on at least 2 hosts with different network re
 
 Here is the Roomfinder micro-services architecture:
 
-(pictures/architecture.png "Micro Services Architecture")
+![Micro Services Architecture](pictures/architecture.png "Micro Services Architecture")
 
 
 
