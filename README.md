@@ -13,8 +13,8 @@ Requirements:
  - Access to Exchange Web Service (EWS) API of a Microsoft Exchange Server 2010 
 
 The application has to be deployed on at least 2 hosts with different network requirements:
- - one with network connectivity to Internet to host webhooks for Spark and Tropo
- - one with network connectivity to Exchange and directory servers
+ - at least one with network connectivity to Internet to host webhooks for Spark and Tropo (called out)
+ - at least one with network connectivity to Exchange, intranet and directory servers (called in)
 
 Here is the Roomfinder micro-services architecture:
 
