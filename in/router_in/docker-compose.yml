@@ -1,0 +1,19 @@
+version: '3'
+
+services:
+  router_in:
+    image: router_in
+    env_file: .env
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 2
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+    networks: 
+      - roomfinder-network
+
+networks:  
+  roomfinder-network:
+    external: true

@@ -1,0 +1,14 @@
+version: '2'
+
+services:
+  out:
+    image: traefik
+    command: --web --docker --docker.domain=$DOMAIN_NAME --logLevel=DEBUG
+    networks: roomfinder-network
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /dev/null:/traefik.toml
+
