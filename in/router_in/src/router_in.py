@@ -15,8 +15,8 @@ def on_request(ch, method, props, body):
 
     if cmd == "test":
         txt="reply message for MQ"
-    elif cmd == "dir":
-        pass
+    elif cmd == "available":
+        txt=request_data
     else:
         pass
 
@@ -31,7 +31,7 @@ def on_request(ch, method, props, body):
 if __name__ == '__main__':
     rabbitmq = os.getenv("RABBITMQ_HOSTNAME")
     if (rabbitmq == None):
-        rabbitmq = "localhost"
+        rabbitmq = "rabbitmq"
 
     rabbitmq_port = os.getenv("RABBITMQ_PORT")
     if (rabbitmq_port == None):

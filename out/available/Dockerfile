@@ -1,4 +1,5 @@
 FROM python:2-alpine
+EXPOSE 5000
 
 # Add current folder as /app
 ADD . /app
@@ -9,4 +10,4 @@ RUN apk add -U ca-certificates curl tzdata bash \
   && rm -rf /var/cache/apk/* \
   && pip install --no-cache-dir --requirement ./requirements.txt
 
-CMD [ "python","./src/router_in.py" ]
+CMD [ "python","./src/available.py" ]

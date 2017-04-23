@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.7
 
 from flask import Flask, request, Response
-import pika, os, json, uuid
+import pika, os, json, uuid, requests, sys
 
 app = Flask(__name__)
 
@@ -9,8 +9,9 @@ def on_response(ch, method, props, body):
     global corr_id
     global response
     if corr_id == props.correlation_id:
-        response = body
-        return response
+        response = body.replace("'",'"').replace('u"','"')
+        sys.stderr.write('Response received: '+str(response)+'\n')
+        return json.loads(response)
     else:
         return None
 
@@ -31,7 +32,7 @@ def send_message_to_queue(message):
     corr_id=str(uuid.uuid4())
 
     response = None
-    corr_id =  str(uuid.uuid4())
+    corr_id = str(uuid.uuid4())
     channel.basic_publish(  exchange='',
                             routing_key="rpc_queue",
                             properties=pika.BasicProperties(
@@ -46,13 +47,10 @@ def send_message_to_queue(message):
     print(" [x] Get response from RabbitMQ")   
     return str(response)    
 
-@app.route('/')
-def index():
-    data = {  
-        "cmd": "test",         
-        "data": "send message for MQ"
-    }    
-    message = json.dumps(data)  
+@app.route('/', methods=["POST"])
+def index():    
+    post_data = request.get_json()
+    message = json.dumps(post_data)  
     reply=send_message_to_queue(message)
     return reply
 
@@ -60,7 +58,7 @@ if __name__ == '__main__':
     # Get MQ environment parameters to connect to RabbitMQ servers
     rabbitmq = os.getenv("RABBITMQ_HOSTNAME")
     if (rabbitmq == None):
-        rabbitmq = "localhost"
+        rabbitmq = "rabbitmq"
 
     rabbitmq_port = os.getenv("RABBITMQ_PORT")
     if (rabbitmq_port == None):
