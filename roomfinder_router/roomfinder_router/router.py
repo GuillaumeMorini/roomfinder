@@ -23,7 +23,7 @@ def find_dir(cco):
         from bs4 import BeautifulSoup
         from html.parser import HTMLParser
     html = HTMLParser().unescape(r.text)
-    sys.stderr.write("html: "+str(html.encode('utf-8'))+"\n")
+    #sys.stderr.write("html: "+str(html.encode('utf-8'))+"\n")
     parsed_html = BeautifulSoup(html)
     table=parsed_html.body.find('table', attrs={'id':'resultsTable'})
     if table is not None:
@@ -43,7 +43,7 @@ def find_dir(cco):
         if not found:
             txt="Are you looking for one of these people:"
             for i in result_list:
-                txt+="\n * "+str(i)
+                txt+="\n * "+str(i.encode("utf-8"))
             return txt
     name=parsed_html.body.find('h2', attrs={'class':'userName'})
     sys.stderr.write("name: "+str(name)+"\n")
@@ -71,6 +71,14 @@ def find_dir(cco):
         encoded_string = base64.b64encode(response.raw.read())
         return name.text+"<br>;"+title.text.replace('.',' ')+"<br>;"+manager.text+"<br>;"+phone_text+";"+encoded_string+";"+"<a href=\"http://wwwin-tools.cisco.com/dir/details/"+real_cco+"\">directory link</a>"
 
+def map(floor):
+    #http://wwwin.cisco.com/c/dam/cec/organizations/gbs/wpr/FloorPlans/ILM-AFP-5.pdf
+    s=floor.split('-')
+    if len(s)!=2:
+        return "Not Found"
+    else:
+        return "http://wwwin.cisco.com/c/dam/cec/organizations/gbs/wpr/FloorPlans/"+s[0]+"-AFP-"+s[1]+".pdf"
+
 def on_request(ch, method, props, body):
     sys.stderr.write(" [x] Received %r\n" % body)
     #sys.stderr.write("Method: {}\n".format(method))     
@@ -92,6 +100,11 @@ def on_request(ch, method, props, body):
         sys.stderr.write("Request directory entry in %s for %s\n" % (str(dir_server.encode('utf-8')), str(cco.encode('utf-8'))))  
         print "dir_server: "+dir_server
         txt=find_dir(cco)
+        sys.stderr.write("txt: {}\n".format(txt))
+    elif cmd == "map":
+        floor = request_data["floor"]
+        sys.stderr.write("Request map for %s\n" % str(floor.encode('utf-8')) )  
+        txt=map(floor)
         sys.stderr.write("txt: {}\n".format(txt))
     elif cmd == "sr":
         pass
