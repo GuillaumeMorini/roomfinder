@@ -40,7 +40,7 @@ import unicodedata
 import feedparser
 from subprocess import check_output
 
-admin_list=["rcronier@cisco.com","gmorini@cisco.com"]
+admin_list=["rcronier@cisco.com","gmorini@cisco.com","johnroomfinder@gmail.com"]
 log_dir="/log/"
 
 app = Flask(__name__)
@@ -163,7 +163,9 @@ def process_webhook():
         else:
             text=text.replace(bot_name,"").lstrip()
 
-    if not (post_data['data']['personEmail'].endswith('@cisco.com') or post_data['data']['personEmail'].endswith('@ciscofrance.com') ):
+    if not (post_data['data']['personEmail'] in admin_list
+        or post_data['data']['personEmail'].endswith('@cisco.com') 
+        or post_data['data']['personEmail'].endswith('@ciscofrance.com') ) :
         reply="** This bot is reserved for Cisco Employees **"
         sys.stderr.write("reply: "+str(reply)+"\n")
         return send_message_to_room(post_data["data"]["roomId"], reply,message_type)
@@ -236,15 +238,15 @@ def process_webhook():
             reply += "* **/advertise/** keyword, followed by a message, will display this message for all users of Roomfinder Cisco Spark Bot.\n"
         message_type="text"
     # Check if message contains phrase "add email" and if so add user to room
-    elif text.lower().find("add ") > -1:
+    elif text.lower().startswith("add "):
         # Get the email that comes
         emails = re.findall(r' [\w\.-]+@[\w\.-]+', text)
-        # pprint(emails)
+        pprint(emails)
         reply = "Adding users to demo room.\n"
         for email in emails:
             send_welcome_message(email)
             reply += "  - %s \n" % (email)
-    elif text.lower().startswith("dir"):
+    elif text.lower().startswith("dir "):
         # Find the cco id
         cco=text.lower().replace('dir ','')
         reply = find_dir(cco)
@@ -276,7 +278,7 @@ def process_webhook():
                 message_type="text"
         else:
             message_type="text"
-    elif text.lower().startswith("image"):
+    elif text.lower().startswith("image "):
         # Find the cco id
         keyword_list = re.findall(r'[\w-]+', text)
         print "keyword_list= "+str(keyword_list)
@@ -288,42 +290,47 @@ def process_webhook():
         print "find_image: "+reply
         if reply.startswith('http'):
             message_type="image"
-    elif text.lower().startswith("plan") or text.lower().startswith("map"):
+    elif text.lower().startswith("plan ") or text.lower().startswith("map "):
         # Find the floor
-        keyword_list = re.findall(r'ILM-[1-7]', text.upper()) + re.findall(r'[1-7]', text)
+        keyword_list = re.findall(r'[\w-]+', text)
         print "keyword_list= "+str(keyword_list)
         if len(keyword_list) > 0:
             keyword_list.reverse()
             floor=keyword_list.pop()
+            while floor.find("map") > -1 or floor.find("plan") > -1 :
+              floor=keyword_list.pop()
             reply = display_map(floor)
             print "display_map: "+floor
-            message_type="image"
+            #message_type="pdf"
         else:
-            reply = "No floor is corresponding. Try **map/plan ILM-X** or **map/plan X**"
-    elif text.lower().startswith("book") or text.lower().startswith("reserve"):
+            reply = "No floor is corresponding. Try **map/plan floor_name** or **map/plan floor_name**"
+    elif text.lower().startswith("book ") or text.lower().startswith("reserve "):
         # Find the room name
-        keyword_list = re.findall(r'[\w-]+', text)
-        sys.stderr.write("keyword_list= "+str(keyword_list)+"\n")
-        keyword_list.reverse()
-        keyword=keyword_list.pop()
-        while keyword.lower().find("book") > -1 or keyword.lower().find("reserve") > -1:
-            keyword=keyword_list.pop()
-        reply = book_room(keyword.upper(),post_data['data']["personEmail"].lower(),getDisplayName(post_data['data']["personId"]))
+        end = len(text)
+        if text.lower().startswith("book "):
+            start = len('book ')
+        elif text.lower().startswith("reserve "):
+            start = len('reserve ')
+        else:
+            sys.stderr.write("I don't know how you arrive here ! This is a bug !\n")    
+        room_name=text[start:end]
+        sys.stderr.write("room_name= "+str(room_name)+"\n")
+        reply = book_room(room_name.upper(),post_data['data']["personEmail"].lower(),getDisplayName(post_data['data']["personId"]))
         sys.stderr.write("book_room: "+reply+"\n")
-    elif text.lower().startswith('in') or text.lower().startswith('inside') or text.lower().startswith('interieur'):          
+    elif text.lower().startswith('in ') or text.lower().startswith('inside ') or text.lower().startswith('interieur '):          
         inside = text.split()[1].upper()
         if inside.lower().startswith('ilm') :
             reply=display_inside(inside)
             message_type="image"
         else :
             reply = "No Inside View is corresponding. Try **in/inside/interieur ILM-X**"
-    elif text.lower().startswith('parking'):
+    elif text.lower() in ["parking"] :
         page = requests.get("http://173.38.154.145/parking/getcounter.py")
         result = page.json()
         reply = "Free cars parking: "+str(result["car"]["count"])+" over "+str(result["car"]["total"])+"<br>"
         reply += "Free motorbikes parking: "+str(result["motorbike"]["count"])+" over "+str(result["motorbike"]["total"])+"<br>"
         reply += "Free bikecycles parking: "+str(result["bicycle"]["count"])+" over "+str(result["bicycle"]["total"])
-    elif text.lower().startswith('temp'):
+    elif text.lower().startswith('temp '):
         sonde = text.split()[1].upper()
         if (sonde == "ILM-1-GAUGUIN") :
             reply = netatmoOutdoor(sonde)
@@ -450,15 +457,13 @@ def where_room(room):
 
 def display_map(floor):
     sys.stderr.write("Display map of floor: "+floor+"\n")
-    t=re.search(r'ILM-[1-7]',floor)
-    if t is not None:
-        return "http://www.guismo.fr.eu.org/plan/"+t.group(0)+".PNG"
-    else:
-        t=re.search(r'[1-7]',floor)
-        if t is not None:
-            return "http://www.guismo.fr.eu.org/plan/ILM-"+t.group(0)+".PNG"
-        else:
-            return "Floor "+ floor + " not known"
+    data = {  
+        "cmd": "map",         
+        "data": {"floor": floor}
+    }    
+    message = json.dumps(data)  
+    reply=send_message_to_queue(message)
+    return reply
 
 def display_inside(room):
     sys.stderr.write("Display inside of room: "+room+"\n")
