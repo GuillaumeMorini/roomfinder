@@ -107,7 +107,7 @@ def advertise(msg):
         
         if line != '' and line!= "\r\n" and line!= "\n" :
             roomid = line.split()[2]
-            send_message_to_room(roomid, "**"+msg+"**", "text")
+            send_message_to_room(roomid, msg, "text")
     logfile.close()
     return True
 
@@ -257,7 +257,7 @@ def process_webhook():
         # Find the room
         room=text.lower().replace('find ','')
         room=room.lower().replace('cherche ','')
-        reply = where_room(room)
+        reply = where_room(room.upper())
         print "where_room: "+str(reply)
         if not reply.startswith("Sorry"):
             rooms=reply.split(';')
@@ -299,7 +299,7 @@ def process_webhook():
             floor=keyword_list.pop()
             while floor.find("map") > -1 or floor.find("plan") > -1 :
               floor=keyword_list.pop()
-            reply = display_map(floor)
+            reply = display_map(floor.upper())
             print "display_map: "+floor
             #message_type="pdf"
         else:
@@ -345,7 +345,7 @@ def process_webhook():
         if post_data['data']['personEmail'] in admin_list :
             end = len(text)
             start = len('/advertise/')
-            advertise(text[start:end].strip().upper())
+            advertise(text[start:end].strip())
             reply=""
         else :
             reply = "##You have no admin rights to advertise##"
@@ -354,12 +354,13 @@ def process_webhook():
         # reply=natural_langage_bot(text.lower())
         # if reply == "":
         #     return reply
-        reply="Command not found !"
+        reply="Command not found ! Type help to have the list of existing commands !"
     sys.stderr.write("reply: "+str(reply)+"\n")
     if reply != "":
         stats(post_data['data']['personEmail'],post_data['data']['roomId'])
         log(post_data['data']['personEmail']+" - " +post_data['data']['roomId'],str(text),reply)
         send_message_to_room(post_data["data"]["roomId"], reply,message_type)
+        log_message_to_room(log_room_id, post_data['data']['personEmail'], text, reply,message_type)
     return ""
 
 def getDisplayName(id):
@@ -538,6 +539,40 @@ def post_localfile(roomId, encoded_photo, text='', html='', markdown='', toPerso
     sys.stderr.write( "file_dict: "+str(file_dict)+"\n" )
     return message
 
+
+def log_message_to_room(room_id, author, message, message_reply,message_type="text"):
+    spark_u = spark_host + "v1/messages"
+    if message_type == "text":
+        message_body = {
+            "roomId" : room_id,
+            "markdown" : "Author: "+author+" <br> Request: "+message+" <br> Reply: "+message_reply
+        }
+    elif message_type == "image":
+        message_body = {
+            "roomId" : room_id,
+            "text" : "Author: "+author+" <br> Request: "+message+" <br> Reply: ",
+            "files" : [message_reply]
+        }        
+    elif message_type == "html":
+        message_body = {
+            "roomId" : room_id,
+            "html" : "Author: "+author+" \n Request: "+message+" \n Reply: "+message_reply
+        }        
+    else:
+        name=message_reply[0]
+        title=message_reply[1]
+        manager=message_reply[2]
+        phone=message_reply[3]
+        photo=message_reply[4]
+        dir_url=message_reply[5]
+        return post_localfile(room_id,photo,html="Author: "+author+" <br>\n Request: "+message+" <br>\n Reply: <br>\n Name: "+str(name)+'\nTitle: '+str(title)+'\nManager: '+str(manager)+'\n'+str(phone)+dir_url)
+    sys.stderr.write( "message_body: "+str(message_body)+"\n" )
+    page = requests.post(spark_u, headers = spark_headers, json=message_body)
+    message = page.json()
+    #return message
+    return ""
+
+
 def send_message_to_room(room_id, message,message_type="text"):
     spark_u = spark_host + "v1/messages"
     if message_type == "text":
@@ -552,6 +587,7 @@ def send_message_to_room(room_id, message,message_type="text"):
             "files" : [message]
         }        
     elif message_type == "html":
+        sys.stderr.write("Post HTML message\n")
         message_body = {
             "roomId" : room_id,
             "html" : message
@@ -680,6 +716,9 @@ if __name__ == '__main__':
     parser.add_argument(
         "--demoemail", help="Email Address to Add to Demo Room", required=False
     )
+    parser.add_argument(
+        "--logroomid", help="Cisco Spark Room ID to log messages", required=False
+    )
     # parser.add_argument(
     #     "-s", "--secret", help="Key Expected in API Calls", required=False
     # )
@@ -736,6 +775,19 @@ if __name__ == '__main__':
     # print "Spark Token: " + spark_token
     # sys.stderr.write("Spark Token: " + spark_token + "\n")
     sys.stderr.write("Spark Token: REDACTED\n")
+
+    log_room_id = args.logroomid
+    # print "Log room id: " + str(log_room_id)
+    if (log_room_id == None):
+        log_room_id = os.getenv("log_room_id")
+        # print "Env log_room_id: " + str(log_room_id)
+        if (log_room_id == None):
+            get_log_room_id = raw_input("What is the Cisco Spark Log Room ID? ")
+            # print "Input log_room_id: " + str(get_log_room_id)
+            log_room_id = get_log_room_id
+    # print "log_room_id: " + log_room_id
+    # sys.stderr.write("log_room_id: " + log_room_id + "\n")
+    sys.stderr.write("log_room_id: "+str(log_room_id)+"\n")
 
     # Set Authorization Details for external requests
     spark_headers["Authorization"] = "Bearer " + spark_token
