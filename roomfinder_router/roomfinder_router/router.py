@@ -1,7 +1,97 @@
 #!/usr/bin/env python2.7
 
-import pika, os, sys, json, requests
+import pika, os, sys, json, requests, datetime
 import base64, urllib, unicodedata, re
+
+try: 
+    from BeautifulSoup import BeautifulSoup
+    from HTMLParser import HTMLParser
+except ImportError:
+    from bs4 import BeautifulSoup
+    from html.parser import HTMLParser
+
+def guest(firstName,lastName,email):
+    base_url="https://internet.cisco.com"
+    uri1=":8443/sponsorportal/LoginCheck.action"
+    uri2=":8443/sponsorportal/guest_accounts/AddGuestAccount.action"
+    user=dir_user
+    pwd=dir_pass
+
+    s  = requests.Session()
+    r=s.get(base_url)
+    # print(r.text)
+
+    parsed_html = BeautifulSoup(r.text)
+    token=parsed_html.body.find('input', attrs={'id':'FORM_SECURITY_TOKEN'}).get("value")
+    print "Token: "+str(token)
+    # token="1b4be9f3-dd79-4232-b849-ac5b615b97df"
+
+    try:
+        response1 = s.post(
+            url=base_url+uri1,
+            headers={
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_4) AppleWebKit/603.1.30 (KHTML, like Gecko) Version/10.1 Safari/603.1.30",
+                "Referer": "https://internet.cisco.com:8443/sponsorportal/Logout.action",
+                "Origin": "https://internet.cisco.com:8443",
+                # "Cookie": "JSESSIONID=B640D7B33CCDFAE3E1FEF98048303FB9",
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            },
+            data={
+                "sponsorUser.loginUsername": user,
+                "FORM_SECURITY_TOKEN": token,
+                "L_T": "",
+                "sponsorUser.password": pwd,
+            },
+        )
+
+        date=datetime.datetime.now().strftime("%m/%d/%Y")
+        startTime=datetime.datetime.now().strftime("T%I:%M:%S")
+
+        try:
+            response2 = s.post(
+                url=base_url+uri2,
+                headers={
+                    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_4) AppleWebKit/603.1.30 (KHTML, like Gecko) Version/10.1 Safari/603.1.30",
+                    "Referer": "https://internet.cisco.com:8443/sponsorportal/guest_accounts/GetAddAccountPage.action",
+                    "Origin": "https://internet.cisco.com:8443",
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                },
+                data={
+                    "guestUser.groupRole.id": "2f15d2c0-be86-11e1-ba69-0050568e002b",
+                    "guestUser.endDate": date,
+                    "guestUser.startTime": startTime,
+                    "serverDate": date,
+                    "serverTime": datetime.datetime.utcnow().strftime("%I:%M"),
+                    "guestUser.endLimit": "7",
+                    "guestUser.timezone": "GMT++02:00+Europe/Paris",
+                    "FORM_SECURITY_TOKEN": token,
+                    "guestUser.timeProfileDuration": "86400000",
+                    "guestUser.notifyByEmail": "true",
+                    "guestUser.endTime": startTime,
+                    "guestUser.startLimit": "30",
+                    "guestUser.timeProfile": "Valid_for_1_Day_after_initial_login",
+                    "guestUser.languageNotification": "English",
+                    "guestUser.firstName": firstName,
+                    "guestUser.timeProfileType": "FromFirstLogin",
+                    "guestUser.company": "Roomfinder",
+                    "emailMandatory": "true",
+                    "guestUser.startDate": date,
+                    "guestUser.emailAddress": email,
+                    "guestUser.lastName": lastName,
+                    "nameToUse": "",
+                },
+            )
+            return "Guest account created"
+
+        except requests.exceptions.RequestException:
+            print('HTTP Request failed')
+
+    except requests.exceptions.RequestException:
+        print('HTTP Request failed')
+
+    return "Error during guest account creation"
 
 def find_dir(cco):
     f = { 'q' : cco.encode('utf-8') }
@@ -16,12 +106,6 @@ def find_dir(cco):
         r=s.post(sso_url,data,headers)
     except requests.exceptions.ConnectionError:
         return "Connection error to directory server"
-    try: 
-        from BeautifulSoup import BeautifulSoup
-        from HTMLParser import HTMLParser
-    except ImportError:
-        from bs4 import BeautifulSoup
-        from html.parser import HTMLParser
     html = HTMLParser().unescape(r.text)
     #sys.stderr.write("html: "+str(html.encode('utf-8'))+"\n")
     parsed_html = BeautifulSoup(html)
@@ -77,7 +161,7 @@ def map(floor):
     if len(s)!=2:
         return "Not Found"
     else:
-        return "http://wwwin.cisco.com/c/dam/cec/organizations/gbs/wpr/FloorPlans/"+s[0]+"-AFP-"+s[1]+".pdf"
+        return "http://wwwin.cisco.com/c/dam/cec/organizations/gbs/wpr/FloorPlans/"+s[0].replace(' ','')+"-AFP-"+s[1]+".pdf"
 
 def on_request(ch, method, props, body):
     sys.stderr.write(" [x] Received %r\n" % body)
@@ -120,6 +204,15 @@ def on_request(ch, method, props, body):
         page = requests.post(book_server+'/where',data = json.dumps(request_data),headers=headers)
         txt=page.text
         sys.stderr.write("txt: {}\n".format(txt))
+    elif cmd == "guest":
+        sys.stderr.write("Request for a guest account creation\n")  
+        firstName= request_data["firstName"]
+        lastName= request_data["lastName"]
+        email= request_data["email"]
+        sys.stderr.write("Request guest account for %s %s <%s>\n" % (firstName.encode('utf-8'), lastName.encode('utf-8'), email.encode('utf-8')) )  
+        txt=guest(firstName,lastName,email)
+        sys.stderr.write("txt: {}\n".format(txt))
+
     ch.basic_publish(exchange='',
                      routing_key=props.reply_to,
                      properties=pika.BasicProperties(correlation_id = \

@@ -25,7 +25,7 @@
 __author__ = 'gmorini@cisco.com'
 
 from flask import Flask, request, Response
-import requests, json, re, urllib, random
+import requests, json, re, urllib, random, socket
 import xml.etree.ElementTree as ET
 import ntpath
 import datetime
@@ -146,6 +146,7 @@ def process_webhook():
     message_id = post_data["data"]["id"]
     message = get_message(message_id)
     print("message: "+str(message))
+    reply=None
 
     # First make sure not processing a message from the bot
     if post_data['data']["personEmail"] == bot_email:
@@ -222,7 +223,7 @@ def process_webhook():
         else:
             reply = "Sorry, there is currently no available rooms"+reply+"\n"
     # Check if message contains word "options" and if so send options
-    elif text.lower() in ["options","help","aide","?"] :
+    elif text.lower() in ["options","help","aide","?","/help","hello","hi"] :
         reply = "Here are the keywords you can use: \n"
         reply += "* **dispo** or **available** keyword will display the available rooms for the next 2 hours timeslot. For other buildings than ILM, you will have to add the prefix of your building, like **available SJC14-**\n"
         reply += "* **reserve** or **book** keyword will try to book, for the next 2 hours, the room mentionned after the keyword **book** or **reserve**.\n"
@@ -253,6 +254,19 @@ def process_webhook():
         print "find_dir: "+str(reply)
         if type(reply) != str and type(reply) != unicode:
             message_type="localfine"
+    elif text.lower().startswith("guest"):
+        if text.lower() not in ["guest"]:
+            # Find the 
+            args=text.split()
+            if len(args) == 4:
+                reply = guest(args[1],args[2],args[3])
+                sys.stderr.write( "guest: "+str(reply)+"\n" )
+            else:
+                reply = "Usage of guest command is:\n"
+                reply += "\tguest firstName lastName email\n"
+        else:
+            reply = "Usage of guest command is:\n"
+            reply += "\tguest firstName lastName email\n"
     elif text.lower().startswith("find ") or text.lower().startswith("cherche "):
         # Find the room
         room=text.lower().replace('find ','')
@@ -262,15 +276,16 @@ def process_webhook():
         if not reply.startswith("Sorry"):
             rooms=reply.split(';')
             if len(rooms)==1:
-                reply="Here is the full name of the room: \n * "+rooms[0]
-                message_type="text"
-                if rooms[0].startswith("ILM-"):
-                    stats(post_data['data']['personEmail'],post_data['data']['roomId'])
-                    log(post_data['data']['personEmail']+" - " +post_data['data']['roomId'],str(text),reply)
-                    send_message_to_room(post_data["data"]["roomId"], reply,message_type)
-                    floor=rooms[0][0:5]
-                    message_type="image"
-                    reply = display_map(floor)
+                r=rooms[0].split('-')
+                if (len(r)>=2):
+                    reply="Here is the full name of the room: \n * "+rooms[0]
+                    message_type="text"
+                    # stats(post_data['data']['personEmail'],post_data['data']['roomId'])
+                    # log(post_data['data']['personEmail']+" - " +post_data['data']['roomId'],str(text),reply)
+                    # send_message_to_room(post_data["data"]["roomId"], reply,message_type)
+                    floor=r[0]+'-'+r[1]
+                    # #message_type="pdf"
+                    reply += " \n <br> \n and the map of the floor: \n <br> \n * "+str(display_map(floor))
             else:
                 reply="Do you mean:\n"
                 for r in rooms:
@@ -290,46 +305,81 @@ def process_webhook():
         print "find_image: "+reply
         if reply.startswith('http'):
             message_type="image"
-    elif text.lower().startswith("plan ") or text.lower().startswith("map "):
+    elif text.lower().startswith("plan") or text.lower().startswith("map"):
         # Find the floor
-        keyword_list = re.findall(r'[\w-]+', text)
-        print "keyword_list= "+str(keyword_list)
-        if len(keyword_list) > 0:
-            keyword_list.reverse()
-            floor=keyword_list.pop()
-            while floor.find("map") > -1 or floor.find("plan") > -1 :
-              floor=keyword_list.pop()
-            reply = display_map(floor.upper())
-            print "display_map: "+floor
-            #message_type="pdf"
+        if text.lower() in ["plan","map"]:
+            reply = "Usage of map/plan command is:\n"
+            reply += "\tmap/plan command followed by floor name like:\n"
+            reply += "\t\tmap SJC05-3\n"        
+            reply += "\t\t\tor\n"        
+            reply += "\t\tplan ILM-7\n"        
         else:
-            reply = "No floor is corresponding. Try **map/plan floor_name** or **map/plan floor_name**"
-    elif text.lower().startswith("book ") or text.lower().startswith("reserve "):
-        # Find the room name
-        end = len(text)
-        if text.lower().startswith("book "):
-            start = len('book ')
-        elif text.lower().startswith("reserve "):
-            start = len('reserve ')
-        else:
-            sys.stderr.write("I don't know how you arrive here ! This is a bug !\n")    
-        room_name=text[start:end]
-        sys.stderr.write("room_name= "+str(room_name)+"\n")
-        reply = book_room(room_name.upper(),post_data['data']["personEmail"].lower(),getDisplayName(post_data['data']["personId"]))
-        sys.stderr.write("book_room: "+reply+"\n")
-    elif text.lower().startswith('in ') or text.lower().startswith('inside ') or text.lower().startswith('interieur '):          
-        inside = text.split()[1].upper()
-        if inside.lower().startswith('ilm') :
-            reply=display_inside(inside)
-            message_type="image"
-        else :
-            reply = "No Inside View is corresponding. Try **in/inside/interieur ILM-X**"
+            floor=text.lower().replace('map ','')
+            floor=floor.lower().replace('plan ','')
+            pattern = re.compile("^([0-7]+)$")
+            m = pattern.match(floor)
+            sys.stderr.write("display_map: "+floor+"\n")
+            if m:
+                # Map and number => ILM
+                floor='ILM-'+m.group()
+                reply = display_map(floor.upper())
+                #message_type="pdf"
+            else:
+                pattern2 = re.compile("^([a-z0-9 ]+\-[0-9]+)$")
+                m2 = pattern2.match(floor)
+                if m2:
+                    floor=m2.group()
+                    reply = display_map(floor.upper())
+                    #message_type="pdf"
+                else:
+                    reply = "No floor is corresponding. Try **map/plan floor_name** or **map/plan floor_name** \n<br>\n <blockquote> with floor_name like ILM-3 or SJC13-3 </blockquote>"
+    elif text.lower().startswith("book") or text.lower().startswith("reserve"):
+        if text.lower() in ["book","reserve"]:
+            reply = "Usage of book/reserve command is:\n"
+            reply += "\tbook/reserve command followed by room name like:\n"
+            reply += "\t\t reserve ILM-7-HUGO\n"        
+            reply += "\t\t\tor\n"        
+            reply += "\t\t book SJC13-3-SMILE\n"  
+        else:      
+            # Find the room name
+            end = len(text)
+            if text.lower().startswith("book "):
+                start = len('book ')
+            elif text.lower().startswith("reserve "):
+                start = len('reserve ')
+            else:
+                sys.stderr.write("I don't know how you arrive here ! This is a bug !\n")    
+            room_name=text[start:end]
+            sys.stderr.write("room_name= "+str(room_name)+"\n")
+            reply = book_room(room_name.upper(),post_data['data']["personEmail"].lower(),getDisplayName(post_data['data']["personId"]))
+            sys.stderr.write("book_room: "+reply+"\n")
+    elif text.lower().startswith('in') or text.lower().startswith('inside') or text.lower().startswith('interieur'):
+        if text.lower() in ["in","inside","interieur"]:
+            reply = "Usage of in/inside/interieur command is:\n"
+            reply += "\t in/inside/interieur command followed by room name like:\n"
+            reply += "\t\t in ILM-7-HUGO\n"        
+            reply += "\t\t\tor\n"        
+            reply += "\t\t inside SJC13-3-SMILE\n"  
+        else:      
+            inside = text.split()[1].upper()
+            if inside.lower().startswith('ilm') :
+                reply=display_inside(inside)
+                message_type="image"
+            else :
+                reply = "No Inside View. This feature is available only for ILM building."
     elif text.lower() in ["parking"] :
-        page = requests.get("http://173.38.154.145/parking/getcounter.py")
-        result = page.json()
-        reply = "Free cars parking: "+str(result["car"]["count"])+" over "+str(result["car"]["total"])+"<br>"
-        reply += "Free motorbikes parking: "+str(result["motorbike"]["count"])+" over "+str(result["motorbike"]["total"])+"<br>"
-        reply += "Free bikecycles parking: "+str(result["bicycle"]["count"])+" over "+str(result["bicycle"]["total"])
+        try:
+            page = requests.get("http://173.38.154.145/parking/getcounter.py", timeout=0.5)
+            result = page.json()
+            reply = "Free cars parking: "+str(result["car"]["count"])+" over "+str(result["car"]["total"])+"<br>"
+            reply += "Free motorbikes parking: "+str(result["motorbike"]["count"])+" over "+str(result["motorbike"]["total"])+"<br>"
+            reply += "Free bikecycles parking: "+str(result["bicycle"]["count"])+" over "+str(result["bicycle"]["total"])
+        except requests.exceptions.RequestException as e:  # This is the correct syntax
+            sys.stderr.write("Timeout or HTTP error code on parking API")
+            reply = "Sorry parking information is not available !"
+        except socket.timeout as e:
+            sys.stderr.write("Timeout or HTTP error code on parking API")
+            reply = "Sorry parking information is not available !"
     elif text.lower().startswith('temp '):
         sonde = text.split()[1].upper()
         if (sonde == "ILM-1-GAUGUIN") :
@@ -445,6 +495,20 @@ def find_dir(cco):
     else:
         tab = reply.split(';')
         return tab[0],tab[1],tab[2],tab[3],tab[4],tab[5]
+
+def guest(firstName, lastName, email):
+    sys.stderr.write("Beginning process to request a guest account for "+firstName+" "+lastName+" <"+email+">\n")
+    data = {  
+        "cmd": "guest",         
+        "data": {
+            "firstName" : firstName,
+            "lastName"  : lastName,
+            "email"     : email
+        }
+    }    
+    message = json.dumps(data)  
+    reply=send_message_to_queue(message)
+    return reply
 
 def where_room(room):
     sys.stderr.write("Beginning process to find this room: "+room+"\n")
