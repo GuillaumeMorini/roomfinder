@@ -153,7 +153,22 @@ def find_dir(cco):
         u = str(parsed_html.body.find('div',attrs={'class':'profImg'}).find('img')['src'])
         response = requests.get(u, stream=True)
         encoded_string = base64.b64encode(response.raw.read())
-        return name.text+"<br>;"+title.text.replace('.',' ')+"<br>;"+manager.text+"<br>;"+phone_text+";"+encoded_string+";"+"<a href=\"http://wwwin-tools.cisco.com/dir/details/"+real_cco+"\">directory link</a>"
+
+        reply = ""
+        if name != None:
+            reply+=name.text+"<br>;"
+        else:
+            reply+=";"
+        if title != None:
+            reply+=title.text.replace('.',' ')+"<br>;"
+        else:
+            reply+=";"
+        if manager != None:
+            reply+=manager.text+"<br>;"
+        else:
+            reply+=";"
+        reply+=phone_text+";"+encoded_string+";"+"<a href=\"http://wwwin-tools.cisco.com/dir/details/"+real_cco+"\">directory link</a>"
+        return reply
 
 def map(floor):
     #http://wwwin.cisco.com/c/dam/cec/organizations/gbs/wpr/FloorPlans/ILM-AFP-5.pdf

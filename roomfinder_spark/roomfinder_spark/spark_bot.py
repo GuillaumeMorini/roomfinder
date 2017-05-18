@@ -228,8 +228,8 @@ def process_webhook():
         reply += "* **dispo** or **available** keyword will display the available rooms for the next 2 hours timeslot. For other buildings than ILM, you will have to add the prefix of your building, like **available SJC14-**\n"
         reply += "* **reserve** or **book** keyword will try to book, for the next 2 hours, the room mentionned after the keyword **book** or **reserve**.\n"
         reply += "* **plan** or **map** keyword will display the map of the floor in **ILM building** mentionned after the keyword **plan** or **map**.\n"
-        reply += "* **in** or **inside** keyword will display a picture inside the room mentionned after the keyword in **ILM building**.\n"
         reply += "* **cherche** or **find** keyword will help you to find the floor of a room mentionned by its short name after the keyword.\n"
+        reply += "* **in** or **inside** keyword will display a picture inside the room mentionned after the keyword in **ILM building**.\n"
         reply += "* **dir** keyword will display the directory entry for the CCO id mentionned after the keyword **dir**.\n"
         reply += "* **parking** keyword will display the available spots inside Cisco **ILM parking**.\n"
         reply += "* **add** keyword followed by an email will create a room between the bot and this email.\n"
@@ -629,7 +629,19 @@ def log_message_to_room(room_id, author, message, message_reply,message_type="te
         phone=message_reply[3]
         photo=message_reply[4]
         dir_url=message_reply[5]
-        return post_localfile(room_id,photo,html="Author: "+author+" <br>\n Request: "+message+" <br>\n Reply: <br>\n Name: "+str(name)+'\nTitle: '+str(title)+'\nManager: '+str(manager)+'\n'+str(phone)+dir_url)
+        tmp="Author: "+author+" <br>\n Request: "+message+" <br>\n Reply: <br>\n "
+
+        if name!= "":
+            tmp+="Name: "+str(name)+'\n'
+        if title != "":
+            tmp+='Title: '+str(title)+'\n'
+        if manager != "":
+            tmp+='Manager: '+str(manager)+'\n'
+        if phone != "":
+            tmp+=str(phone)
+        if dir_url != "":
+            tmp+=dir_url
+        return post_localfile(room_id,photo,html=tmp)
     sys.stderr.write( "message_body: "+str(message_body)+"\n" )
     page = requests.post(spark_u, headers = spark_headers, json=message_body)
     message = page.json()
@@ -663,7 +675,18 @@ def send_message_to_room(room_id, message,message_type="text"):
         phone=message[3]
         photo=message[4]
         dir_url=message[5]
-        return post_localfile(room_id,photo,html='Name: '+str(name)+'\nTitle: '+str(title)+'\nManager: '+str(manager)+'\n'+str(phone)+dir_url)
+        tmp=""
+        if name!= "":
+            tmp+="Name: "+str(name)+'\n'
+        if title != "":
+            tmp+='Title: '+str(title)+'\n'
+        if manager != "":
+            tmp+='Manager: '+str(manager)+'\n'
+        if phone != "":
+            tmp+=str(phone)
+        if dir_url != "":
+            tmp+=dir_url
+        return post_localfile(room_id,photo,html=tmp)
     sys.stderr.write( "message_body: "+str(message_body)+"\n" )
     page = requests.post(spark_u, headers = spark_headers, json=message_body)
     message = page.json()
