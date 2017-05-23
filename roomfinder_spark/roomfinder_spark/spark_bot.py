@@ -231,6 +231,7 @@ def process_webhook():
         reply += "* **cherche** or **find** keyword will help you to find the floor of a room mentionned by its short name after the keyword.\n"
         reply += "* **in** or **inside** keyword will display a picture inside the room mentionned after the keyword in **ILM building**.\n"
         reply += "* **dir** keyword will display the directory entry for the CCO id mentionned after the keyword **dir**.\n"
+        reply += "* **guest** keyword will create a guest wifi account for an attendee. You should specify after the keyword **guest** the attendee first name, last name and email, like **guest** john doe jdoe@email.com.\n"
         reply += "* **parking** keyword will display the available spots inside Cisco **ILM parking**.\n"
         reply += "* **add** keyword followed by an email will create a room between the bot and this email.\n"
         reply += "* **help** or **aide** will display a helping message to the Spark room.\n"
