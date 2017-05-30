@@ -231,6 +231,7 @@ def process_webhook():
         reply += "* **cherche** or **find** keyword will help you to find the floor of a room mentionned by its short name after the keyword.\n"
         reply += "* **in** or **inside** keyword will display a picture inside the room mentionned after the keyword in **ILM building**.\n"
         reply += "* **dir** keyword will display the directory entry for the CCO id mentionned after the keyword **dir**.\n"
+        reply += "* **guest** keyword will create a guest wifi account for an attendee. You should specify after the keyword **guest** the attendee first name, last name and email, like **guest** john doe jdoe@email.com.\n"
         reply += "* **parking** keyword will display the available spots inside Cisco **ILM parking**.\n"
         reply += "* **add** keyword followed by an email will create a room between the bot and this email.\n"
         reply += "* **help** or **aide** will display a helping message to the Spark room.\n"
@@ -459,6 +460,20 @@ def send_message_to_queue(message):
 
 def book_room(room_name,user_email,user_name):
     sys.stderr.write("Beginning process to book a room and especially this room: "+room_name+"\n")
+    duration=2
+
+    if room_name.endswith(' 1H') or room_name.endswith(' 1 H') or room_name.endswith(' 1 HOUR') or room_name.endswith(' 1HOUR')  or room_name.endswith(' 1 HOURS') or room_name.endswith(' 1HOURS') :
+        duration=1
+        room_name=room_name.replace(' 1HOURS','').replace(' 1 HOURS','').replace(' 1 HOUR','').replace(' 1HOUR','').replace(' 1 H','').replace(' 1H','')
+    elif room_name.endswith(' 30M') or room_name.endswith(' 30 M') or room_name.endswith(' 30MIN') or room_name.endswith(' 30 MIN') or room_name.endswith(' 30MINS') or room_name.endswith(' 30 MINS') or room_name.endswith(' 30MINUTES') or room_name.endswith(' 30 MINUTES') or room_name.endswith(' 30MINUTE') or room_name.endswith(' 30 MINUTE') :
+        duration=0.5
+        room_name=room_name.replace(' 30MINS','').replace(' 30 MINS','').replace(' 30MINUTES','').replace(' 30 MINUTES','').replace(' 30MINUTE','').replace(' 30 MINUTE','')
+        room_name=room_name.replace(' 30MIN','').replace(' 30 MIN','').replace(' 30M','').replace(' 30 M','')
+    elif room_name.endswith(' 2H') or room_name.endswith(' 2 H') or room_name.endswith(' 2HOUR') or room_name.endswith(' 2 HOUR') or room_name.endswith(' 2HOURS') or room_name.endswith(' 2 HOURS') :
+        duration=2
+        room_name=room_name.replace(' 2HOURS','').replace(' 2 HOURS','').replace(' 2HOUR','').replace(' 2 HOUR','').replace(' 2H','').replace(' 2 H','')
+
+    sys.stderr.write("After removing duration, room:_name is "+room_name+"\n")
 
     start, end, results = get_available()
     dispo_list=[r.split(' ')[0] for r in results]
@@ -467,7 +482,7 @@ def book_room(room_name,user_email,user_name):
 
         now = datetime.datetime.now().replace(microsecond=0)
         starttime = (now - datetime.timedelta(minutes=5)).isoformat()
-        endtime = (now - datetime.timedelta(minutes=5) + datetime.timedelta(hours=2)).isoformat()
+        endtime = (now - datetime.timedelta(minutes=5) + datetime.timedelta(hours=duration)).isoformat()
 
         # page = requests.get(book_server+'/book?starttime='+starttime+'&endtime='+endtime+'&user_name='+user_name+'&user_email'+user_email+'&room_name='+room_name) # find how to send the list of rooms read from previous file
         # return page.text() # format result
@@ -625,9 +640,6 @@ def log_message_to_room(room_id, author, message, message_reply,message_type="te
     else:
         name=message_reply[0]
         title=message_reply[1]
-        #sys.stderr.write
-        sys.stderr.write('title=|'+str(title)+"|\n")
-        sys.stderr.write('Type of title: '+str(type(title))+'\n')
         manager=message_reply[2]
         phone=message_reply[3]
         photo=message_reply[4]
@@ -636,9 +648,7 @@ def log_message_to_room(room_id, author, message, message_reply,message_type="te
 
         if name!= "":
             tmp+="Name: "+str(name)+'\n'
-        if title == "":
-            sys.stderr.write('title empty\n')
-        else:
+        if title != "":
             tmp+='Title: '+str(title)+'\n'
         if manager != "":
             tmp+='Manager: '+str(manager)+'\n'
@@ -683,9 +693,7 @@ def send_message_to_room(room_id, message,message_type="text"):
         tmp=""
         if name!= "":
             tmp+="Name: "+str(name)+'\n'
-        if title == "":
-            sys.stderr.write('title empty\n')
-        else:
+        if title != "":
             tmp+='Title: '+str(title)+'\n'
         if manager != "":
             tmp+='Manager: '+str(manager)+'\n'
