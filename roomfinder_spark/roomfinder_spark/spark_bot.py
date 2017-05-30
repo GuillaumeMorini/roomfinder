@@ -25,7 +25,7 @@
 __author__ = 'gmorini@cisco.com'
 
 from flask import Flask, request, Response
-import requests, json, re, urllib, random
+import requests, json, re, urllib, random, socket
 import xml.etree.ElementTree as ET
 import ntpath
 import datetime
@@ -40,7 +40,7 @@ import unicodedata
 import feedparser
 from subprocess import check_output
 
-admin_list=["rcronier@cisco.com","gmorini@cisco.com"]
+admin_list=["rcronier@cisco.com","gmorini@cisco.com","johnroomfinder@gmail.com"]
 log_dir="/log/"
 
 app = Flask(__name__)
@@ -107,7 +107,7 @@ def advertise(msg):
         
         if line != '' and line!= "\r\n" and line!= "\n" :
             roomid = line.split()[2]
-            send_message_to_room(roomid, "**"+msg+"**", "text")
+            send_message_to_room(roomid, msg, "text")
     logfile.close()
     return True
 
@@ -146,6 +146,7 @@ def process_webhook():
     message_id = post_data["data"]["id"]
     message = get_message(message_id)
     print("message: "+str(message))
+    reply=None
 
     # First make sure not processing a message from the bot
     if post_data['data']["personEmail"] == bot_email:
@@ -163,7 +164,9 @@ def process_webhook():
         else:
             text=text.replace(bot_name,"").lstrip()
 
-    if not (post_data['data']['personEmail'].endswith('@cisco.com') or post_data['data']['personEmail'].endswith('@ciscofrance.com') ):
+    if not (post_data['data']['personEmail'] in admin_list
+        or post_data['data']['personEmail'].endswith('@cisco.com') 
+        or post_data['data']['personEmail'].endswith('@ciscofrance.com') ) :
         reply="** This bot is reserved for Cisco Employees **"
         sys.stderr.write("reply: "+str(reply)+"\n")
         return send_message_to_room(post_data["data"]["roomId"], reply,message_type)
@@ -220,13 +223,13 @@ def process_webhook():
         else:
             reply = "Sorry, there is currently no available rooms"+reply+"\n"
     # Check if message contains word "options" and if so send options
-    elif text.lower() in ["options","help","aide","?"] :
+    elif text.lower() in ["options","help","aide","?","/help","hello","hi"] :
         reply = "Here are the keywords you can use: \n"
         reply += "* **dispo** or **available** keyword will display the available rooms for the next 2 hours timeslot. For other buildings than ILM, you will have to add the prefix of your building, like **available SJC14-**\n"
         reply += "* **reserve** or **book** keyword will try to book, for the next 2 hours, the room mentionned after the keyword **book** or **reserve**.\n"
         reply += "* **plan** or **map** keyword will display the map of the floor in **ILM building** mentionned after the keyword **plan** or **map**.\n"
-        reply += "* **in** or **inside** keyword will display a picture inside the room mentionned after the keyword in **ILM building**.\n"
         reply += "* **cherche** or **find** keyword will help you to find the floor of a room mentionned by its short name after the keyword.\n"
+        reply += "* **in** or **inside** keyword will display a picture inside the room mentionned after the keyword in **ILM building**.\n"
         reply += "* **dir** keyword will display the directory entry for the CCO id mentionned after the keyword **dir**.\n"
         reply += "* **parking** keyword will display the available spots inside Cisco **ILM parking**.\n"
         reply += "* **add** keyword followed by an email will create a room between the bot and this email.\n"
@@ -236,39 +239,53 @@ def process_webhook():
             reply += "* **/advertise/** keyword, followed by a message, will display this message for all users of Roomfinder Cisco Spark Bot.\n"
         message_type="text"
     # Check if message contains phrase "add email" and if so add user to room
-    elif text.lower().find("add ") > -1:
+    elif text.lower().startswith("add "):
         # Get the email that comes
         emails = re.findall(r' [\w\.-]+@[\w\.-]+', text)
-        # pprint(emails)
+        pprint(emails)
         reply = "Adding users to demo room.\n"
         for email in emails:
             send_welcome_message(email)
             reply += "  - %s \n" % (email)
-    elif text.lower().startswith("dir"):
+    elif text.lower().startswith("dir "):
         # Find the cco id
         cco=text.lower().replace('dir ','')
         reply = find_dir(cco)
         print "find_dir: "+str(reply)
         if type(reply) != str and type(reply) != unicode:
             message_type="localfine"
+    elif text.lower().startswith("guest"):
+        if text.lower() not in ["guest"]:
+            # Find the 
+            args=text.split()
+            if len(args) == 4:
+                reply = guest(args[1],args[2],args[3])
+                sys.stderr.write( "guest: "+str(reply)+"\n" )
+            else:
+                reply = "Usage of guest command is:\n"
+                reply += "\tguest firstName lastName email\n"
+        else:
+            reply = "Usage of guest command is:\n"
+            reply += "\tguest firstName lastName email\n"
     elif text.lower().startswith("find ") or text.lower().startswith("cherche "):
         # Find the room
         room=text.lower().replace('find ','')
         room=room.lower().replace('cherche ','')
-        reply = where_room(room)
+        reply = where_room(room.upper())
         print "where_room: "+str(reply)
         if not reply.startswith("Sorry"):
             rooms=reply.split(';')
             if len(rooms)==1:
-                reply="Here is the full name of the room: \n * "+rooms[0]
-                message_type="text"
-                if rooms[0].startswith("ILM-"):
-                    stats(post_data['data']['personEmail'],post_data['data']['roomId'])
-                    log(post_data['data']['personEmail']+" - " +post_data['data']['roomId'],str(text),reply)
-                    send_message_to_room(post_data["data"]["roomId"], reply,message_type)
-                    floor=rooms[0][0:5]
-                    message_type="image"
-                    reply = display_map(floor)
+                r=rooms[0].split('-')
+                if (len(r)>=2):
+                    reply="Here is the full name of the room: \n * "+rooms[0]
+                    message_type="text"
+                    # stats(post_data['data']['personEmail'],post_data['data']['roomId'])
+                    # log(post_data['data']['personEmail']+" - " +post_data['data']['roomId'],str(text),reply)
+                    # send_message_to_room(post_data["data"]["roomId"], reply,message_type)
+                    floor=r[0]+'-'+r[1]
+                    # #message_type="pdf"
+                    reply += " \n <br> \n and the map of the floor: \n <br> \n * "+str(display_map(floor))
             else:
                 reply="Do you mean:\n"
                 for r in rooms:
@@ -276,7 +293,7 @@ def process_webhook():
                 message_type="text"
         else:
             message_type="text"
-    elif text.lower().startswith("image"):
+    elif text.lower().startswith("image "):
         # Find the cco id
         keyword_list = re.findall(r'[\w-]+', text)
         print "keyword_list= "+str(keyword_list)
@@ -290,40 +307,80 @@ def process_webhook():
             message_type="image"
     elif text.lower().startswith("plan") or text.lower().startswith("map"):
         # Find the floor
-        keyword_list = re.findall(r'ILM-[1-7]', text.upper()) + re.findall(r'[1-7]', text)
-        print "keyword_list= "+str(keyword_list)
-        if len(keyword_list) > 0:
-            keyword_list.reverse()
-            floor=keyword_list.pop()
-            reply = display_map(floor)
-            print "display_map: "+floor
-            message_type="image"
+        if text.lower() in ["plan","map"]:
+            reply = "Usage of map/plan command is:\n"
+            reply += "\tmap/plan command followed by floor name like:\n"
+            reply += "\t\tmap SJC05-3\n"        
+            reply += "\t\t\tor\n"        
+            reply += "\t\tplan ILM-7\n"        
         else:
-            reply = "No floor is corresponding. Try **map/plan ILM-X** or **map/plan X**"
+            floor=text.lower().replace('map ','')
+            floor=floor.lower().replace('plan ','')
+            pattern = re.compile("^([0-7]+)$")
+            m = pattern.match(floor)
+            sys.stderr.write("display_map: "+floor+"\n")
+            if m:
+                # Map and number => ILM
+                floor='ILM-'+m.group()
+                reply = display_map(floor.upper())
+                #message_type="pdf"
+            else:
+                pattern2 = re.compile("^([a-z0-9 ]+\-[0-9]+)$")
+                m2 = pattern2.match(floor)
+                if m2:
+                    floor=m2.group()
+                    reply = display_map(floor.upper())
+                    #message_type="pdf"
+                else:
+                    reply = "No floor is corresponding. Try **map/plan floor_name** or **map/plan floor_name** \n<br>\n <blockquote> with floor_name like ILM-3 or SJC13-3 </blockquote>"
     elif text.lower().startswith("book") or text.lower().startswith("reserve"):
-        # Find the room name
-        keyword_list = re.findall(r'[\w-]+', text)
-        sys.stderr.write("keyword_list= "+str(keyword_list)+"\n")
-        keyword_list.reverse()
-        keyword=keyword_list.pop()
-        while keyword.lower().find("book") > -1 or keyword.lower().find("reserve") > -1:
-            keyword=keyword_list.pop()
-        reply = book_room(keyword.upper(),post_data['data']["personEmail"].lower(),getDisplayName(post_data['data']["personId"]))
-        sys.stderr.write("book_room: "+reply+"\n")
-    elif text.lower().startswith('in') or text.lower().startswith('inside') or text.lower().startswith('interieur'):          
-        inside = text.split()[1].upper()
-        if inside.lower().startswith('ilm') :
-            reply=display_inside(inside)
-            message_type="image"
-        else :
-            reply = "No Inside View is corresponding. Try **in/inside/interieur ILM-X**"
-    elif text.lower().startswith('parking'):
-        page = requests.get("http://173.38.154.145/parking/getcounter.py")
-        result = page.json()
-        reply = "Free cars parking: "+str(result["car"]["count"])+" over "+str(result["car"]["total"])+"<br>"
-        reply += "Free motorbikes parking: "+str(result["motorbike"]["count"])+" over "+str(result["motorbike"]["total"])+"<br>"
-        reply += "Free bikecycles parking: "+str(result["bicycle"]["count"])+" over "+str(result["bicycle"]["total"])
-    elif text.lower().startswith('temp'):
+        if text.lower() in ["book","reserve"]:
+            reply = "Usage of book/reserve command is:\n"
+            reply += "\tbook/reserve command followed by room name like:\n"
+            reply += "\t\t reserve ILM-7-HUGO\n"        
+            reply += "\t\t\tor\n"        
+            reply += "\t\t book SJC13-3-SMILE\n"  
+        else:      
+            # Find the room name
+            end = len(text)
+            if text.lower().startswith("book "):
+                start = len('book ')
+            elif text.lower().startswith("reserve "):
+                start = len('reserve ')
+            else:
+                sys.stderr.write("I don't know how you arrive here ! This is a bug !\n")    
+            room_name=text[start:end]
+            sys.stderr.write("room_name= "+str(room_name)+"\n")
+            reply = book_room(room_name.upper(),post_data['data']["personEmail"].lower(),getDisplayName(post_data['data']["personId"]))
+            sys.stderr.write("book_room: "+reply+"\n")
+    elif text.lower().startswith('in') or text.lower().startswith('inside') or text.lower().startswith('interieur'):
+        if text.lower() in ["in","inside","interieur"]:
+            reply = "Usage of in/inside/interieur command is:\n"
+            reply += "\t in/inside/interieur command followed by room name like:\n"
+            reply += "\t\t in ILM-7-HUGO\n"        
+            reply += "\t\t\tor\n"        
+            reply += "\t\t inside SJC13-3-SMILE\n"  
+        else:      
+            inside = text.split()[1].upper()
+            if inside.lower().startswith('ilm') :
+                reply=display_inside(inside)
+                message_type="image"
+            else :
+                reply = "No Inside View. This feature is available only for ILM building."
+    elif text.lower() in ["parking"] :
+        try:
+            page = requests.get("http://173.38.154.145/parking/getcounter.py", timeout=0.5)
+            result = page.json()
+            reply = "Free cars parking: "+str(result["car"]["count"])+" over "+str(result["car"]["total"])+"<br>"
+            reply += "Free motorbikes parking: "+str(result["motorbike"]["count"])+" over "+str(result["motorbike"]["total"])+"<br>"
+            reply += "Free bikecycles parking: "+str(result["bicycle"]["count"])+" over "+str(result["bicycle"]["total"])
+        except requests.exceptions.RequestException as e:  # This is the correct syntax
+            sys.stderr.write("Timeout or HTTP error code on parking API")
+            reply = "Sorry parking information is not available !"
+        except socket.timeout as e:
+            sys.stderr.write("Timeout or HTTP error code on parking API")
+            reply = "Sorry parking information is not available !"
+    elif text.lower().startswith('temp '):
         sonde = text.split()[1].upper()
         if (sonde == "ILM-1-GAUGUIN") :
             reply = netatmoOutdoor(sonde)
@@ -338,7 +395,7 @@ def process_webhook():
         if post_data['data']['personEmail'] in admin_list :
             end = len(text)
             start = len('/advertise/')
-            advertise(text[start:end].strip().upper())
+            advertise(text[start:end].strip())
             reply=""
         else :
             reply = "##You have no admin rights to advertise##"
@@ -347,12 +404,13 @@ def process_webhook():
         # reply=natural_langage_bot(text.lower())
         # if reply == "":
         #     return reply
-        reply="Command not found !"
+        reply="Command not found ! Type help to have the list of existing commands !"
     sys.stderr.write("reply: "+str(reply)+"\n")
     if reply != "":
         stats(post_data['data']['personEmail'],post_data['data']['roomId'])
         log(post_data['data']['personEmail']+" - " +post_data['data']['roomId'],str(text),reply)
         send_message_to_room(post_data["data"]["roomId"], reply,message_type)
+        log_message_to_room(log_room_id, post_data['data']['personEmail'], text, reply,message_type)
     return ""
 
 def getDisplayName(id):
@@ -438,6 +496,20 @@ def find_dir(cco):
         tab = reply.split(';')
         return tab[0],tab[1],tab[2],tab[3],tab[4],tab[5]
 
+def guest(firstName, lastName, email):
+    sys.stderr.write("Beginning process to request a guest account for "+firstName+" "+lastName+" <"+email+">\n")
+    data = {  
+        "cmd": "guest",         
+        "data": {
+            "firstName" : firstName,
+            "lastName"  : lastName,
+            "email"     : email
+        }
+    }    
+    message = json.dumps(data)  
+    reply=send_message_to_queue(message)
+    return reply
+
 def where_room(room):
     sys.stderr.write("Beginning process to find this room: "+room+"\n")
     data = {  
@@ -450,15 +522,13 @@ def where_room(room):
 
 def display_map(floor):
     sys.stderr.write("Display map of floor: "+floor+"\n")
-    t=re.search(r'ILM-[1-7]',floor)
-    if t is not None:
-        return "http://www.guismo.fr.eu.org/plan/"+t.group(0)+".PNG"
-    else:
-        t=re.search(r'[1-7]',floor)
-        if t is not None:
-            return "http://www.guismo.fr.eu.org/plan/ILM-"+t.group(0)+".PNG"
-        else:
-            return "Floor "+ floor + " not known"
+    data = {  
+        "cmd": "map",         
+        "data": {"floor": floor}
+    }    
+    message = json.dumps(data)  
+    reply=send_message_to_queue(message)
+    return reply
 
 def display_inside(room):
     sys.stderr.write("Display inside of room: "+room+"\n")
@@ -533,6 +603,57 @@ def post_localfile(roomId, encoded_photo, text='', html='', markdown='', toPerso
     sys.stderr.write( "file_dict: "+str(file_dict)+"\n" )
     return message
 
+
+def log_message_to_room(room_id, author, message, message_reply,message_type="text"):
+    spark_u = spark_host + "v1/messages"
+    if message_type == "text":
+        message_body = {
+            "roomId" : room_id,
+            "markdown" : "Author: "+author+" <br> Request: "+message+" <br> Reply: "+message_reply
+        }
+    elif message_type == "image":
+        message_body = {
+            "roomId" : room_id,
+            "text" : "Author: "+author+" <br> Request: "+message+" <br> Reply: ",
+            "files" : [message_reply]
+        }        
+    elif message_type == "html":
+        message_body = {
+            "roomId" : room_id,
+            "html" : "Author: "+author+" \n Request: "+message+" \n Reply: "+message_reply
+        }        
+    else:
+        name=message_reply[0]
+        title=message_reply[1]
+        #sys.stderr.write
+        sys.stderr.write('title=|'+str(title)+"|\n")
+        sys.stderr.write('Type of title: '+str(type(title))+'\n')
+        manager=message_reply[2]
+        phone=message_reply[3]
+        photo=message_reply[4]
+        dir_url=message_reply[5]
+        tmp="Author: "+author+" <br>\n Request: "+message+" <br>\n Reply: <br>\n "
+
+        if name!= "":
+            tmp+="Name: "+str(name)+'\n'
+        if title == "":
+            sys.stderr.write('title empty\n')
+        else:
+            tmp+='Title: '+str(title)+'\n'
+        if manager != "":
+            tmp+='Manager: '+str(manager)+'\n'
+        if phone != "":
+            tmp+=str(phone)
+        if dir_url != "":
+            tmp+=dir_url
+        return post_localfile(room_id,photo,html=tmp)
+    sys.stderr.write( "message_body: "+str(message_body)+"\n" )
+    page = requests.post(spark_u, headers = spark_headers, json=message_body)
+    message = page.json()
+    #return message
+    return ""
+
+
 def send_message_to_room(room_id, message,message_type="text"):
     spark_u = spark_host + "v1/messages"
     if message_type == "text":
@@ -547,6 +668,7 @@ def send_message_to_room(room_id, message,message_type="text"):
             "files" : [message]
         }        
     elif message_type == "html":
+        sys.stderr.write("Post HTML message\n")
         message_body = {
             "roomId" : room_id,
             "html" : message
@@ -558,7 +680,20 @@ def send_message_to_room(room_id, message,message_type="text"):
         phone=message[3]
         photo=message[4]
         dir_url=message[5]
-        return post_localfile(room_id,photo,html='Name: '+str(name)+'\nTitle: '+str(title)+'\nManager: '+str(manager)+'\n'+str(phone)+dir_url)
+        tmp=""
+        if name!= "":
+            tmp+="Name: "+str(name)+'\n'
+        if title == "":
+            sys.stderr.write('title empty\n')
+        else:
+            tmp+='Title: '+str(title)+'\n'
+        if manager != "":
+            tmp+='Manager: '+str(manager)+'\n'
+        if phone != "":
+            tmp+=str(phone)
+        if dir_url != "":
+            tmp+=dir_url
+        return post_localfile(room_id,photo,html=tmp)
     sys.stderr.write( "message_body: "+str(message_body)+"\n" )
     page = requests.post(spark_u, headers = spark_headers, json=message_body)
     message = page.json()
@@ -675,6 +810,9 @@ if __name__ == '__main__':
     parser.add_argument(
         "--demoemail", help="Email Address to Add to Demo Room", required=False
     )
+    parser.add_argument(
+        "--logroomid", help="Cisco Spark Room ID to log messages", required=False
+    )
     # parser.add_argument(
     #     "-s", "--secret", help="Key Expected in API Calls", required=False
     # )
@@ -731,6 +869,19 @@ if __name__ == '__main__':
     # print "Spark Token: " + spark_token
     # sys.stderr.write("Spark Token: " + spark_token + "\n")
     sys.stderr.write("Spark Token: REDACTED\n")
+
+    log_room_id = args.logroomid
+    # print "Log room id: " + str(log_room_id)
+    if (log_room_id == None):
+        log_room_id = os.getenv("log_room_id")
+        # print "Env log_room_id: " + str(log_room_id)
+        if (log_room_id == None):
+            get_log_room_id = raw_input("What is the Cisco Spark Log Room ID? ")
+            # print "Input log_room_id: " + str(get_log_room_id)
+            log_room_id = get_log_room_id
+    # print "log_room_id: " + log_room_id
+    # sys.stderr.write("log_room_id: " + log_room_id + "\n")
+    sys.stderr.write("log_room_id: "+str(log_room_id)+"\n")
 
     # Set Authorization Details for external requests
     spark_headers["Authorization"] = "Bearer " + spark_token
