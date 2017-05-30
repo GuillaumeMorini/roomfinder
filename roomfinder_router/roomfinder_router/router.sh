@@ -5,6 +5,6 @@
 #cd proxytunnel-1.9.0
 #make
 #cd ..
-echo "Running ./proxytunnel -a 5672 -p proxy-wsa.esl.cisco.com:80 -d $roomfinder_rabbitmq_server:$roomfinder_rabbitmq_port &"
-./proxytunnel -a 5672 -p proxy-wsa.esl.cisco.com:80 -d $roomfinder_rabbitmq_server:$roomfinder_rabbitmq_port &
+echo "Running ./proxytunnel -a 5672 -p proxy.esl.cisco.com:80 -d $roomfinder_rabbitmq_server:$roomfinder_rabbitmq_port &"
+./proxytunnel -a 5672 -p proxy.esl.cisco.com:80 -d $roomfinder_rabbitmq_server:$roomfinder_rabbitmq_port &
 exec python ./roomfinder_router/router.py
