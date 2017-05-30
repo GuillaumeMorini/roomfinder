@@ -460,6 +460,20 @@ def send_message_to_queue(message):
 
 def book_room(room_name,user_email,user_name):
     sys.stderr.write("Beginning process to book a room and especially this room: "+room_name+"\n")
+    duration=2
+
+    if room_name.endswith(' 1H') or room_name.endswith(' 1 H') or room_name.endswith(' 1 HOUR') or room_name.endswith(' 1HOUR')  or room_name.endswith(' 1 HOURS') or room_name.endswith(' 1HOURS') :
+        duration=1
+        room_name=room_name.replace(' 1HOURS','').replace(' 1 HOURS','').replace(' 1 HOUR','').replace(' 1HOUR','').replace(' 1 H','').replace(' 1H','')
+    elif room_name.endswith(' 30M') or room_name.endswith(' 30 M') or room_name.endswith(' 30MIN') or room_name.endswith(' 30 MIN') or room_name.endswith(' 30MINS') or room_name.endswith(' 30 MINS') or room_name.endswith(' 30MINUTES') or room_name.endswith(' 30 MINUTES') or room_name.endswith(' 30MINUTE') or room_name.endswith(' 30 MINUTE') :
+        duration=0.5
+        room_name=room_name.replace(' 30MINS','').replace(' 30 MINS','').replace(' 30MINUTES','').replace(' 30 MINUTES','').replace(' 30MINUTE','').replace(' 30 MINUTE','')
+        room_name=room_name.replace(' 30MIN','').replace(' 30 MIN','').replace(' 30M','').replace(' 30 M','')
+    elif room_name.endswith(' 2H') or room_name.endswith(' 2 H') or room_name.endswith(' 2HOUR') or room_name.endswith(' 2 HOUR') or room_name.endswith(' 2HOURS') or room_name.endswith(' 2 HOURS') :
+        duration=2
+        room_name=room_name.replace(' 2HOURS','').replace(' 2 HOURS','').replace(' 2HOUR','').replace(' 2 HOUR','').replace(' 2H','').replace(' 2 H','')
+
+    sys.stderr.write("After removing duration, room:_name is "+room_name+"\n")
 
     start, end, results = get_available()
     dispo_list=[r.split(' ')[0] for r in results]
@@ -468,7 +482,7 @@ def book_room(room_name,user_email,user_name):
 
         now = datetime.datetime.now().replace(microsecond=0)
         starttime = (now - datetime.timedelta(minutes=5)).isoformat()
-        endtime = (now - datetime.timedelta(minutes=5) + datetime.timedelta(hours=2)).isoformat()
+        endtime = (now - datetime.timedelta(minutes=5) + datetime.timedelta(hours=duration)).isoformat()
 
         # page = requests.get(book_server+'/book?starttime='+starttime+'&endtime='+endtime+'&user_name='+user_name+'&user_email'+user_email+'&room_name='+room_name) # find how to send the list of rooms read from previous file
         # return page.text() # format result
