@@ -186,11 +186,21 @@ def findRooms(prefix=None,anywhere=False):
     for elem in elems:
         email = elem.findall(".//{http://schemas.microsoft.com/exchange/services/2006/types}EmailAddress")
         name = elem.findall(".//{http://schemas.microsoft.com/exchange/services/2006/types}DisplayName")
+        sys.stderr.write("Perhaps found "+str(name[0].text)+" <"+str(email[0].text)+">\n")
         if prefix is not None:
             if len(email) > 0 and len(name) > 0 :
                 if email[0].text.startswith("conf_") or email[0].text.startswith("CONF_"):
-                    if name[0].text.startswith(prefix) or anywhere:
+                    if name[0].text.startswith(prefix.upper()) or anywhere:
+                        sys.stderr.write("Validate "+str(name[0].text)+" <"+str(email[0].text)+">\n")
                         rooms[email[0].text] = name[0].text
+                    else:
+                        sys.stderr.write("Not validated due to not starting with prefix: "+str(prefix.upper())+"\n")
+                else:
+                    sys.stderr.write("Not validated due to not starting with conf_\n")
+            else:
+                sys.stderr.write("Not validated due to null length\n")
+        else:
+            sys.stderr.write("Not validated due to prefix is none\n")
     return rooms        
 
 
