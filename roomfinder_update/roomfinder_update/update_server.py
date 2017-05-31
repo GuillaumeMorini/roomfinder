@@ -45,10 +45,11 @@ def doSomethingWithResult(response):
             status=elem.text
 
         tree2=ET.fromstring(response.request.body)
-        elems=tree2.findall(".//{http://schemas.microsoft.com/exchange/services/2006/types}Address")
-        for e in elems:
+        elems2=tree2.findall(".//{http://schemas.microsoft.com/exchange/services/2006/types}Address")
+        for e in elems2:
             room=e.text
 
+        #sys.stderr.write(str(now.isoformat())+": Get BusyType for room "+str(rooms[room])+": len: "+str(len(elems))+" => "+str(elems[0])+"\n")
         sys.stderr.write(str(now.isoformat())+": Status for room "+str(rooms[room])+": "+str(room)+" => "+status+"\n")
         result.append((status, rooms[room], room))
 
