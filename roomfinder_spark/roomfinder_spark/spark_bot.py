@@ -101,13 +101,13 @@ def readstats():
     logs = "* nb Users : " + str(nbUsers) + "\r\n" + "* nb Requests : " + str(nbMsg)
     return logs
     
-def advertise(msg):
+def advertise(msg,message_type="text"):
     logfile = open(log_dir+'ILM-RoomFinder-Bot.log', 'r+')
     for line in logfile:
         
         if line != '' and line!= "\r\n" and line!= "\n" :
             roomid = line.split()[2]
-            send_message_to_room(roomid, msg, "text")
+            send_message_to_room(roomid, msg, message_type)
     logfile.close()
     return True
 
@@ -152,6 +152,11 @@ def process_webhook():
     if post_data['data']["personEmail"] == bot_email:
         return ""
 
+    sys.stderr.write("text: "+str(message["text"].encode('utf-8'))+"\n")
+    if "markdown" in message:
+        sys.stderr.write("markdown: "+str(message["markdown"].encode('utf-8'))+"\n")
+    if "html" in message:
+        sys.stderr.write("html: "+str(message["html"].encode('utf-8'))+"\n")
     text=message["text"].lstrip().encode("utf-8")
 
     # If someone is mentioned, do not answer
@@ -226,7 +231,7 @@ def process_webhook():
     elif text.lower() in ["options","help","aide","?","/help","hello","hi"] :
         reply = "Here are the keywords you can use: \n"
         reply += "* **dispo** or **available** keyword will display the available rooms for the next 2 hours timeslot. For other buildings than ILM, you will have to add the prefix of your building, like **available SJC14-**\n"
-        reply += "* **reserve** or **book** keyword will try to book, for the next 2 hours, the room mentionned after the keyword **book** or **reserve**.\n"
+        reply += "* **reserve** or **book** keyword will try to book, by default for the next 2 hours, the room mentionned after the keyword **book** or **reserve**. You can specify the duration of the meeting with the option 30m or 1h.\n"
         reply += "* **plan** or **map** keyword will display the map of the floor in **ILM building** mentionned after the keyword **plan** or **map**.\n"
         reply += "* **cherche** or **find** keyword will help you to find the floor of a room mentionned by its short name after the keyword.\n"
         reply += "* **in** or **inside** keyword will display a picture inside the room mentionned after the keyword in **ILM building**.\n"
@@ -394,9 +399,10 @@ def process_webhook():
             reply = "##You have no admin rights to view stats##"
     elif text.lower().startswith("/advertise/"):
         if post_data['data']['personEmail'] in admin_list :
-            end = len(text)
-            start = len('/advertise/')
-            advertise(text[start:end].strip())
+            if "html" in message:
+                advertise(message["html"].replace("/advertise/","").lstrip().strip(),"html")
+            else:
+                advertise(text.replace("/advertise/","").lstrip().strip())
             reply=""
         else :
             reply = "##You have no admin rights to advertise##"
@@ -682,7 +688,7 @@ def send_message_to_room(room_id, message,message_type="text"):
         message_body = {
             "roomId" : room_id,
             "html" : message
-        }        
+        }
     else:
         name=message[0]
         title=message[1]
