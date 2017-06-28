@@ -135,6 +135,8 @@ def process_demoroom_members():
     #     json.dumps(demo_room_members, sort_keys=True, indent = 4, separators = (',', ': ')),
     #     content_type='application/json',
     #     status=status)
+    else:
+        resp = Response("OK", status=status)
     return resp
 
 @app.route('/', methods=["POST"])
