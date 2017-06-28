@@ -1,9 +1,10 @@
 pipeline:
   build:
-    build:
-      image: python:2
-      commands:
-        - echo "Beginning new build"
+    image: python
+    commands:
+      - print("Beginning new build")
+
+
   #   run_tests:
   #     image: python:2-alpine
   #     environment:
