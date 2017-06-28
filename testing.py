@@ -17,6 +17,7 @@ class FlaskTestCase(unittest.TestCase):
         sys.stderr.write('Test HTTP GET /demoroom/members == 200.\n')
         resp = self.app.get('/demoroom/members')
         self.assertEquals(resp.status_code, 200)
+
     #def test_about_correct_http_response(self):
     #    sys.stderr.write('Test HTTP GET /about == 200.\n')
     #    resp = self.app.get('/about')
