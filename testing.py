@@ -5,7 +5,6 @@ sys.path.append('roomfinder_spark/roomfinder_spark')
 import spark_bot
 
 class FlaskTestCase(unittest.TestCase):
-
     def setUp(self):
         sys.stderr.write('Setup testing.\n')
         #web_server.data_server = os.getenv("roomfinder_data_server")
