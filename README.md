@@ -3,7 +3,7 @@ Roomfinder
 
 ![logo](./logo_128.png?raw=true "Roomfinder")
 
-[![Build Status](http://drone.guismo.fr.eu.org:8000/api/badges/GuillaumeMorini/roomfinder/status.svg)](http://drone.guismo.fr.eu.org:8000/GuillaumeMorini/roomfinder)
+[![Build Status](http://drone.guismo.fr.eu.org:8000/api/badges/GuillaumeMorini/roomfinder/status.svg?branch=dev)](http://drone.guismo.fr.eu.org:8000/GuillaumeMorini/roomfinder)
 
 ChatBot written in Python for finding free conference rooms from a Microsoft Exchange Server.
 
