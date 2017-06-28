@@ -8,7 +8,7 @@ pipeline:
   publish:
     image: plugins/docker
     repo: guismo/roomfinder_spark
-    file: roomfinder_spark/Dockerfile
+    dockerfile: roomfinder_spark/Dockerfile
     tag: [ latest ]
     secrets: [ docker_username, docker_password ]
     when:
