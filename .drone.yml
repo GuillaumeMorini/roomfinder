@@ -1,35 +1,36 @@
-build:
-  build_starting:
-    image: python:2
-    commands:
-      - echo "Beginning new build"
-  run_tests:
-    image: python:2-alpine
-    environment:
-      - roomfinder_dispo_server=http://37.187.22.103:5002
-      - roomfinder_data_server=http://37.187.22.103:5001
-      - roomfinder_spark_bot_email=roomfinder-dev@sparkbot.io
-      - spark_token=ZTE2NjRiN2YtOTdjMy00M2RlLTk2NjQtNTE3NWZhZjU5ZmY5YmY3MTM5MDAtY2Zi
-      - roomfinder_spark_bot_url=http://37.187.22.103:6666
-      - log_room_id=Y2lzY29zcGFyazovL3VzL1JPT00vNGZhZDViMTAtNWMxMS0xMWU3LThkNzMtZDllYWI0MTFkYzIy
-    commands:
-      - pip install -r roomfinder_spark/requirements.txt
-      - python testing.py
-publish:
-    docker:
-        environment:
-            - DOCKER_LAUNCH_DEBUG=true
-        storage_driver: vfs
-        repo: guismo/roomfinder_spark
-        file: roomfinder_spark/Dockerfile
-        context: roomfinder_spark
-        tag: latest
-        username: guismo
-        password: 1ternet
-        email: guismo1@free.fr
-notify:
-    spark:
-        image: hpreston/drone-spark
-        auth_token: ZTE2NjRiN2YtOTdjMy00M2RlLTk2NjQtNTE3NWZhZjU5ZmY5YmY3MTM5MDAtY2Zi
-        roomId: Y2lzY29zcGFyazovL3VzL1JPT00vNGZhZDViMTAtNWMxMS0xMWU3LThkNzMtZDllYWI0MTFkYzIy
+pipeline:
+  build:
+    build_starting:
+      image: python:2
+      commands:
+        - echo "Beginning new build"
+    run_tests:
+      image: python:2-alpine
+      environment:
+        - roomfinder_dispo_server=http://37.187.22.103:5002
+        - roomfinder_data_server=http://37.187.22.103:5001
+        - roomfinder_spark_bot_email=roomfinder-dev@sparkbot.io
+        - spark_token=ZTE2NjRiN2YtOTdjMy00M2RlLTk2NjQtNTE3NWZhZjU5ZmY5YmY3MTM5MDAtY2Zi
+        - roomfinder_spark_bot_url=http://37.187.22.103:6666
+        - log_room_id=Y2lzY29zcGFyazovL3VzL1JPT00vNGZhZDViMTAtNWMxMS0xMWU3LThkNzMtZDllYWI0MTFkYzIy
+      commands:
+        - pip install -r roomfinder_spark/requirements.txt
+        - python testing.py
+  publish:
+      docker:
+          environment:
+              - DOCKER_LAUNCH_DEBUG=true
+          storage_driver: vfs
+          repo: guismo/roomfinder_spark
+          file: roomfinder_spark/Dockerfile
+          context: roomfinder_spark
+          tag: latest
+          username: guismo
+          password: 1ternet
+          email: guismo1@free.fr
+  notify:
+      spark:
+          image: hpreston/drone-spark
+          auth_token: ZTE2NjRiN2YtOTdjMy00M2RlLTk2NjQtNTE3NWZhZjU5ZmY5YmY3MTM5MDAtY2Zi
+          roomId: Y2lzY29zcGFyazovL3VzL1JPT00vNGZhZDViMTAtNWMxMS0xMWU3LThkNzMtZDllYWI0MTFkYzIy
 
