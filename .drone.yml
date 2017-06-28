@@ -13,17 +13,14 @@ pipeline:
       - pip install -r roomfinder_spark/requirements.txt
       - python testing.py
   publish:
-      docker:
-          environment:
-              - DOCKER_LAUNCH_DEBUG=true
-          storage_driver: vfs
-          repo: guismo/roomfinder_spark
-          file: roomfinder_spark/Dockerfile
-          context: roomfinder_spark
-          tag: latest
-          username: guismo
-          password: 1ternet
-          email: guismo1@free.fr
+    image: plugins/docker
+    repo: guismo/roomfinder_spark
+    tag: [ latest ]
+    secrets: [ docker_username, docker_password ]
+    when:
+      branch: master
+      event: push
+
   # notify:
   #     spark:
   #         image: hpreston/drone-spark
