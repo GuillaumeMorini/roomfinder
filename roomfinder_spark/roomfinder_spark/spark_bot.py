@@ -189,7 +189,7 @@ def process_webhook():
         if len(buildings) > 0 :
             building=buildings[0][1:]
             u = dispo_server + "/dispo?key="+str(building)
-            page = requests.get(u, headers = app_headers)
+            page = requests.get(u, headers = app_headers, verify=False)
             tally = page.json()
             sys.stderr.write("Tally: "+str(tally)+"\n")
             #tally = sorted(tally.items(), key = lambda (k,v): v, reverse=True)
@@ -380,7 +380,7 @@ def process_webhook():
                 reply = "No Inside View. This feature is available only for ILM building."
     elif text.lower() in ["parking"] :
         try:
-            page = requests.get("http://173.38.154.145/parking/getcounter.py", timeout=0.5)
+            page = requests.get("http://173.38.154.145/parking/getcounter.py", timeout=0.5, verify=False)
             result = page.json()
             reply = "Free cars parking: "+str(result["car"]["count"])+" over "+str(result["car"]["total"])+"<br>"
             reply += "Free motorbikes parking: "+str(result["motorbike"]["count"])+" over "+str(result["motorbike"]["total"])+"<br>"
@@ -427,7 +427,7 @@ def process_webhook():
 
 def getDisplayName(id):
     spark_u = spark_host + "v1/people/"+id
-    page = requests.get(spark_u, headers = spark_headers)
+    page = requests.get(spark_u, headers = spark_headers, verify=False)
     displayName = page.json()["displayName"]
     return displayName
 
@@ -566,7 +566,7 @@ def display_inside(room):
 
 def find_image(keyword):
     u = "http://api.flickr.com/services/feeds/photos_public.gne?tags="+keyword+"&lang=en-us&format=json"
-    page = requests.get(u)
+    page = requests.get(u, verify=False)
     test=page.text.encode('utf-8').replace('jsonFlickrFeed(','').replace(')','').replace('\\\'','\\\\\'')
     j=json.loads(test)
     if len(j["items"]) > 0 :
@@ -579,7 +579,7 @@ def find_image(keyword):
 # Utilities to interact with the Roomfinder-App Server
 def get_available():
     u = app_server + "/"
-    page = requests.get(u, headers = app_headers)
+    page = requests.get(u, headers = app_headers, verify=False)
     tally = page.json()
     #print "Tally: "+str(tally)
     #tally = sorted(tally.items(), key = lambda (k,v): v, reverse=True)
@@ -596,7 +596,7 @@ def send_welcome_message(email):
         "toPersonEmail" : email,
         "markdown" : "Welcome in a chat room with **RoomFinder**, the 1:1 Bot to help you interact with Cisco Buildings\nType **help** to list the existing commands.\n"
     }
-    page = requests.post(spark_u, headers = spark_headers, json=message_body)
+    page = requests.post(spark_u, headers = spark_headers, json=message_body, verify=False)
     message = page.json()
     return message
 
@@ -620,7 +620,7 @@ def post_localfile(roomId, encoded_photo, text='', html='', markdown='', toPerso
         payload['toPersonEmail'] = toPersonEmail
     m = MultipartEncoder(fields=payload)
     headers = {'Authorization': "Bearer " + spark_token, 'Content-Type': m.content_type}
-    page = requests.request("POST",url=spark_host + "v1/messages", data=m, headers = headers )
+    page = requests.request("POST",url=spark_host + "v1/messages", data=m, headers = headers , verify=False)
     sys.stderr.write( "page: "+str(page)+"\n" )
     message=page.json()
     file_dict = json.loads(page.text)
@@ -669,7 +669,7 @@ def log_message_to_room(room_id, author, message, message_reply,message_type="te
             tmp+=dir_url
         return post_localfile(room_id,photo,html=tmp)
     sys.stderr.write( "message_body: "+str(message_body)+"\n" )
-    page = requests.post(spark_u, headers = spark_headers, json=message_body)
+    page = requests.post(spark_u, headers = spark_headers, json=message_body, verify=False)
     message = page.json()
     #return message
     return ""
@@ -714,21 +714,21 @@ def send_message_to_room(room_id, message,message_type="text"):
             tmp+=dir_url
         return post_localfile(room_id,photo,html=tmp)
     sys.stderr.write( "message_body: "+str(message_body)+"\n" )
-    page = requests.post(spark_u, headers = spark_headers, json=message_body)
+    page = requests.post(spark_u, headers = spark_headers, json=message_body, verify=False)
     message = page.json()
     #return message
     return ""
 
 def get_message(message_id):
     spark_u = spark_host + "v1/messages/" + message_id
-    page = requests.get(spark_u, headers = spark_headers)
+    page = requests.get(spark_u, headers = spark_headers, verify=False)
     message = page.json()
     return message
 
 #### Webhook Utilities
 def current_webhooks():
     spark_u = spark_host + "v1/webhooks"
-    page = requests.get(spark_u, headers = spark_headers)
+    page = requests.get(spark_u, headers = spark_headers, verify=False)
     webhooks = page.json()
     return webhooks["items"]
 
@@ -740,7 +740,7 @@ def create_webhook(target, webhook_name = "New Webhook"):
         "resource" : "messages",
         "event" : "created"
     }
-    page = requests.post(spark_u, headers = spark_headers, json=spark_body)
+    page = requests.post(spark_u, headers = spark_headers, json=spark_body, verify=False)
     webhook = page.json()
     return webhook
 
@@ -750,7 +750,7 @@ def update_webhook(webhook_id, target, name):
         "name" : name,
         "targetUrl" : target
     }
-    page = requests.put(spark_u, headers = spark_headers, json=spark_body)
+    page = requests.put(spark_u, headers = spark_headers, json=spark_body, verify=False)
     webhook = page.json()
     return webhook
 
@@ -781,20 +781,20 @@ def setup_webhook(target, name):
 #### Room Utilities
 def get_membership(room_id):
     spark_u = spark_host + "v1/memberships?roomId=%s" % (room_id)
-    page = requests.get(spark_u, headers = spark_headers)
+    page = requests.get(spark_u, headers = spark_headers, verify=False)
     memberships = page.json()["items"]
 
     return memberships
 
 def get_bot_id():
     spark_u = spark_host + "v1/people/me"
-    page = requests.get(spark_u, headers = spark_headers)
+    page = requests.get(spark_u, headers = spark_headers, verify=False)
     reply = page.json()
     return reply["id"]
 
 def get_bot_name():
     spark_u = spark_host + "v1/people/me"
-    page = requests.get(spark_u, headers = spark_headers)
+    page = requests.get(spark_u, headers = spark_headers, verify=False)
     reply = page.json()
     return reply["displayName"]
 
