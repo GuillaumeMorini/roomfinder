@@ -135,6 +135,8 @@ def process_demoroom_members():
     #     json.dumps(demo_room_members, sort_keys=True, indent = 4, separators = (',', ': ')),
     #     content_type='application/json',
     #     status=status)
+    else:
+        resp = Response("OK", status=status)
     return resp
 
 @app.route('/', methods=["POST"])
@@ -261,18 +263,21 @@ def process_webhook():
         if type(reply) != str and type(reply) != unicode:
             message_type="localfine"
     elif text.lower().startswith("guest"):
-        if text.lower() not in ["guest"]:
-            # Find the 
-            args=text.split()
-            if len(args) == 4:
-                reply = guest(args[1],args[2],args[3])
-                sys.stderr.write( "guest: "+str(reply)+"\n" )
+        if post_data['data']['personEmail'] in admin_list :
+            if text.lower() not in ["guest"]:
+                # Find the 
+                args=text.split()
+                if len(args) == 4:
+                    reply = guest(args[1],args[2],args[3])
+                    sys.stderr.write( "guest: "+str(reply)+"\n" )
+                else:
+                    reply = "Usage of guest command is:\n"
+                    reply += "\tguest firstName lastName email\n"
             else:
                 reply = "Usage of guest command is:\n"
                 reply += "\tguest firstName lastName email\n"
         else:
-            reply = "Usage of guest command is:\n"
-            reply += "\tguest firstName lastName email\n"
+            reply = "## We have been asked by Infosec to shutdown the Guest feature. We are working with them to find a way to restore this succesfull service. ##"
     elif text.lower().startswith("find ") or text.lower().startswith("cherche "):
         # Find the room
         room=text.lower().replace('find ','')

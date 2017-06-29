@@ -304,7 +304,7 @@ if __name__ == '__main__':
 
     sys.stderr.write("Connecting to "+rabbitmq+" on port "+rabbitmq_port+"\n")
     connection = pika.BlockingConnection(pika.ConnectionParameters(
-        host="localhost" ))
+        host="localhost", port=5672 ))
     channel = connection.channel()
     channel.queue_declare(queue='rpc_queue')
     channel.basic_qos(prefetch_count=1)
