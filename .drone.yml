@@ -19,3 +19,4 @@ pipeline:
     image: guismo/drone-spark
     auth_token: ZTE2NjRiN2YtOTdjMy00M2RlLTk2NjQtNTE3NWZhZjU5ZmY5YmY3MTM5MDAtY2Zi
     roomId: Y2lzY29zcGFyazovL3VzL1JPT00vNGZhZDViMTAtNWMxMS0xMWU3LThkNzMtZDllYWI0MTFkYzIy
+
