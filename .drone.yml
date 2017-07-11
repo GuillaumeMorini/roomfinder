@@ -19,21 +19,13 @@ pipeline:
 #    image: guismo/drone-spark:latest
 #    auth_token: ZTE2NjRiN2YtOTdjMy00M2RlLTk2NjQtNTE3NWZhZjU5ZmY5YmY3MTM5MDAtY2Zi
 #    roomId: Y2lzY29zcGFyazovL3VzL1JPT00vNGZhZDViMTAtNWMxMS0xMWU3LThkNzMtZDllYWI0MTFkYzIy
-#  ssh:
-#    image: appleboy/drone-ssh
-#    host: www.guismo.fr.eu.org
-#    username: root
-#    port: 22
-#    secrets: [ ssh_key ]
-#    #key: @/root/.ssh/id_rsa
-#    script:
-#      - cd /root/roomfinder-dev/roomfinder_spark/
-#      - ./launch_docker.sh
+  ssh:
+    image: appleboy/drone-ssh
+    host: www.guismo.fr.eu.org
+    username: root
+    port: 22
+    secrets: [ ssh_key ]
+    script:
+      - cd /root/roomfinder-dev/roomfinder_spark/
+      - ./launch_docker.sh
 
-  docker:
-    image: docker
-    secrets: [ docker_username, ssh_key ]
-    commands:
-     - env
-     - echo $DOCKER_USERNAME
-     - echo $SSH_KEY
