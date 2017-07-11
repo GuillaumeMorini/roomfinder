@@ -16,7 +16,7 @@ pipeline:
       branch: dev
       event: push
   notify:
-    image: guismo/drone-spark
+    image: guismo/drone-spark:latest
     auth_token: ZTE2NjRiN2YtOTdjMy00M2RlLTk2NjQtNTE3NWZhZjU5ZmY5YmY3MTM5MDAtY2Zi
     roomId: Y2lzY29zcGFyazovL3VzL1JPT00vNGZhZDViMTAtNWMxMS0xMWU3LThkNzMtZDllYWI0MTFkYzIy
 
