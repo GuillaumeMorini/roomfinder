@@ -1,22 +1,39 @@
 pipeline:
-  build:
-    image: python:2-alpine
-    commands:
-      - echo "Beginning new build"
-      - pip install -r roomfinder_spark/requirements.txt
-      - python testing.py
-  publish:
-    image: plugins/docker
-    repo: guismo/roomfinder_spark
-    dockerfile: roomfinder_spark/Dockerfile
-    context: roomfinder_spark
-    tag: [ latest ]
-    secrets: [ docker_username, docker_password ]
-    when:
-      branch: dev
-      event: push
-  notify:
-    image: guismo/drone-spark:latest
-    auth_token: ZTE2NjRiN2YtOTdjMy00M2RlLTk2NjQtNTE3NWZhZjU5ZmY5YmY3MTM5MDAtY2Zi
-    roomId: Y2lzY29zcGFyazovL3VzL1JPT00vNGZhZDViMTAtNWMxMS0xMWU3LThkNzMtZDllYWI0MTFkYzIy
+#  build:
+#    image: python:2-alpine
+#    commands:
+#      - echo "Beginning new build"
+#      - pip install -r roomfinder_spark/requirements.txt
+#      - python testing.py
+#  publish:
+#    image: plugins/docker
+#    repo: guismo/roomfinder_spark
+#    dockerfile: roomfinder_spark/Dockerfile
+#    context: roomfinder_spark
+#    tag: [ latest ]
+#    secrets: [ docker_username, docker_password ]
+#    when:
+#      branch: dev
+#      event: push
+#  notify:
+#    image: guismo/drone-spark:latest
+#    auth_token: ZTE2NjRiN2YtOTdjMy00M2RlLTk2NjQtNTE3NWZhZjU5ZmY5YmY3MTM5MDAtY2Zi
+#    roomId: Y2lzY29zcGFyazovL3VzL1JPT00vNGZhZDViMTAtNWMxMS0xMWU3LThkNzMtZDllYWI0MTFkYzIy
+#  ssh:
+#    image: appleboy/drone-ssh
+#    host: www.guismo.fr.eu.org
+#    username: root
+#    port: 22
+#    secrets: [ ssh_key ]
+#    #key: @/root/.ssh/id_rsa
+#    script:
+#      - cd /root/roomfinder-dev/roomfinder_spark/
+#      - ./launch_docker.sh
 
+  docker:
+    image: docker
+    secrets: [ docker_username, ssh_key ]
+    commands:
+     - env
+     - echo $DOCKER_USERNAME
+     - echo $SSH_KEY
