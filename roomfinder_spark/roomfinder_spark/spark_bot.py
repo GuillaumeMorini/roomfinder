@@ -242,6 +242,8 @@ def process_webhook():
         reply += "* **parking** keyword will display the available spots inside Cisco **ILM parking**.\n"
         reply += "* **add** keyword followed by an email will create a room between the bot and this email.\n"
         reply += "* **help** or **aide** will display a helping message to the Spark room.\n"
+        reply += "\nAll the the bot request are documented here in [EN](https://cisco.jiveon.com/docs/DOC-1766766) and [FR](https://cisco.jiveon.com/docs/DOC-1765746).\n"
+        reply += "Do not hesitate to help us improve RoomFinder by joining the [RoomFinder Support Space](http://incis.co/VNDI)\n"
         if post_data['data']['personEmail'] in admin_list :
             reply += "* **/stats/** keyword will display the statistics of Roomfinder Cisco Spark Bot.\n"
             reply += "* **/advertise/** keyword, followed by a message, will display this message for all users of Roomfinder Cisco Spark Bot.\n"
