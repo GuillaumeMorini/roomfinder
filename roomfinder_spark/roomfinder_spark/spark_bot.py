@@ -83,7 +83,7 @@ def stats(user,roomid):
 
 #REMOVE USER FROM THE ADVERTISING
 def optout(user):
-    f = open("ILM-RoomFinder-Bot.log","r+")
+    f = open(log_dir+"ILM-RoomFinder-Bot.log","r+")
     d = f.readlines()
     f.seek(0)
     for i in d:
