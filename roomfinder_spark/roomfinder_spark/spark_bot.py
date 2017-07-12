@@ -244,25 +244,25 @@ def process_webhook():
             for result in titi:
                 reply += "* %s\n" % (result)
                 #sys.stderr.write("Salle: "+result+"\n")
-            reply += "\nYou can book one of the rooms with the keyword : **book ROOM-NAME [duration]**"
+            reply += "\nYou can book one of the rooms with the keyword : **book ROOM-NAME [30m - 1h]**"
         else:
-            reply = "Sorry, there is currently no available rooms"+reply+"\n"
+            reply = "Sorry, there are currently no available rooms"+reply+"\n"
     # Check if message contains word "options" and if so send options
     elif text.lower() in ["options","help","aide","?","/help","hello","hi"] :
         reply = "Here are the keywords you can use: \n"
-        reply += "* **dispo** or **available** keyword will display the available rooms for the next 2 hours timeslot. For other buildings than ILM, you will have to add the prefix of your building, like **available SJC14-**\n"
+        reply += "* 📅 **dispo** or **available** keyword will display the available rooms for the next 2 hours timeslot. For other buildings than ILM, you will have to add the prefix of your building, like **available SJC14-**\n"
         reply += "* **reserve** or **book** keyword will try to book, by default for the next 2 hours, the room mentionned after the keyword **book** or **reserve**. You can specify the duration of the meeting with the option 30m or 1h.\n"
-        reply += "* **plan** or **map** keyword will display the map of the floor in **ILM building** mentionned after the keyword **plan** or **map**.\n"
-        reply += "* **cherche** or **find** keyword will help you to find the floor of a room mentionned by its short name after the keyword.\n"
-        reply += "* **in** or **inside** keyword will display a picture inside the room mentionned after the keyword in **ILM building**.\n"
+        reply += "* 🗺 **plan** or **map** keyword will display the map of the floor in **ILM building** mentionned after the keyword **plan** or **map**.\n"
+        reply += "* 🕵 **cherche** or **find** keyword will help you to find the floor of a room mentionned by its short name after the keyword.\n"
+        reply += "* 🏙 **in** or **inside** keyword will display a picture inside the room mentionned after the keyword in **ILM building**.\n"
         reply += "* **dir** keyword will display the directory entry for the CCO id mentionned after the keyword **dir**.\n"
-        reply += "* [disabled] **guest** keyword will create a guest wifi account for an attendee. You should specify after the keyword **guest** the attendee first name, last name and email, like **guest** john doe jdoe@email.com.\n"
-        reply += "* **parking** keyword will display the available spots inside Cisco **ILM parking**.\n"
+        reply += "* ⛔ [disabled] **guest** keyword will create a guest wifi account for an attendee. You should specify after the keyword **guest** the attendee first name, last name and email, like **guest** john doe jdoe@email.com.\n"
+        reply += "* 🚗 **parking** keyword will display the available spots inside Cisco **ILM parking**.\n"
         reply += "* **add** keyword followed by an email will create a room between the bot and this email.\n"
-        reply += "* [new] **optout** or **bye** keyword will remove you from the list of users. You will no longer receive ads until you send me a new request.\n"        
+        reply += "* [new] 👋 **optout** or **bye** keyword will remove you from the list of users. You will no longer receive ads until you send me a new request.\n"        
         reply += "* **help** or **aide** will display a helping message to the Spark room.\n"
         reply += "\nAll the the bot request are documented in [EN](https://cisco.jiveon.com/docs/DOC-1766766) and [FR](https://cisco.jiveon.com/docs/DOC-1765746). \r\n"
-        reply += "Do not hesitate to help us improve RoomFinder by joining the [RoomFinder Support Space](http://incis.co/VNDI)\n"
+        reply += "\nDo not hesitate to help us improve RoomFinder by joining the [RoomFinder Support Space](http://incis.co/VNDI)\n"
         if post_data['data']['personEmail'] in admin_list :
             reply += "* **/stats/** keyword will display the statistics of Roomfinder Cisco Spark Bot.\n"
             reply += "* **/advertise/** keyword, followed by a message, will display this message for all users of Roomfinder Cisco Spark Bot.\n"
