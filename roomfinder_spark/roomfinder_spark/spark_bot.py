@@ -161,7 +161,8 @@ def process_webhook():
     message = get_message(message_id)
     print("message: "+str(message))
     reply=None
-
+    removed = False
+    
     # First make sure not processing a message from the bot
     if post_data['data']["personEmail"] == bot_email:
         return ""
@@ -419,6 +420,7 @@ def process_webhook():
     elif text.lower() == "optout" or text.lower().startswith('bye') or text.lower().startswith('quit'):
             reply = "##Bye bye" + post_data['data']['personEmail'] + ", I am removing you from the list of users. ##"
             optout(post_data['data']['personEmail'])
+            removed = True
     elif text.lower().startswith("/advertise/"):
         if post_data['data']['personEmail'] in admin_list :
             if "html" in message:
@@ -436,10 +438,13 @@ def process_webhook():
         reply="Command not found ! Type help to have the list of existing commands !"
     sys.stderr.write("reply: "+str(reply)+"\n")
     if reply != "":
-        stats(post_data['data']['personEmail'],post_data['data']['roomId'])
+        if not removed :
+            stats(post_data['data']['personEmail'],post_data['data']['roomId'])
         log(post_data['data']['personEmail']+" - " +post_data['data']['roomId'],str(text),reply)
         send_message_to_room(post_data["data"]["roomId"], reply,message_type)
         log_message_to_room(log_room_id, post_data['data']['personEmail'], text, reply,message_type)
+
+
     return ""
 
 def getDisplayName(id):
