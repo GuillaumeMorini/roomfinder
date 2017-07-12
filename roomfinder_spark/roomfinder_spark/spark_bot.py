@@ -232,7 +232,8 @@ def process_webhook():
 #                reply = ", with more than "+str(inf)+" and less than "+str(sup)+" seats, "+start+" "+end
                 reply = ", with more than "+str(inf)+" and less than "+str(sup)+" seats in the next 2 hours"               
         else:
-            reply = " "+start+" "+end
+#            reply = " "+start+" "+end
+            reply = " in the next 2 hours"
             filtered_results=toto
 
         titi=list(filtered_results)
@@ -243,6 +244,7 @@ def process_webhook():
             for result in titi:
                 reply += "* %s\n" % (result)
                 #sys.stderr.write("Salle: "+result+"\n")
+            reply += "\nYou can book one of the rooms with the keyword : **book ROOM-NAME [duration]**"
         else:
             reply = "Sorry, there is currently no available rooms"+reply+"\n"
     # Check if message contains word "options" and if so send options
@@ -260,7 +262,7 @@ def process_webhook():
         reply += "* [new] **optout** or **bye** keyword will remove you from the list of users. You will no longer receive ads until you send me a new request.\n"        
         reply += "* **help** or **aide** will display a helping message to the Spark room.\n"
         reply += "\nAll the the bot request are documented in [EN](https://cisco.jiveon.com/docs/DOC-1766766) and [FR](https://cisco.jiveon.com/docs/DOC-1765746). \r\n"
-        reply += "\nDo not hesitate to help us improve RoomFinder by joining the [RoomFinder Support Space](http://incis.co/VNDI)\n"
+        reply += "Do not hesitate to help us improve RoomFinder by joining the [RoomFinder Support Space](http://incis.co/VNDI)\n"
         if post_data['data']['personEmail'] in admin_list :
             reply += "* **/stats/** keyword will display the statistics of Roomfinder Cisco Spark Bot.\n"
             reply += "* **/advertise/** keyword, followed by a message, will display this message for all users of Roomfinder Cisco Spark Bot.\n"
