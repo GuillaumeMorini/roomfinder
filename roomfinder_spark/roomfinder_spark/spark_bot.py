@@ -230,13 +230,14 @@ def process_webhook():
                 sys.stderr.write("filtered_results: "+str(filtered_results)+"\n")
                 reply = ", with more than "+str(inf)+" and less than "+str(sup)+" seats, "+start+" "+end
         else:
-            reply = " "+start+" "+end + "-" + end
+            reply = " "+start+" "+end
             filtered_results=toto
 
         titi=list(filtered_results)
         # Test if filtered result list is empty or not
         if titi:
-            reply = "The current available rooms"+reply+" are:\n"
+#            reply = "The current available rooms"+reply+" are:\n"
+            reply = "The current available rooms in the next 2 hours are:\n"
             for result in titi:
                 reply += "* %s\n" % (result)
                 #sys.stderr.write("Salle: "+result+"\n")
@@ -256,8 +257,8 @@ def process_webhook():
         reply += "* **add** keyword followed by an email will create a room between the bot and this email.\n"
         reply += "* [new] **optout** or **bye** keyword will remove you from the list of users. You will no longer receive ads until you send me a new request.\n"        
         reply += "* **help** or **aide** will display a helping message to the Spark room.\n"
-        reply += "All the the bot request are documented in [EN](https://cisco.jiveon.com/docs/DOC-1766766) and [FR](https://cisco.jiveon.com/docs/DOC-1765746). \r\n"
-        reply += "Do not hesitate to help us improve RoomFinder by joining the [RoomFinder Support Space](http://incis.co/VNDI)\n"
+        reply += "\nAll the the bot request are documented in [EN](https://cisco.jiveon.com/docs/DOC-1766766) and [FR](https://cisco.jiveon.com/docs/DOC-1765746). \r\n"
+        reply += "\nDo not hesitate to help us improve RoomFinder by joining the [RoomFinder Support Space](http://incis.co/VNDI)\n"
         if post_data['data']['personEmail'] in admin_list :
             reply += "* **/stats/** keyword will display the statistics of Roomfinder Cisco Spark Bot.\n"
             reply += "* **/advertise/** keyword, followed by a message, will display this message for all users of Roomfinder Cisco Spark Bot.\n"
