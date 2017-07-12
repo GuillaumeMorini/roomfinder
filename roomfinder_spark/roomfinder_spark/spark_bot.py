@@ -222,13 +222,15 @@ def process_webhook():
                 inf = int(number[0])
                 filtered_results=[result for result in toto if int(result.split('(')[1].split(')')[0])>=inf]
                 sys.stderr.write("filtered_results: "+str(filtered_results)+"\n")
-                reply = ", with more than "+str(inf)+" seats, "+start+" "+end
+#                reply = ", with more than "+str(inf)+" seats, "+start+" "+end
+                reply = ", with more than "+str(inf)+" seats, int the next 2 hours"
             else:
                 inf = int(number[0])
                 sup = int(number[1])
                 filtered_results=[result for result in toto if int(result.split('(')[1].split(')')[0])>=inf and int(result.split('(')[1].split(')')[0])<=sup]
                 sys.stderr.write("filtered_results: "+str(filtered_results)+"\n")
-                reply = ", with more than "+str(inf)+" and less than "+str(sup)+" seats, "+start+" "+end
+#                reply = ", with more than "+str(inf)+" and less than "+str(sup)+" seats, "+start+" "+end
+                reply = ", with more than "+str(inf)+" and less than "+str(sup)+" seats in the next 2 hours"               
         else:
             reply = " "+start+" "+end
             filtered_results=toto
@@ -236,8 +238,8 @@ def process_webhook():
         titi=list(filtered_results)
         # Test if filtered result list is empty or not
         if titi:
-#            reply = "The current available rooms"+reply+" are:\n"
-            reply = "The current available rooms in the next 2 hours are:\n"
+            reply = "The current available rooms"+reply+" are:\n"
+
             for result in titi:
                 reply += "* %s\n" % (result)
                 #sys.stderr.write("Salle: "+result+"\n")
