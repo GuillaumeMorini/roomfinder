@@ -81,6 +81,18 @@ def stats(user,roomid):
     logfile.close()
     return False
 
+#REMOVE USER FROM THE ADVERTISING
+def optout(user)
+    f = open("ILM-RoomFinder-Bot.log","r+")
+    d = f.readlines()
+    f.seek(0)
+    for i in d:
+        if (i.startswith(user) == 0) :
+            f.write(i)
+    f.truncate()
+    f.close()
+    return False
+
 def log(user, request, response):
     f = open(log_dir+user +'.log', 'a+')
     f.write("\r\n" + datetime.datetime.now().replace(microsecond=0).isoformat() + " - " + str(request) + " - " + str(response) + "\r\n")
@@ -404,6 +416,9 @@ def process_webhook():
             reply=readstats()
         else:
             reply = "##You have no admin rights to view stats##"
+    elif text.lower() == "optout" or text.lower().startswith('bye') or text.lower().startswith('quit'):
+            reply = "##Bye bye, I am removing you from the list of users. ##"
+            optout(post_data['data']['personEmail'])
     elif text.lower().startswith("/advertise/"):
         if post_data['data']['personEmail'] in admin_list :
             if "html" in message:
