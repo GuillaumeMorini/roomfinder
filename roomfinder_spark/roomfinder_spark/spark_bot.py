@@ -22,6 +22,11 @@
     export roomfinder_spark_bot_url=http://public_ip_or_name:5000
 '''
 
+import sys  
+
+reload(sys)  
+sys.setdefaultencoding('utf8')
+
 __author__ = 'gmorini@cisco.com'
 
 from flask import Flask, request, Response
