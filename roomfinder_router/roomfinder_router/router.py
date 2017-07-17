@@ -1,10 +1,5 @@
 #!/usr/bin/env python2.7
 
-import sys  
-
-reload(sys)  
-sys.setdefaultencoding('utf8')
-
 import pika, os, sys, json, requests, datetime
 import base64, urllib, unicodedata, re
 
@@ -203,8 +198,8 @@ def on_request(ch, method, props, body):
         cco= request_data["cco"]
         sys.stderr.write("Request directory entry in %s for %s\n" % (str(dir_server.encode('utf-8')), str(cco.encode('utf-8'))))  
         print "dir_server: "+dir_server
-        txt=find_dir(cco).encode('utf-8')
-        sys.stderr.write("txt: {}\n".format(txt))
+        txt=find_dir(cco).decode('utf-8')
+        sys.stderr.write("txt: {}\n".format(txt.encode('utf-8')))
     elif cmd == "map":
         floor = request_data["floor"]
         sys.stderr.write("Request map for %s\n" % str(floor.encode('utf-8')) )  
@@ -237,7 +232,7 @@ def on_request(ch, method, props, body):
                      routing_key=props.reply_to,
                      properties=pika.BasicProperties(correlation_id = \
                                                          props.correlation_id),
-                     body=str(txt))
+                     body=txt)
     ch.basic_ack(delivery_tag = method.delivery_tag)
     return txt
 
