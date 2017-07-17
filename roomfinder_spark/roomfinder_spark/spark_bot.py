@@ -422,7 +422,7 @@ def process_webhook():
         stats(post_data['data']['personEmail'],post_data['data']['roomId'])
         log(post_data['data']['personEmail']+" - " +post_data['data']['roomId'],str(text),reply)
         send_message_to_room(post_data["data"]["roomId"], reply,message_type)
-        log_message_to_room(log_room_id, post_data['data']['personEmail'], str(text), reply,message_type)
+        log_message_to_room(log_room_id, post_data['data']['personEmail'], str(text), str(reply),message_type)
     return ""
 
 def getDisplayName(id):
