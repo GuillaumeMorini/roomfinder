@@ -635,7 +635,7 @@ def log_message_to_room(room_id, author, message, message_reply,message_type="te
     if message_type == "text":
         message_body = {
             "roomId" : room_id,
-            "markdown" : "Author: "+author+" <br> Request: "+message+" <br> Reply: "+message_reply
+            "markdown" : "Author: "+author+" <br> Request: "+message+" <br> Reply: "+message_reply.decode('utf-8')
         }
     elif message_type == "image":
         message_body = {
