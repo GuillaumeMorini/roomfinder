@@ -1,0 +1,23 @@
+version: '3'
+
+services:
+  map:
+    image: map
+    env_file: .env
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 2
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+      labels:
+        - "traefik.backend=map"
+        - "traefik.frontend.rule=Host:map.cisco.com"
+        - "traefik.port=5000"
+    networks: 
+      - roomfinder-network
+
+networks:  
+  roomfinder-network:
+    external: true
