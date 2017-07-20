@@ -141,7 +141,10 @@ def dispo():
     end=None
     if "end" in j:
         end=str(j["end"])
-    return dispo_building(key,start,end)
+    else:
+        end=(datetime.datetime.strptime(start, "%Y-%m-%dT%H:%M:%S" )+datetime.timedelta(hours=2)).isoformat()
+    sys.stderr.write("start: "+str(start)+" end: "+str(end)+"\n")
+    return dispo_building(key,datetime.datetime.strptime(start, "%Y-%m-%dT%H:%M:%S" ),datetime.datetime.strptime(end, "%Y-%m-%dT%H:%M:%S" ))
 
 @app.route('/where', methods=['POST'])
 def where():

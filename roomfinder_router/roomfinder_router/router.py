@@ -193,17 +193,17 @@ def on_request(ch, method, props, body):
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
     	page = requests.post(book_server+'/book',data = json.dumps(request_data),headers=headers)
         txt=page.text
-        sys.stderr.write("txt: {}\n".format(txt))    
+        sys.stderr.write("txt: {}\n".format(txt.encode('utf-8')))
     elif cmd == "dir":
         cco= request_data["cco"]
         sys.stderr.write("Request directory entry in %s for %s\n" % (str(dir_server.encode('utf-8')), str(cco.encode('utf-8'))))  
         print "dir_server: "+dir_server
-        txt=find_dir(cco)
-        sys.stderr.write("txt: {}\n".format(txt))
+        txt=find_dir(cco).decode('utf-8')
+        sys.stderr.write("txt: {}\n".format(txt.encode('utf-8')))
     elif cmd == "map":
         floor = request_data["floor"]
         sys.stderr.write("Request map for %s\n" % str(floor.encode('utf-8')) )  
-        txt=map(floor)
+        txt=map(floor).encode('utf-8')
         sys.stderr.write("txt: {}\n".format(txt))
     elif cmd == "sr":
         pass
@@ -211,13 +211,13 @@ def on_request(ch, method, props, body):
         sys.stderr.write("Request dispo of a room to %s\n" % book_server)  
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
         page = requests.post(book_server+'/dispo',data = json.dumps(request_data),headers=headers)
-        txt=page.text
+        txt=page.text.encode('utf-8')
         sys.stderr.write("txt: {}\n".format(txt))
     elif cmd == "where":
         sys.stderr.write("Request where is a room to %s\n" % book_server)  
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
         page = requests.post(book_server+'/where',data = json.dumps(request_data),headers=headers)
-        txt=page.text
+        txt=page.text.encode('utf-8')
         sys.stderr.write("txt: {}\n".format(txt))
     elif cmd == "guest":
         sys.stderr.write("Request for a guest account creation\n")  
@@ -225,14 +225,14 @@ def on_request(ch, method, props, body):
         lastName= request_data["lastName"]
         email= request_data["email"]
         sys.stderr.write("Request guest account for %s %s <%s>\n" % (firstName.encode('utf-8'), lastName.encode('utf-8'), email.encode('utf-8')) )  
-        txt=guest(firstName,lastName,email)
+        txt=guest(firstName,lastName,email).encode('utf-8')
         sys.stderr.write("txt: {}\n".format(txt))
 
     ch.basic_publish(exchange='',
                      routing_key=props.reply_to,
                      properties=pika.BasicProperties(correlation_id = \
                                                          props.correlation_id),
-                     body=str(txt))
+                     body=txt)
     ch.basic_ack(delivery_tag = method.delivery_tag)
     return txt
 
@@ -304,7 +304,7 @@ if __name__ == '__main__':
 
     sys.stderr.write("Connecting to "+rabbitmq+" on port "+rabbitmq_port+"\n")
     connection = pika.BlockingConnection(pika.ConnectionParameters(
-        host="localhost" ))
+        host="localhost", port=5672 ))
     channel = connection.channel()
     channel.queue_declare(queue='rpc_queue')
     channel.basic_qos(prefetch_count=1)
