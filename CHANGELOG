@@ -1,11 +1,12 @@
+v1.3
+ - add guest feature
+ - work on book in advance
 
 v1.2
  - add flickr search for image keyword in Cisco Spark room
  - add directory integration for cco search in Cisco Spark room
 
-
 v1.1
-
  - add possibility to sort the list of room in web
  - add no rooms available message on Spark on filtered results (between 10 and 20 seats)
  - add a link to Spark room on web site

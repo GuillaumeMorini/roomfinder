@@ -81,6 +81,18 @@ def stats(user,roomid):
     logfile.close()
     return False
 
+#REMOVE USER FROM THE ADVERTISING
+def optout(user):
+    f = open(log_dir+"ILM-RoomFinder-Bot.log","r+")
+    d = f.readlines()
+    f.seek(0)
+    for i in d:
+        if (i.startswith(user) == 0) :
+            f.write(i)
+    f.truncate()
+    f.close()
+    return False
+
 def log(user, request, response):
     f = open(log_dir+user +'.log', 'a+')
     f.write("\r\n" + datetime.datetime.now().replace(microsecond=0).isoformat() + " - " + str(request) + " - " + str(response) + "\r\n")
@@ -149,6 +161,7 @@ def process_webhook():
     message = get_message(message_id)
     print("message: "+str(message))
     reply=None
+    removed = False
 
     # First make sure not processing a message from the bot
     if post_data['data']["personEmail"] == bot_email:
@@ -209,26 +222,31 @@ def process_webhook():
                 inf = int(number[0])
                 filtered_results=[result for result in toto if int(result.split('(')[1].split(')')[0])>=inf]
                 sys.stderr.write("filtered_results: "+str(filtered_results)+"\n")
-                reply = ", with more than "+str(inf)+" seats, "+start+" "+end
+#                reply = ", with more than "+str(inf)+" seats, "+start+" "+end
+                reply = ", with more than "+str(inf)+" seats, int the next 2 hours"
             else:
                 inf = int(number[0])
                 sup = int(number[1])
                 filtered_results=[result for result in toto if int(result.split('(')[1].split(')')[0])>=inf and int(result.split('(')[1].split(')')[0])<=sup]
                 sys.stderr.write("filtered_results: "+str(filtered_results)+"\n")
-                reply = ", with more than "+str(inf)+" and less than "+str(sup)+" seats, "+start+" "+end
+#                reply = ", with more than "+str(inf)+" and less than "+str(sup)+" seats, "+start+" "+end
+                reply = ", with more than "+str(inf)+" and less than "+str(sup)+" seats in the next 2 hours"               
         else:
-            reply = " "+start+" "+end
+#            reply = " "+start+" "+end
+            reply = " in the next 2 hours"
             filtered_results=toto
 
         titi=list(filtered_results)
         # Test if filtered result list is empty or not
         if titi:
             reply = "The current available rooms"+reply+" are:\n"
+
             for result in titi:
                 reply += "* %s\n" % (result)
                 #sys.stderr.write("Salle: "+result+"\n")
+            reply += "\nYou can book one of the rooms with the keyword : **book ROOM-NAME [option : 30m or 1h]**"
         else:
-            reply = "Sorry, there is currently no available rooms"+reply+"\n"
+            reply = "Sorry, there are currently no available rooms"+reply+"\n"
     # Check if message contains word "options" and if so send options
     elif text.lower() in ["options","help","aide","?","/help","hello","hi"] :
         reply = "Here are the keywords you can use: \n"
@@ -238,10 +256,13 @@ def process_webhook():
         reply += "* **cherche** or **find** keyword will help you to find the floor of a room mentionned by its short name after the keyword.\n"
         reply += "* **in** or **inside** keyword will display a picture inside the room mentionned after the keyword in **ILM building**.\n"
         reply += "* **dir** keyword will display the directory entry for the CCO id mentionned after the keyword **dir**.\n"
-        reply += "* **guest** keyword will create a guest wifi account for an attendee. You should specify after the keyword **guest** the attendee first name, last name and email, like **guest** john doe jdoe@email.com.\n"
+        reply += "* [disabled] **guest** keyword will create a guest wifi account for an attendee. You should specify after the keyword **guest** the attendee first name, last name and email, like **guest** john doe jdoe@email.com.\n"
         reply += "* **parking** keyword will display the available spots inside Cisco **ILM parking**.\n"
         reply += "* **add** keyword followed by an email will create a room between the bot and this email.\n"
+        reply += "* [new] **optout** or **bye** keyword will remove you from the list of users. You will no longer receive ads until you send me a new request.\n"        
         reply += "* **help** or **aide** will display a helping message to the Spark room.\n"
+        reply += "\nAll the the bot request are documented in [EN](https://cisco.jiveon.com/docs/DOC-1766766) and [FR](https://cisco.jiveon.com/docs/DOC-1765746). \r\n"
+        reply += "\nDo not hesitate to help us improve RoomFinder by joining the [RoomFinder Support Space](http://incis.co/VNDI)\n"
         if post_data['data']['personEmail'] in admin_list :
             reply += "* **/stats/** keyword will display the statistics of Roomfinder Cisco Spark Bot.\n"
             reply += "* **/advertise/** keyword, followed by a message, will display this message for all users of Roomfinder Cisco Spark Bot.\n"
@@ -402,6 +423,10 @@ def process_webhook():
             reply=readstats()
         else:
             reply = "##You have no admin rights to view stats##"
+    elif text.lower() == "optout" or text.lower().startswith('bye') or text.lower().startswith('quit'):
+            reply = "##Bye bye " + post_data['data']['personEmail'] + ", I am removing you from the list of users. ##"
+            optout(post_data['data']['personEmail'])
+            removed = True
     elif text.lower().startswith("/advertise/"):
         if post_data['data']['personEmail'] in admin_list :
             if "html" in message:
@@ -419,7 +444,8 @@ def process_webhook():
         reply="Command not found ! Type help to have the list of existing commands !"
     sys.stderr.write("reply: "+str(reply)+"\n")
     if reply != "":
-        stats(post_data['data']['personEmail'],post_data['data']['roomId'])
+        if not removed :
+            stats(post_data['data']['personEmail'],post_data['data']['roomId'])
         log(post_data['data']['personEmail']+" - " +post_data['data']['roomId'],str(text),reply)
         send_message_to_room(post_data["data"]["roomId"], reply,message_type)
         log_message_to_room(log_room_id, post_data['data']['personEmail'], str(text), str(reply),message_type)
