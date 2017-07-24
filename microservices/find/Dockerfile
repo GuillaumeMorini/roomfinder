@@ -1,4 +1,4 @@
-FROM python:2-alpine
+FROM python:alpine
 EXPOSE 5000
 
 # Add current folder as /app
