@@ -1,0 +1,27 @@
+version: '3'
+
+services:
+  dir:
+    image: guismo/rf_dir:latest
+    env_file: ./.env
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 2
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+    ports: 
+     - "5000:80"
+  api:
+    image: guismo/rf_api:latest
+    env_file: ./.env
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 2
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+    ports: 
+     - "5555:80"
