@@ -118,7 +118,7 @@ def find_dir(cco):
             if m.group(1) == cco:
                 u=dir_detail_server+cco
                 r=s.get(u)
-                print(r.text)
+                print(r.text.encode('utf-8'))
                 html = HTMLParser().unescape(r.text)
                 sys.stderr.write("html: "+str(html.encode('utf-8'))+"\n")
                 parsed_html = BeautifulSoup(html)

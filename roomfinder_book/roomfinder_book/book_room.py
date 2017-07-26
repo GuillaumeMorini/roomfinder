@@ -11,6 +11,7 @@ from requests_ntlm import HttpNtlmAuth
 from threading import Thread
 from Queue import Queue
 import argparse
+import unidecode
 
 def doWork():
     # while True:
@@ -245,7 +246,7 @@ def dispo_building(b,start=None, end=None):
 def book_room(room_name, room_email, user_name, user_email, start_time, end_time):
     xml_template = open("book_room.xml", "r").read()
     xml = Template(xml_template)
-    data = unicode(xml.substitute(starttime=start_time,endtime=end_time,user=user_name,user_email=user_email,room=room_name,room_email=room_email))
+    data = unicode(xml.substitute(starttime=start_time,endtime=end_time,user=unidecode.unidecode(unicode(user_name.replace("\'",""))),user_email=user_email,room=room_name,room_email=room_email))
     header = "\"content-type: text/xml;charset=utf-8\""
     command = "curl --silent --header " + header +" --data '" + data + "' --ntlm "+ "-u "+ user+":"+password+" "+ url
     response = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True).communicate()[0]
