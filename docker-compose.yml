@@ -12,7 +12,7 @@ services:
       restart_policy:
         condition: on-failure
     ports: 
-     - "5000:80"
+     - "5001:80"
   api:
     image: guismo/rf_api:latest
     env_file: ./.env
@@ -25,3 +25,18 @@ services:
         condition: on-failure
     ports: 
      - "5555:80"
+  spark:
+    image: guismo/rf_spark:latest
+    env_file: ./.env
+    deploy:
+      replicas: 1
+      update_config:
+        parallelism: 2
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+    ports: 
+     - "5002:5000"
+    volumes:
+     - ./log:/log
+

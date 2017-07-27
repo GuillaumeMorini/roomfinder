@@ -1,0 +1,8 @@
+ArgumentParser
+flask
+requests
+requests-toolbelt
+lnetatmo
+pika
+uuid
+urllib3

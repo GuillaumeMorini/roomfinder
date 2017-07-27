@@ -30,11 +30,10 @@ def api(cmd):
     post_data = request.get_json()
     sys.stderr.write('Message: '+str(post_data)+'\n')
     page = requests.post(URL, headers = headers, json=post_data)
-    txt=page.text.replace("'",'"').replace('u"','"')
-    sys.stderr.write('Reply: '+str(txt)+'\n')
-    reply=json.loads(txt)
+    sys.stderr.write('Reply: '+str(page)+'\n')
+    reply=page.json()
     sys.stderr.write('Reply JSON: '+str(reply)+'\n')
-    return str(reply)
+    return json.dumps(reply).replace("\'","\"")
   else:
     abort(404)
 
