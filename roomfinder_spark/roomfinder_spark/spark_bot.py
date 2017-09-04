@@ -172,7 +172,7 @@ def process_webhook():
     #     sys.stderr.write("markdown: "+str(message["markdown"].encode('utf-8'))+"\n")
     # if "html" in message:
     #     sys.stderr.write("html: "+str(message["html"].encode('utf-8'))+"\n")
-    text=message["text"].lstrip().encode("utf-8")
+    text=message["text"].replace('@Roomfinder','').lstrip().rstrip().lower().encode("utf-8")
 
     # If someone is mentioned, do not answer
     if 'mentionedPeople' in message:
@@ -194,23 +194,24 @@ def process_webhook():
     sys.stderr.write("Incoming Room Message\tmessage: "+text+"\t")
 
     # Check if message contains word "dispo" and if so send results
-    if text.lower().startswith("dispo") or text.lower().startswith("available"):
+    if text.startswith("dispo") or text.startswith("available"):
         buildings = re.findall(r' [a-zA-Z][a-zA-Z0-9\-]+', text)
         sys.stderr.write('Building founds: '+str(len(buildings))+"\n")
         for b in buildings:
             sys.stderr.write(' - '+str(b)+"\n")
-        if len(buildings) > 0 :
-            building=buildings[0][1:]
-            u = dispo_server + "/dispo?key="+str(building)
-            page = requests.get(u, headers = app_headers, verify=False)
-            tally = page.json()
-            sys.stderr.write("Tally: "+str(tally)+"\n")
-            #tally = sorted(tally.items(), key = lambda (k,v): v, reverse=True)
-            results=(i[1] for i in tally[1] if i[0]=="Free")
-            start = " in building "+str(building)+" "+tally[0][2]
-            end = tally[0][3]
-        else:
-            start, end, results = get_available()
+        if len(buildings) == 0 :
+            buildings=[" ILM-"]
+
+        building=buildings[0][1:]
+        u = dispo_server + "/dispo?key="+str(building)
+        page = requests.get(u, headers = app_headers)
+        tally = page.json()
+        sys.stderr.write("Tally: "+str(tally)+"\n")
+        #tally = sorted(tally.items(), key = lambda (k,v): v, reverse=True)
+        results=(i[1] for i in tally[1] if i[0]=="Free")
+        start = " in building "+str(building)+" "+tally[0][2]
+        end = tally[0][3]
+
         number = re.findall(r' [0-9]+', text)
         print "number: "+str(number)
         toto=list(results)
@@ -244,11 +245,11 @@ def process_webhook():
             for result in titi:
                 reply += "* %s\n" % (result)
                 #sys.stderr.write("Salle: "+result+"\n")
-            reply += "\nYou can book one of the rooms with the keyword : **book ROOM-NAME [option : 30m or 1h]**"
+            reply += "\nYou can book one of the rooms with the keyword : **book ROOM-NAME [option: 30m or 1h]**"
         else:
             reply = "Sorry, there are currently no available rooms"+reply+"\n"
     # Check if message contains word "options" and if so send options
-    elif text.lower() in ["options","help","aide","?","/help","hello","hi"] :
+    elif text in ["options","help","aide","?","/help","hello","hi"] :
         reply = "Here are the keywords you can use: \n"
         reply += "* **dispo** or **available** keyword will display the available rooms for the next 2 hours timeslot. For other buildings than ILM, you will have to add the prefix of your building, like **available SJC14-**\n"
         reply += "* **reserve** or **book** keyword will try to book, by default for the next 2 hours, the room mentionned after the keyword **book** or **reserve**. You can specify the duration of the meeting with the option 30m or 1h.\n"
@@ -268,7 +269,7 @@ def process_webhook():
             reply += "* **/advertise/** keyword, followed by a message, will display this message for all users of Roomfinder Cisco Spark Bot.\n"
         message_type="text"
     # Check if message contains phrase "add email" and if so add user to room
-    elif text.lower().startswith("add "):
+    elif text.startswith("add "):
         # Get the email that comes
         emails = re.findall(r' [\w\.-]+@[\w\.-]+', text)
         pprint(emails)
@@ -276,16 +277,22 @@ def process_webhook():
         for email in emails:
             send_welcome_message(email)
             reply += "  - %s \n" % (email)
-    elif text.lower().startswith("dir "):
-        # Find the cco id
-        cco=text.lower().replace('dir ','')
-        reply = find_dir(cco)
-        print "find_dir: "+str(reply)
-        if type(reply) != str and type(reply) != unicode:
-            message_type="localfine"
-    elif text.lower().startswith("guest"):
+    elif text.startswith("dir"):
+        if text.rstrip() == "dir" :
+            reply  = "Usage of dir command is: \n"
+            reply += "\t\tdir cco_id \n"
+            reply += "\tor \n"
+            reply += "\t\tdir firstname lastname \n"
+        else:
+            # Find the cco id
+            cco=text.replace('dir ','')
+            reply = find_dir(cco)
+            print "find_dir: "+str(reply)
+            if type(reply) != str and type(reply) != unicode:
+                message_type="localfine"
+    elif text.startswith("guest"):
         if post_data['data']['personEmail'] in admin_list :
-            if text.lower() not in ["guest"]:
+            if text not in ["guest"]:
                 # Find the 
                 args=text.split()
                 if len(args) == 4:
@@ -299,10 +306,10 @@ def process_webhook():
                 reply += "\tguest firstName lastName email\n"
         else:
             reply = "## We have been asked by Infosec to shutdown the Guest feature. We are working with them to find a way to restore this succesfull service. ##"
-    elif text.lower().startswith("find ") or text.lower().startswith("cherche "):
+    elif text.startswith("find ") or text.startswith("cherche "):
         # Find the room
-        room=text.lower().replace('find ','')
-        room=room.lower().replace('cherche ','')
+        room=text.replace('find ','')
+        room=room.replace('cherche ','')
         reply = where_room(room.upper())
         print "where_room: "+str(reply)
         if not reply.startswith("Sorry"):
@@ -325,7 +332,7 @@ def process_webhook():
                 message_type="text"
         else:
             message_type="text"
-    elif text.lower().startswith("image "):
+    elif text.startswith("image "):
         # Find the cco id
         keyword_list = re.findall(r'[\w-]+', text)
         print "keyword_list= "+str(keyword_list)
@@ -337,17 +344,17 @@ def process_webhook():
         print "find_image: "+reply
         if reply.startswith('http'):
             message_type="image"
-    elif text.lower().startswith("plan") or text.lower().startswith("map"):
+    elif text.startswith("plan") or text.startswith("map"):
         # Find the floor
-        if text.lower() in ["plan","map"]:
+        if text in ["plan","map"]:
             reply = "Usage of map/plan command is:\n"
             reply += "\tmap/plan command followed by floor name like:\n"
             reply += "\t\tmap SJC05-3\n"        
             reply += "\t\t\tor\n"        
             reply += "\t\tplan ILM-7\n"        
         else:
-            floor=text.lower().replace('map ','')
-            floor=floor.lower().replace('plan ','')
+            floor=text.replace('map ','')
+            floor=floor.replace('plan ','')
             pattern = re.compile("^([0-7]+)$")
             m = pattern.match(floor)
             sys.stderr.write("display_map: "+floor+"\n")
@@ -355,18 +362,25 @@ def process_webhook():
                 # Map and number => ILM
                 floor='ILM-'+m.group()
                 reply = display_map(floor.upper())
-                #message_type="pdf"
+                message_type="pdf"
             else:
                 pattern2 = re.compile("^([a-z0-9 ]+\-[0-9]+)$")
                 m2 = pattern2.match(floor)
                 if m2:
                     floor=m2.group()
                     reply = display_map(floor.upper())
-                    #message_type="pdf"
+                    if reply != "Connection error to map server":
+                        message_type="pdf"
                 else:
-                    reply = "No floor is corresponding. Try **map/plan floor_name** or **map/plan floor_name** \n<br>\n <blockquote> with floor_name like ILM-3 or SJC13-3 </blockquote>"
-    elif text.lower().startswith("book") or text.lower().startswith("reserve"):
-        if text.lower() in ["book","reserve"]:
+                    t=floor.split("-")
+                    if len(t) == 3 :
+                        reply = display_map((t[0]+"-"+t[1]).upper())
+                        if reply != "Connection error to map server":
+                            message_type="pdf"
+                    else:
+                        reply = "No floor is corresponding. Try **map/plan floor_name** or **map/plan floor_name** \n<br>\n <blockquote> with floor_name like ILM-3 or SJC13-3 </blockquote>"
+    elif text.startswith("book") or text.startswith("reserve"):
+        if text in ["book","reserve"]:
             reply = "Usage of book/reserve command is:\n"
             reply += "\tbook/reserve command followed by room name like:\n"
             reply += "\t\t reserve ILM-7-HUGO\n"        
@@ -375,18 +389,18 @@ def process_webhook():
         else:      
             # Find the room name
             end = len(text)
-            if text.lower().startswith("book "):
+            if text.startswith("book "):
                 start = len('book ')
-            elif text.lower().startswith("reserve "):
+            elif text.startswith("reserve "):
                 start = len('reserve ')
             else:
                 sys.stderr.write("I don't know how you arrive here ! This is a bug !\n")    
             room_name=text[start:end]
             sys.stderr.write("room_name= "+str(room_name)+"\n")
-            reply = book_room(room_name.upper(),post_data['data']["personEmail"].lower(),getDisplayName(post_data['data']["personId"]))
+            reply = book_room(room_name.upper(),post_data['data']["personEmail"],getDisplayName(post_data['data']["personId"]))
             sys.stderr.write("book_room: "+reply+"\n")
-    elif text.lower().startswith('in') or text.lower().startswith('inside') or text.lower().startswith('interieur'):
-        if text.lower() in ["in","inside","interieur"]:
+    elif text.startswith('in') or text.startswith('inside') or text.startswith('interieur'):
+        if text in ["in","inside","interieur"]:
             reply = "Usage of in/inside/interieur command is:\n"
             reply += "\t in/inside/interieur command followed by room name like:\n"
             reply += "\t\t in ILM-7-HUGO\n"        
@@ -394,14 +408,14 @@ def process_webhook():
             reply += "\t\t inside SJC13-3-SMILE\n"  
         else:      
             inside = text.split()[1].upper()
-            if inside.lower().startswith('ilm') :
+            if inside.startswith('ilm') :
                 reply=display_inside(inside)
                 message_type="image"
             else :
                 reply = "No Inside View. This feature is available only for ILM building."
-    elif text.lower() in ["parking"] :
+    elif text in ["parking"] :
         try:
-            page = requests.get("http://173.38.154.145/parking/getcounter.py", timeout=0.5, verify=False)
+            page = requests.get("http://173.38.154.145/parking/getcounter.py", timeout=0.5)
             result = page.json()
             reply = "Free cars parking: "+str(result["car"]["count"])+" over "+str(result["car"]["total"])+"<br>"
             reply += "Free motorbikes parking: "+str(result["motorbike"]["count"])+" over "+str(result["motorbike"]["total"])+"<br>"
@@ -412,33 +426,33 @@ def process_webhook():
         except socket.timeout as e:
             sys.stderr.write("Timeout or HTTP error code on parking API")
             reply = "Sorry parking information is not available !"
-    elif text.lower().startswith('temp '):
+    elif text.startswith('temp '):
         sonde = text.split()[1].upper()
         if (sonde == "ILM-1-GAUGUIN") :
             reply = netatmoOutdoor(sonde)
         else :
             reply = "No Temperature sensors available in this room"
-    elif text.lower() == "/stats/":
+    elif text == "/stats/":
         if post_data['data']['personEmail'] in admin_list :
             reply=readstats()
         else:
             reply = "##You have no admin rights to view stats##"
-    elif text.lower() == "optout" or text.lower().startswith('bye') or text.lower().startswith('quit'):
+    elif text == "optout" or text.startswith('bye') or text.startswith('quit'):
             reply = "##Bye bye " + post_data['data']['personEmail'] + ", I am removing you from the list of users. ##"
             optout(post_data['data']['personEmail'])
             removed = True
-    elif text.lower().startswith("/advertise/"):
+    elif text.startswith("/advertise/"):
         if post_data['data']['personEmail'] in admin_list :
             if "html" in message:
                 advertise(message["html"].replace("/advertise/","").lstrip().strip(),"html")
             else:
-                advertise(text.replace("/advertise/","").lstrip().strip())
+                advertise(message["text"].replace("/advertise/","").lstrip().strip())
             reply=""
         else :
             reply = "##You have no admin rights to advertise##"
     # If nothing matches, send instructions
     else:
-        # reply=natural_langage_bot(text.lower())
+        # reply=natural_langage_bot(text)
         # if reply == "":
         #     return reply
         reply="Command not found ! Type help to have the list of existing commands !"
@@ -448,12 +462,12 @@ def process_webhook():
             stats(post_data['data']['personEmail'],post_data['data']['roomId'])
         log(post_data['data']['personEmail']+" - " +post_data['data']['roomId'],str(text),reply)
         send_message_to_room(post_data["data"]["roomId"], reply,message_type)
-        log_message_to_room(log_room_id, post_data['data']['personEmail'], str(text), str(reply),message_type)
+        log_message_to_room(log_room_id, post_data['data']['personEmail'], str(text), reply,message_type)
     return ""
 
 def getDisplayName(id):
     spark_u = spark_host + "v1/people/"+id
-    page = requests.get(spark_u, headers = spark_headers, verify=False)
+    page = requests.get(spark_u, headers = spark_headers)
     displayName = page.json()["displayName"]
     return displayName
 
@@ -512,27 +526,16 @@ def book_room(room_name,user_email,user_name):
 
     sys.stderr.write("After removing duration, room:_name is "+room_name+"\n")
 
-    start, end, results = get_available()
-    dispo_list=[r.split(' ')[0] for r in results]
-    if room_name in dispo_list or not room_name.startswith('ILM-'):
-        print "Room booked is available"
+    now = datetime.datetime.now().replace(microsecond=0)
+    starttime = (now - datetime.timedelta(minutes=5)).isoformat()
+    endtime = (now - datetime.timedelta(minutes=5) + datetime.timedelta(hours=duration)).isoformat()
 
-        now = datetime.datetime.now().replace(microsecond=0)
-        starttime = (now - datetime.timedelta(minutes=5)).isoformat()
-        endtime = (now - datetime.timedelta(minutes=5) + datetime.timedelta(hours=duration)).isoformat()
-
-        # page = requests.get(book_server+'/book?starttime='+starttime+'&endtime='+endtime+'&user_name='+user_name+'&user_email'+user_email+'&room_name='+room_name) # find how to send the list of rooms read from previous file
-        # return page.text() # format result
-        # Previous 2 lines should replace next 6 lines
-        data = {  
-            "cmd": "book",         
-            "data": {"starttime": starttime, "endtime": endtime, "user_name": user_name, "user_email": user_email, "room_name": room_name}
-        }    
-        message = json.dumps(data)  
-        return send_message_to_queue(message)
-    else:
-        print "Room booked is not available"
-        return "Room "+str(room_name)+", you are trying to book, is not available !"
+    data = {  
+        "cmd": "book",         
+        "data": {"starttime": starttime, "endtime": endtime, "user_name": user_name, "user_email": user_email, "room_name": room_name}
+    }    
+    message = json.dumps(data)  
+    return send_message_to_queue(message)
 
 def find_dir(cco):
     sys.stderr.write("Beginning process to find someone in the directory and especially this person: "+cco+"\n")
@@ -592,7 +595,7 @@ def display_inside(room):
 
 def find_image(keyword):
     u = "http://api.flickr.com/services/feeds/photos_public.gne?tags="+keyword+"&lang=en-us&format=json"
-    page = requests.get(u, verify=False)
+    page = requests.get(u)
     test=page.text.encode('utf-8').replace('jsonFlickrFeed(','').replace(')','').replace('\\\'','\\\\\'')
     j=json.loads(test)
     if len(j["items"]) > 0 :
@@ -605,7 +608,7 @@ def find_image(keyword):
 # Utilities to interact with the Roomfinder-App Server
 def get_available():
     u = app_server + "/"
-    page = requests.get(u, headers = app_headers, verify=False)
+    page = requests.get(u, headers = app_headers)
     tally = page.json()
     #print "Tally: "+str(tally)
     #tally = sorted(tally.items(), key = lambda (k,v): v, reverse=True)
@@ -622,7 +625,7 @@ def send_welcome_message(email):
         "toPersonEmail" : email,
         "markdown" : "Welcome in a chat room with **RoomFinder**, the 1:1 Bot to help you interact with Cisco Buildings\nType **help** to list the existing commands.\n"
     }
-    page = requests.post(spark_u, headers = spark_headers, json=message_body, verify=False)
+    page = requests.post(spark_u, headers = spark_headers, json=message_body)
     message = page.json()
     return message
 
@@ -646,13 +649,46 @@ def post_localfile(roomId, encoded_photo, text='', html='', markdown='', toPerso
         payload['toPersonEmail'] = toPersonEmail
     m = MultipartEncoder(fields=payload)
     headers = {'Authorization': "Bearer " + spark_token, 'Content-Type': m.content_type}
-    page = requests.request("POST",url=spark_host + "v1/messages", data=m, headers = headers , verify=False)
+    page = requests.request("POST",url=spark_host + "v1/messages", data=m, headers = headers )
     sys.stderr.write( "page: "+str(page)+"\n" )
     message=page.json()
     file_dict = json.loads(page.text)
     file_dict['statuscode'] = str(page.status_code)
     sys.stderr.write( "statuscode: "+str(file_dict['statuscode'])+"\n" )
     sys.stderr.write( "file_dict: "+str(file_dict)+"\n" )
+    handle.close()
+    openfile.close()
+    return message
+
+def post_pdffile(roomId, encoded_file, text='', html='', markdown='', toPersonId='', toPersonEmail=''):
+    filename='/app/output.pdf'
+    with open(filename, 'wb') as handle:
+        handle.write(encoded_file.decode('base64'))    
+    openfile = open(filename, 'rb')
+    filename = ntpath.basename(filename)
+    payload = {'roomId': roomId, 'files': (filename, openfile, 'application/pdf')}
+    #payload = {'roomId': roomId}
+    if text:
+        payload['text'] = text
+    if html:
+        payload['html'] = html
+    if markdown:
+        payload['markdown'] = markdown
+    if toPersonId:
+        payload['toPersonId'] = toPersonId
+    if toPersonEmail:
+        payload['toPersonEmail'] = toPersonEmail
+    m = MultipartEncoder(fields=payload)
+    headers = {'Authorization': "Bearer " + spark_token, 'Content-Type': m.content_type}
+    page = requests.request("POST",url=spark_host + "v1/messages", data=m, headers = headers )
+    sys.stderr.write( "page: "+str(page)+"\n" )
+    message=page.json()
+    file_dict = json.loads(page.text)
+    file_dict['statuscode'] = str(page.status_code)
+    sys.stderr.write( "statuscode: "+str(file_dict['statuscode'])+"\n" )
+    sys.stderr.write( "file_dict: "+str(file_dict)+"\n" )
+    handle.close()
+    openfile.close()
     return message
 
 
@@ -674,7 +710,10 @@ def log_message_to_room(room_id, author, message, message_reply,message_type="te
             "roomId" : room_id,
             "html" : "Author: "+author+" \n Request: "+message+" \n Reply: "+message_reply
         }        
+    elif message_type == "pdf":
+        return post_pdffile(room_id,message_reply,html="Author: "+author+" \n Request: "+message+" \n Reply: Here is the map !\n")
     else:
+        sys.stderr.write("message_reply: "+str(message_reply)+"\n")
         name=message_reply[0]
         title=message_reply[1]
         manager=message_reply[2]
@@ -684,18 +723,25 @@ def log_message_to_room(room_id, author, message, message_reply,message_type="te
         tmp="Author: "+author+" <br>\n Request: "+message+" <br>\n Reply: <br>\n "
 
         if name!= "":
-            tmp+="Name: "+str(name)+'\n'
+            tmp+="<b>Name</b>: "+str(name)+'\n'
         if title != "":
-            tmp+='Title: '+str(title)+'\n'
+            tmp+='<b>Title</b>: '+str(title)+'\n'
         if manager != "":
-            tmp+='Manager: '+str(manager)+'\n'
+            tmp+='<b>Manager</b>: '+str(manager)+'\n'
         if phone != "":
             tmp+=str(phone)
         if dir_url != "":
             tmp+=dir_url
+        sys.stderr.write("tmp: "+str(tmp)+"\n")
+        # Temporary bypass
         return post_localfile(room_id,photo,html=tmp)
+        # message_body = {
+        #     "roomId" : room_id,
+        #     "html" : tmp
+        # }        
+
     sys.stderr.write( "message_body: "+str(message_body)+"\n" )
-    page = requests.post(spark_u, headers = spark_headers, json=message_body, verify=False)
+    page = requests.post(spark_u, headers = spark_headers, json=message_body)
     message = page.json()
     #return message
     return ""
@@ -720,6 +766,9 @@ def send_message_to_room(room_id, message,message_type="text"):
             "roomId" : room_id,
             "html" : message
         }
+    elif message_type == "pdf":
+        sys.stderr.write("Post PDF message\n")
+        return post_pdffile(room_id,message,html="Here is the map !\n")
     else:
         name=message[0]
         title=message[1]
@@ -729,32 +778,32 @@ def send_message_to_room(room_id, message,message_type="text"):
         dir_url=message[5]
         tmp=""
         if name!= "":
-            tmp+="Name: "+str(name)+'\n'
+            tmp+="<b>Name</b>: "+str(name)+'\n'
         if title != "":
-            tmp+='Title: '+str(title)+'\n'
+            tmp+='<b>Title</b>: '+str(title)+'\n'
         if manager != "":
-            tmp+='Manager: '+str(manager)+'\n'
+            tmp+='<b>Manager</b>: '+str(manager)+'\n'
         if phone != "":
             tmp+=str(phone)
         if dir_url != "":
             tmp+=dir_url
         return post_localfile(room_id,photo,html=tmp)
     sys.stderr.write( "message_body: "+str(message_body)+"\n" )
-    page = requests.post(spark_u, headers = spark_headers, json=message_body, verify=False)
+    page = requests.post(spark_u, headers = spark_headers, json=message_body)
     message = page.json()
     #return message
     return ""
 
 def get_message(message_id):
     spark_u = spark_host + "v1/messages/" + message_id
-    page = requests.get(spark_u, headers = spark_headers, verify=False)
+    page = requests.get(spark_u, headers = spark_headers)
     message = page.json()
     return message
 
 #### Webhook Utilities
 def current_webhooks():
     spark_u = spark_host + "v1/webhooks"
-    page = requests.get(spark_u, headers = spark_headers, verify=False)
+    page = requests.get(spark_u, headers = spark_headers)
     webhooks = page.json()
     return webhooks["items"]
 
@@ -766,7 +815,7 @@ def create_webhook(target, webhook_name = "New Webhook"):
         "resource" : "messages",
         "event" : "created"
     }
-    page = requests.post(spark_u, headers = spark_headers, json=spark_body, verify=False)
+    page = requests.post(spark_u, headers = spark_headers, json=spark_body)
     webhook = page.json()
     return webhook
 
@@ -776,7 +825,7 @@ def update_webhook(webhook_id, target, name):
         "name" : name,
         "targetUrl" : target
     }
-    page = requests.put(spark_u, headers = spark_headers, json=spark_body, verify=False)
+    page = requests.put(spark_u, headers = spark_headers, json=spark_body)
     webhook = page.json()
     return webhook
 
@@ -807,20 +856,20 @@ def setup_webhook(target, name):
 #### Room Utilities
 def get_membership(room_id):
     spark_u = spark_host + "v1/memberships?roomId=%s" % (room_id)
-    page = requests.get(spark_u, headers = spark_headers, verify=False)
+    page = requests.get(spark_u, headers = spark_headers)
     memberships = page.json()["items"]
 
     return memberships
 
 def get_bot_id():
     spark_u = spark_host + "v1/people/me"
-    page = requests.get(spark_u, headers = spark_headers, verify=False)
+    page = requests.get(spark_u, headers = spark_headers)
     reply = page.json()
     return reply["id"]
 
 def get_bot_name():
     spark_u = spark_host + "v1/people/me"
-    page = requests.get(spark_u, headers = spark_headers, verify=False)
+    page = requests.get(spark_u, headers = spark_headers)
     reply = page.json()
     return reply["displayName"]
 

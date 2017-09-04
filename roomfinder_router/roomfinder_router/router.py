@@ -2,6 +2,8 @@
 
 import pika, os, sys, json, requests, datetime
 import base64, urllib, unicodedata, re
+import os, json, requests, sys, re, base64
+
 
 try: 
     from BeautifulSoup import BeautifulSoup
@@ -94,81 +96,125 @@ def guest(firstName,lastName,email):
     return "Error during guest account creation"
 
 def find_dir(cco):
-    f = { 'q' : cco.encode('utf-8') }
-    u = dir_server + urllib.urlencode(f)
-    r = None
-    try:
-        s = requests.Session()
-        r=s.get(u)
-        print(str(r.text.encode('utf-8')))
-        headers={'Content-type': 'application/x-www-form-urlencoded'}
-        data="userid="+dir_user+"&password="+dir_pass+"&target=&smauthreason=&smquerydata=&smagentname=&postpreservationdata=&SMENC=&SMLOCALE="
-        r=s.post(sso_url,data,headers)
-    except requests.exceptions.ConnectionError:
-        return "Connection error to directory server"
-    html = HTMLParser().unescape(r.text)
-    #sys.stderr.write("html: "+str(html.encode('utf-8'))+"\n")
-    parsed_html = BeautifulSoup(html)
-    table=parsed_html.body.find('table', attrs={'id':'resultsTable'})
-    if table is not None:
-        result_list=[unicodedata.normalize('NFKD',i.text) for i in table.findAll('a',attrs={'class':'hover-link'})]
-        found=False
-        for n in result_list:
-            m = re.search(r"\(([A-Za-z0-9]+)\)", n)
-            if m.group(1) == cco:
-                u=dir_detail_server+cco
-                r=s.get(u)
-                print(r.text.encode('utf-8'))
-                html = HTMLParser().unescape(r.text)
-                sys.stderr.write("html: "+str(html.encode('utf-8'))+"\n")
-                parsed_html = BeautifulSoup(html)
-                found=True
-                print("Found!")
-        if not found:
-            txt="Are you looking for one of these people:"
-            for i in result_list:
-                txt+="\n * "+str(i.encode("utf-8"))
-            return txt
-    name=parsed_html.body.find('h2', attrs={'class':'userName'})
-    sys.stderr.write("name: "+str(name)+"\n")
-    if not hasattr(name, 'text'):
-        return "CCO id not found !"
-    else:
-        tmp=parsed_html.body.find('p', attrs={'class':'userId'})
-        print("tmp: "+str(tmp))
-        m=re.search(r"\(([A-Za-z0-9]+)\)", str(tmp))
-        print("m: "+str(m))
-        real_cco=str(m.group(1))
-        sys.stderr.write("real_cco: "+str(real_cco)+"\n")
-        title=parsed_html.body.find('p', attrs={'class':'des'})
-        sys.stderr.write("title: "+str(title)+"\n")
-        manager=parsed_html.body.find('a', attrs={'class':'hover-link'})
-        sys.stderr.write("manager: "+str(manager)+"\n")
-        phone_text=""
-        phone=parsed_html.body.find('div', attrs={'id':'dir_phone_links'})
-        if phone is not None:
-            for p in phone.findAll('p'):
-                if p.text.find("Work") > -1 or p.text.find("Mobile") > -1 :
-                    phone_text+=str(p.text)+"<br>"
-        u = str(parsed_html.body.find('div',attrs={'class':'profImg'}).find('img')['src'])
-        response = requests.get(u, stream=True)
-        encoded_string = base64.b64encode(response.raw.read())
+    # Timeout for requests get and post
+    TIMEOUT=1
 
-        reply = ""
-        if name != None:
-            reply+=name.text+"<br>;"
+    headers = {}
+    headers["Content-type"] = "application/json; charset=utf-8"
+
+    dir_server="https://collab-tme.cisco.com/ldap/?have=cn&want=cn,description,manager,telephonenumber,mobile,title,co,ciscoitbuilding,postofficebox&values="
+    dir_server_2="https://collab-tme.cisco.com/ldap/?have=description&want=cn,description,manager,telephonenumber,mobile,title,co,ciscoitbuilding,postofficebox&values="
+    dir_detail_server="http://wwwin-tools.cisco.com/dir/reports/"
+    pic_server="http://wwwin.cisco.com/dir/photo/zoom/"
+
+    index=cco
+    sys.stderr.write('cco: '+str(cco)+'\n')
+    u = dir_server + urllib.pathname2url('*'+cco+'*')
+    try:
+        r=requests.get(u, timeout=TIMEOUT)
+    except requests.exceptions.RequestException:
+        sys.stderr.write('Timeout looking for exact CCO\n')
+        return 'Timeout looking for exact CCO\n'
+    reply=r.json()
+    if 'responseCode' not in reply :
+        sys.stderr.write('no responseCode looking for exact CCO\n')
+        return 'no responseCode looking for exact CCO\n'
+    if  reply["responseCode"] != 0:
+        sys.stderr.write("Exact CCO not found !\n")
+        u = dir_server_2 + urllib.pathname2url('*'+cco+'*')
+        try:
+            r=requests.get(u, timeout=TIMEOUT)
+        except requests.exceptions.RequestException:
+            sys.stderr.write('Timeout looking for name\n')
+            return 'Timeout looking for name\n'
+        reply=r.json()
+        if 'responseCode' not in reply or reply["responseCode"] != 0:
+            sys.stderr.write('Nobody found with this name or CCO in the directory\n')
+            return 'Nobody found with this name or CCO in the directory\n'
+    else:
+        sys.stderr.write("Exact CCO found !\n")
+        reply["results"][index]["cn"]=cco
+    if "results" not in reply :
+        sys.stderr.write('no results\n')
+        return 'no results\n'
+    l=reply["results"]
+    sys.stderr.write(str(l)+"\n")
+    if cco not in l:
+        if len(l) > 1:
+            sys.stderr.write("List of CCO found !\n")
+            sys.stderr.write("reply: "+str(l)+"\n")
+            txt="Are you looking for one of these people:"
+            for e in l:
+                cco=l[e]["cn"]
+                txt+="\n * "+str(e)+" ("+str(cco)+")"
+            return txt.encode('utf-8')
         else:
-            reply+=";"
-        if title != None:
-            reply+=title.text.replace('.',' ')+"<br>;"
+            sys.stderr.write("One person found !\n")
+            index=list(l.keys())[0]
+            cco=l[index]["cn"]
+            reply["results"][index]["description"]=index
+    sys.stderr.write("cco2: "+str(cco)+"\n")
+    sys.stderr.write("index: "+str(index)+"\n")
+    # Add picture URL from picture server
+    reply["results"][index]["pic"]=pic_server+cco+".jpg"
+    response = requests.get(reply["results"][index]["pic"], stream=True)
+    encoded_string = base64.b64encode(response.raw.read())
+    # Add Link to directory
+    reply["results"][index]["link"]=dir_detail_server+cco
+    # Add manager name
+    if "manager" in reply["results"][index]:
+        sys.stderr.write("Manager found\n")
+        manager_cco=reply["results"][index]["manager"].split(',')[0].split('=')[1]
+        u = dir_server + manager_cco
+        try:
+            r=requests.get(u, timeout=TIMEOUT)
+        except requests.exceptions.RequestException:
+            sys.stderr.write('Timeout looking for manager name\n')
+            return 'Timeout looking for manager name\n'
+        reply2=r.json()
+        if 'responseCode' not in reply2 or reply2["responseCode"] != 0 or "results" not in reply2 :
+            sys.stderr.write('no responseCode or results looking for manager name\n')
+            return 'no responseCode or results looking for manager name\n'
+        sys.stderr.write("Manager: "+str(reply2["results"])+"\n")
+        reply["results"][index]["manager_name"]=reply2["results"][manager_cco]["description"]+" ("+manager_cco+")"
+    else:
+        sys.stderr.write("Manager not found\n")
+        # No manager
+        pass
+    # Add building
+    location=reply["results"][index]["postofficebox"]
+    if location is None:
+        sys.stderr.write("Location not found\n")
+        reply["results"][index]["building"]="None"
+    else:    
+        sys.stderr.write("Location found\n")
+        end = location.find('/')
+        if end > 0 :
+            reply["results"][index]["building"]=location[0:end]
         else:
-            reply+=";"
-        if manager != None:
-            reply+=manager.text+"<br>;"
-        else:
-            reply+=";"
-        reply+=phone_text+";"+encoded_string+";"+"<a href=\"http://wwwin-tools.cisco.com/dir/details/"+real_cco+"\">directory link</a>"
-        return reply
+            reply["results"][index]["building"]="None"
+    sys.stderr.write("reply: "+str(reply["results"])+"\n")
+
+    text = ""
+    if reply["results"][index]["description"] != None:
+        text+=reply["results"][index]["description"]+"<br>;"
+    else:
+        text+=";"
+    if reply["results"][index]["title"] != None:
+        text+=reply["results"][index]["title"]+"<br>;"
+    else:
+        text+=";"
+    if reply["results"][index]["manager_name"] != None:
+        text+=reply["results"][index]["manager_name"]+"<br>;"
+    else:
+        text+=";"
+    phone_text=""
+    if reply["results"][index]["telephonenumber"] != None:
+        phone_text+="<b>Work</b>: "+reply["results"][index]["telephonenumber"]+"<br>"
+    if reply["results"][index]["mobile"] != None:
+        phone_text+="<b>Mobile</b>: "+reply["results"][index]["mobile"]+"<br>"
+    text+=phone_text+";"+encoded_string+";"+"<b>Internal directory</b>: <a href=\"http://wwwin-tools.cisco.com/dir/details/"+reply["results"][index]["cn"]+"\">link</a>"
+    return text.encode('utf-8')
 
 def map(floor):
     #http://wwwin.cisco.com/c/dam/cec/organizations/gbs/wpr/FloorPlans/ILM-AFP-5.pdf
@@ -176,7 +222,25 @@ def map(floor):
     if len(s)!=2:
         return "Not Found"
     else:
-        return "http://wwwin.cisco.com/c/dam/cec/organizations/gbs/wpr/FloorPlans/"+s[0].replace(' ','')+"-AFP-"+s[1]+".pdf"
+        #return "http://wwwin.cisco.com/c/dam/cec/organizations/gbs/wpr/FloorPlans/"+s[0].replace(' ','')+"-AFP-"+s[1]+".pdf"
+        url="http://wwwin.cisco.com/c/dam/cec/organizations/gbs/wpr/FloorPlans/"+s[0].replace(' ','')+"-AFP-"+s[1]+".pdf"
+        sys.stderr.write("Getting map on url: "+url+"\n")
+        try:
+            s = requests.Session()
+            r=s.get(url)
+            #sys.stderr.write(str(r.text.encode('utf-8'))+"\n")
+            headers={'Content-type': 'application/x-www-form-urlencoded'}
+            data="userid="+dir_user+"&password="+dir_pass+"&target=&login-button=Log+In&login-button-login=Next&login-button-login=Log+in"
+            response=s.post(sso_url,data,headers, stream=True)
+            if response.headers["Content-Type"] == "application/pdf":
+                sys.stderr.write("Content is a pdf file\n")
+                encoded_string = base64.b64encode(response.raw.read())
+                sys.stderr.write("Encoded string:\n"+str(encoded_string)+"\n")
+                return encoded_string
+            else:
+                return "Connection error to map server"
+        except requests.exceptions.ConnectionError:
+            return "Connection error to map server"
 
 def on_request(ch, method, props, body):
     sys.stderr.write(" [x] Received %r\n" % body)
@@ -204,7 +268,7 @@ def on_request(ch, method, props, body):
         floor = request_data["floor"]
         sys.stderr.write("Request map for %s\n" % str(floor.encode('utf-8')) )  
         txt=map(floor).encode('utf-8')
-        sys.stderr.write("txt: {}\n".format(txt))
+        #sys.stderr.write("txt: {}\n".format(txt))
     elif cmd == "sr":
         pass
     elif cmd == "dispo":
