@@ -32,6 +32,7 @@ def send_request(data):
 
 def doSomethingWithResult(response):
     if response is None:
+        sys.stderr.write("KO\n")
         return "KO"
     else:
         tree = ET.fromstring(response.text.encode('utf-8'))
@@ -46,6 +47,13 @@ def doSomethingWithResult(response):
         elems=tree2.findall(".//{http://schemas.microsoft.com/exchange/services/2006/types}Address")
         for e in elems:
             room=e.text
+
+
+        elems=tree.findall(".//faultcode")
+        if elems != [] :
+            print("Error occured")
+            status= "N/A"
+
 
         sys.stderr.write(str(datetime.datetime.now().isoformat())+": Status for room: "+str(room)+" => "+status+"\n")
         result.append((status, rooms[room], room))
@@ -66,6 +74,12 @@ def is_available(room_email,start_time,end_time):
     elems=tree.findall(".//{http://schemas.microsoft.com/exchange/services/2006/types}BusyType")
     for elem in elems:
         status=elem.text
+
+    elems=tree.findall(".//faultcode")
+    if elems != [] :
+        print("Error occured")
+        status= "N/A"
+
     return (status == "Free")
 
 @app.route('/', methods=['GET', 'POST'])
