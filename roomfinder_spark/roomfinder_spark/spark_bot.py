@@ -53,6 +53,18 @@ app_headers["Content-type"] = "application/json"
 google_headers = {}
 google_headers["User-Agent"] = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) AppleWebKit/534.30 (KHTML, like Gecko) Chrome/12.0.742.112 Safari/534.30"
 
+def return_utf(s):
+    if isinstance(s, unicode): 
+        return s.encode('utf-8')
+    if isinstance(s, int): 
+        return str(s).encode('utf-8')
+    if isinstance(s, float): 
+        return str(s).encode('utf-8')
+    if isinstance(s, complex): 
+        return str(s).encode('utf-8')
+    if isinstance(s, str): 
+        return s
+
 def netatmoOutdoor(sonde):
     authorization = lnetatmo.ClientAuth()
     devList = lnetatmo.WeatherStationData(authorization)
@@ -462,7 +474,7 @@ def process_webhook():
             stats(post_data['data']['personEmail'],post_data['data']['roomId'])
         log(post_data['data']['personEmail']+" - " +post_data['data']['roomId'],str(text),reply)
         send_message_to_room(post_data["data"]["roomId"], reply,message_type)
-        log_message_to_room(log_room_id, post_data['data']['personEmail'], str(text), reply,message_type)
+        log_message_to_room(log_room_id, post_data['data']['personEmail'], str(text.encode('utf-8')), reply,message_type)
     return ""
 
 def getDisplayName(id):
@@ -713,32 +725,43 @@ def log_message_to_room(room_id, author, message, message_reply,message_type="te
     elif message_type == "pdf":
         return post_pdffile(room_id,message_reply,html="Author: "+author+" \n Request: "+message+" \n Reply: Here is the map !\n")
     else:
-        sys.stderr.write("message_reply: "+str(message_reply)+"\n")
-        name=message_reply[0]
-        title=message_reply[1]
-        manager=message_reply[2]
-        phone=message_reply[3]
-        photo=message_reply[4]
-        dir_url=message_reply[5]
-        tmp="Author: "+author+" <br>\n Request: "+message+" <br>\n Reply: <br>\n "
+        try:
+            sys.stderr.write("message_reply: "+str(message_reply)+"\n")
+            name=message_reply[0]
+            sys.stderr.write("After get name from message_reply\n")
+            title=message_reply[1]
+            manager=message_reply[2]
+            phone=message_reply[3]
+            photo=message_reply[4]
+            dir_url=message_reply[5]
+            author
+            tmp=""
+            tmp+="Author: "+return_utf(author)+" <br>\n Request: "+return_utf(message)+" <br>\n Reply: <br>\n "
 
-        if name!= "":
-            tmp+="<b>Name</b>: "+str(name)+'\n'
-        if title != "":
-            tmp+='<b>Title</b>: '+str(title)+'\n'
-        if manager != "":
-            tmp+='<b>Manager</b>: '+str(manager)+'\n'
-        if phone != "":
-            tmp+=str(phone)
-        if dir_url != "":
-            tmp+=dir_url
-        sys.stderr.write("tmp: "+str(tmp)+"\n")
-        # Temporary bypass
+            sys.stderr.write("Before name\n")
+            sys.stderr.write("Type: "+str(type(name))+"\n")
+
+            if name!= "":
+                sys.stderr.write("After test on name\n")
+                tmp+="<b>Name</b>: "+return_utf(name)+'\n'
+
+            sys.stderr.write("After name\n")
+
+            if title != "":
+                tmp+='<b>Title</b>: '+return_utf(title)+'\n'
+            if manager != "":
+                tmp+='<b>Manager</b>: '+return_utf(manager)+'\n'
+            if phone != "":
+                tmp+=return_utf(phone)
+            if dir_url != "":
+                tmp+=return_utf(dir_url)
+            #sys.stderr.write("tmp: "+str(tmp.encode('utf-8'))+"\n")
+            sys.stderr.write("Before post_localfile\n")
+
+        except Exception as ex:
+            sys.stderr.write("Exception: "+str(ex))
+
         return post_localfile(room_id,photo,html=tmp)
-        # message_body = {
-        #     "roomId" : room_id,
-        #     "html" : tmp
-        # }        
 
     sys.stderr.write( "message_body: "+str(message_body)+"\n" )
     page = requests.post(spark_u, headers = spark_headers, json=message_body)
