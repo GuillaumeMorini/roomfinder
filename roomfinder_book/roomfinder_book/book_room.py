@@ -14,7 +14,7 @@ import argparse
 import unidecode
 
 def doWork():
-    # while True:
+    while True:
         data = q.get()
         response = send_request(data)
         doSomethingWithResult(response)
@@ -24,7 +24,7 @@ def send_request(data):
     try:
         headers = {}
         headers["Content-type"] = "text/xml; charset=utf-8"
-        sys.stderr.write('data='+str(data)+'\n')
+        #sys.stderr.write('data='+str(data)+'\n')
         response=requests.post(url,headers = headers, data= data, auth= HttpNtlmAuth(user,password))
         return response
     except:
@@ -36,6 +36,7 @@ def doSomethingWithResult(response):
         return "KO"
     else:
         tree = ET.fromstring(response.text.encode('utf-8'))
+        sys.stderr.write("XML response: "+str(response.text.encode('utf-8'))+"\n")
 
         status = "Free"
         # arrgh, namespaces!!
@@ -55,7 +56,7 @@ def doSomethingWithResult(response):
             status= "N/A"
 
 
-        sys.stderr.write(str(datetime.datetime.now().isoformat())+": Status for room: "+str(room)+" => "+status+"\n")
+        sys.stderr.write(str(datetime.datetime.now().isoformat())+": Status for room: "+str(rooms[room])+" => "+status+"\n")
         result.append((status, rooms[room], room))
         return "OK"
 
@@ -238,16 +239,20 @@ def dispo_building(b,start=None, end=None):
     xml_template = open("getavailibility_template.xml", "r").read()
     xml = Template(xml_template)
 
-    q = Queue(len(rooms) * 2 + 2)
+    MAX_THREADS=20
+    q = Queue()
     try:
-        for room in rooms:
+        for i in range(MAX_THREADS):
             t = Thread(target=doWork)
             t.daemon = True
             t.start()
-            sys.stderr.write(str(datetime.datetime.now().isoformat())+": End of init of Thread start\n")
+        sys.stderr.write(str(datetime.datetime.now().isoformat())+": End of init of Thread start\n")
+        
+        for room in rooms:
             data=unicode(xml.substitute(email=room,starttime=start.isoformat(),endtime=end.isoformat())).strip()
             q.put(data)
         sys.stderr.write(str(datetime.datetime.now().isoformat())+": End of send data to process to Thread\n")
+        
         q.join()
         sys.stderr.write(str(datetime.datetime.now().isoformat())+": End of join Thread\n")
     except KeyboardInterrupt:
@@ -331,5 +336,5 @@ if __name__ == '__main__':
     except:
     	try:
     		app.run(debug=True, host='0.0.0.0', port=int("5000"))
-    	except:
-    		print "Web server error"
+        except Exception as ex:
+            print "Web server error: "+str(ex)
