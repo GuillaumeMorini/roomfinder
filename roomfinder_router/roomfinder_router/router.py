@@ -108,6 +108,7 @@ def find_dir(cco):
     pic_server="http://wwwin.cisco.com/dir/photo/zoom/"
 
     index=cco
+    cco=cco.encode('utf-8')
     sys.stderr.write('cco: '+str(cco)+'\n')
     u = dir_server + urllib.pathname2url('*'+cco+'*')
     try:
@@ -131,9 +132,17 @@ def find_dir(cco):
         if 'responseCode' not in reply or reply["responseCode"] != 0:
             sys.stderr.write('Nobody found with this name or CCO in the directory\n')
             return 'Nobody found with this name or CCO in the directory\n'
+        else:
+            for r in reply["results"]:
+                index=r
+                reply["results"][r]["description"]=index
+
     else:
         sys.stderr.write("Exact CCO found !\n")
-        reply["results"][index]["cn"]=cco
+        for r in reply["results"]:
+            index=r
+            reply["results"][r]["cn"]=index
+
     if "results" not in reply :
         sys.stderr.write('no results\n')
         return 'no results\n'
@@ -146,15 +155,16 @@ def find_dir(cco):
             txt="Are you looking for one of these people:"
             for e in l:
                 cco=l[e]["cn"]
-                txt+="\n * "+str(e)+" ("+str(cco)+")"
-            return txt.encode('utf-8')
+                name=l[e]["description"]
+                txt+="\n * "+str(name.encode('utf-8'))+" ("+str(cco)+")"
+            return txt
         else:
             sys.stderr.write("One person found !\n")
             index=list(l.keys())[0]
             cco=l[index]["cn"]
             reply["results"][index]["description"]=index
     sys.stderr.write("cco2: "+str(cco)+"\n")
-    sys.stderr.write("index: "+str(index)+"\n")
+    sys.stderr.write("index: "+str(index.encode('utf-8'))+"\n")
     # Add picture URL from picture server
     reply["results"][index]["pic"]=pic_server+cco+".jpg"
     response = requests.get(reply["results"][index]["pic"], stream=True)
@@ -216,6 +226,59 @@ def find_dir(cco):
     text+=phone_text+";"+encoded_string+";"+"<b>Internal directory</b>: <a href=\"http://wwwin-tools.cisco.com/dir/details/"+reply["results"][index]["cn"]+"\">link</a>"
     return text.encode('utf-8')
 
+def building(name):
+    name=name.upper()
+    url="http://wwwin.cisco.com/c/dam/cec/organizations/gbs/wpr/serverBuildingOnlineDetail.txt"
+    try:
+        s = requests.Session()
+        r=s.get(url)
+        #sys.stderr.write(str(r.text.encode('utf-8'))+"\n")
+        headers={'Content-type': 'application/x-www-form-urlencoded'}
+        data="userid="+dir_user+"&password="+dir_pass+"&target=&login-button=Log+In&login-button-login=Next&login-button-login=Log+in"
+        response=s.post(sso_url,data,headers)
+        if response.status_code==200:
+            if response.text:
+                buildings=json.loads(response.text)
+                found=[]
+                for theater,t in buildings.iteritems():
+                    #print theater, ":", t["theaterName"]
+                    for region in t["regions"]:
+                        #print "\t",region["regionCode"], ":", region["regionName"]
+                        for country in region["countries"]:
+                            #print "\t\t",country["countryName"]
+                            for state in country["states"]:
+                                #print "\t\t\t",state["stateName"]
+                                for city in state["cities"]:
+                                    #print "\t\t\t\t",city["cityName"]
+                                    for campus in city["campuses"]:
+                                        #print "\t\t\t\t\t",campus["campusName"]
+                                        for building in campus["buildings"]:
+                                            import re
+                                            if re.match('[a-zA-Z][a-zA-Z0-9]', building["buildingId"]):
+                                                #print "\t\t\t\t\t\t",building["buildingId"],building["buildingName"]
+                                                if (
+                                                     country["countryName"].find(name) >= 0 or
+                                                     state["stateName"].find(name) >= 0 or
+                                                     city["cityName"].find(name) >= 0 or
+                                                     campus["campusName"].find(name) >= 0 or
+                                                     building["buildingId"].find(name) >= 0 or
+                                                     building["buildingName"].find(name) >= 0
+                                                   ) :
+                                                        sys.stderr.write("Found "+name+" in one of "+country["countryName"]+" "+state["stateName"]+" "+city["cityName"]+" "+campus["campusName"]+" "+building["buildingName"]+"\n")
+                                                        found.append({"id": building["buildingId"],"name": building["buildingName"]})
+                if len(found)>15:
+                    return "Sorry too much building ! Please refine your request !"
+                txt="Are you looking for one of these buildings:"
+                for e in found:
+                    id=e["id"]
+                    name=e["name"]
+                    txt+="\n * "+str(id.encode('utf-8'))+" ("+str(name.encode('utf-8'))+")"
+                return txt
+        return "Connection error to building server"
+    except Exception as e:
+        return "Connection error to building server"
+
+
 def map(floor):
     #http://wwwin.cisco.com/c/dam/cec/organizations/gbs/wpr/FloorPlans/ILM-AFP-5.pdf
     s=floor.split('-')
@@ -236,7 +299,8 @@ def map(floor):
                 sys.stderr.write("Content is a pdf file\n")
                 encoded_string = base64.b64encode(response.raw.read())
                 sys.stderr.write("Encoded string:\n"+str(encoded_string)+"\n")
-                return encoded_string
+
+                return json.dumps({"text": "Here is the map !\n", "pdf":  encoded_string })
             else:
                 return "Connection error to map server"
         except requests.exceptions.ConnectionError:
@@ -269,6 +333,11 @@ def on_request(ch, method, props, body):
         sys.stderr.write("Request map for %s\n" % str(floor.encode('utf-8')) )  
         txt=map(floor).encode('utf-8')
         #sys.stderr.write("txt: {}\n".format(txt))
+    elif cmd == "building":
+        b = request_data["building"]
+        sys.stderr.write("Request building lookup for %s\n" % str(b.encode('utf-8')) )  
+        txt=building(b) #.encode('utf-8')
+        sys.stderr.write("txt: {}\n".format(txt))
     elif cmd == "sr":
         pass
     elif cmd == "dispo":

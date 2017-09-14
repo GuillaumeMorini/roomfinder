@@ -1,62 +1,66 @@
 #!/usr/bin/env python2.7
 
 import sys
+
 reload(sys)
 sys.setdefaultencoding("utf-8")
-from flask import Flask, render_template, request, jsonify
-import subprocess
-import getpass
-from string import Template
-import xml.etree.ElementTree as ET
-import csv, codecs
-import argparse
+from flask import Flask, render_template, request
 import datetime
 import os, sys
 import requests
-from socket import error as SocketError
-import errno
 
-app = Flask(__name__,static_folder='static')
+app = Flask(__name__, static_folder='static')
+
 
 @app.route('/')
 def index():
-	u = data_server + "/"
-	try:
-		page = requests.get(u)
-		options = page.json()
-		room_list = options
-	except:
-		try:
-			page = requests.get(u)
-			options = page.json()
-			room_list = options
-		except:
-			room_list=(("Temporary unavailable !"),())
-	return render_template('home.html', room_list=room_list, title="Room Finder Web Application", current_time=datetime.datetime.now(), book_url=book_url)
+    u = data_server + "/"
+    try:
+        page = requests.get(u)
+        options = page.json()
+        room_list = options
+    except:
+        try:
+            page = requests.get(u)
+            options = page.json()
+            room_list = options
+        except:
+            room_list = (("Temporary unavailable !"), ())
+    return render_template('home.html', room_list=room_list,
+                           title="Room Finder Web Application",
+                           current_time=datetime.datetime.now(),
+                           book_url=book_url)
+
 
 @app.route("/about")
 def about():
     return render_template('about.html', title="About", current_time=datetime.datetime.now())
 
+
 @app.route("/form")
 def form():
-    return render_template('form.html', title="Add yourself to the Cisco Spark room", current_time=datetime.datetime.now())
+    return render_template('form.html',
+                           title="Add yourself to the Cisco Spark room",
+                           current_time=datetime.datetime.now())
+
 
 @app.route("/add", methods=["POST"])
 def add():
-	status = 200
-	if request.method == "POST":
-		email = request.form['email']
-		try:
-			page = requests.post(spark_server+'/demoroom/members',data = {'email':email})
-			options = page.json()
-            		sys.stderr.write("reply: "+str(options)+"\n")
-			return render_template('added.html', email=email)
-		except KeyError:
-			return render_template('error.html', email=email)
+    status = 200
+    if request.method == "POST":
+        email = request.form['email']
+        try:
+            page = requests.post(spark_server + '/demoroom/members', data={'email': email})
+            options = page.json()
+            sys.stderr.write("reply: " + str(options) + "\n")
+            return render_template('added.html', email=email)
+        except KeyError:
+            return render_template('error.html', email=email)
+
 
 if __name__ == '__main__':
     from argparse import ArgumentParser
+
     parser = ArgumentParser("Room Finder Web Service")
     parser.add_argument(
         "-d", "--data", help="Address of data server", required=False
@@ -106,9 +110,9 @@ if __name__ == '__main__':
     sys.stderr.write("Spark bot Server: " + spark_server + "\n")
 
     try:
-    	app.run(debug=True, host='0.0.0.0', port=int("5000"))
+        app.run(debug=True, host='0.0.0.0', port=int("5000"))
     except:
-    	try:
-    		app.run(debug=True, host='0.0.0.0', port=int("5000"))
-    	except:
-    		print "Web server error"
+        try:
+            app.run(debug=True, host='0.0.0.0', port=int("5000"))
+        except:
+            print "Web server error"

@@ -171,7 +171,7 @@ def process_webhook():
     message_type="text"
     message_id = post_data["data"]["id"]
     message = get_message(message_id)
-    print("message: "+str(message))
+    sys.stderr.write("message: "+str(message)+"\n")
     reply=None
     removed = False
 
@@ -179,12 +179,17 @@ def process_webhook():
     if post_data['data']["personEmail"] == bot_email:
         return ""
 
-    sys.stderr.write("text: "+str(message["text"].encode('utf-8'))+"\n")
     # if "markdown" in message:
     #     sys.stderr.write("markdown: "+str(message["markdown"].encode('utf-8'))+"\n")
     # if "html" in message:
     #     sys.stderr.write("html: "+str(message["html"].encode('utf-8'))+"\n")
-    text=message["text"].replace('@Roomfinder','').lstrip().rstrip().lower().encode("utf-8")
+    if "text" in message:
+        text=message["text"].replace('@Roomfinder','').lstrip().rstrip().lower().encode("utf-8")
+        text=message["text"].replace('Roomfinder','').lstrip().rstrip().lower().encode("utf-8")
+    else:
+
+        message["text"]=""
+    sys.stderr.write("text: "+str(message["text"].encode('utf-8'))+"\n")
 
     # If someone is mentioned, do not answer
     if 'mentionedPeople' in message:
@@ -194,6 +199,7 @@ def process_webhook():
             sys.stderr.write("Not the bot mentionned, do not answer !\n")
             return ""
         else:
+            sys.stderr.write("Bot mentionned, removing the bot name !\n")
             text=text.replace(bot_name,"").lstrip()
 
     if not (post_data['data']['personEmail'] in admin_list
@@ -240,7 +246,7 @@ def process_webhook():
             else:
                 inf = int(number[0])
                 sup = int(number[1])
-                filtered_results=[result for result in toto if int(result.split('(')[1].split(')')[0])>=inf and int(result.split('(')[1].split(')')[0])<=sup]
+                filtered_results=[result for result in toto if inf <= int(result.split('(')[1].split(')')[0]) <= sup]
                 sys.stderr.write("filtered_results: "+str(filtered_results)+"\n")
 #                reply = ", with more than "+str(inf)+" and less than "+str(sup)+" seats, "+start+" "+end
                 reply = ", with more than "+str(inf)+" and less than "+str(sup)+" seats in the next 2 hours"               
@@ -267,6 +273,7 @@ def process_webhook():
         reply += "* **reserve** or **book** keyword will try to book, by default for the next 2 hours, the room mentionned after the keyword **book** or **reserve**. You can specify the duration of the meeting with the option 30m or 1h.\n"
         reply += "* **plan** or **map** keyword will display the map of the floor in **ILM building** mentionned after the keyword **plan** or **map**.\n"
         reply += "* **cherche** or **find** keyword will help you to find the floor of a room mentionned by its short name after the keyword.\n"
+        reply += "* **batiment** or **building** keyword will help you to find a building id based on name of the building/town/country mentionned after the keyword, like **building Toronto** or **batiment ILM**.\n"
         reply += "* **in** or **inside** keyword will display a picture inside the room mentionned after the keyword in **ILM building**.\n"
         reply += "* **dir** keyword will display the directory entry for the CCO id mentionned after the keyword **dir**.\n"
         reply += "* [disabled] **guest** keyword will create a guest wifi account for an attendee. You should specify after the keyword **guest** the attendee first name, last name and email, like **guest** john doe jdoe@email.com.\n"
@@ -329,14 +336,16 @@ def process_webhook():
             if len(rooms)==1:
                 r=rooms[0].split('-')
                 if (len(r)>=2):
-                    reply="Here is the full name of the room: \n * "+rooms[0]
-                    message_type="text"
+                    floor=r[0]+'-'+r[1]
+                    floor_map_raw=display_map(floor)
+                    floor_map=json.loads(floor_map_raw)
+                    floor_map["text"]="Here is the full name of the room, and the map of the floor: \n * "+rooms[0]
                     # stats(post_data['data']['personEmail'],post_data['data']['roomId'])
                     # log(post_data['data']['personEmail']+" - " +post_data['data']['roomId'],str(text),reply)
                     # send_message_to_room(post_data["data"]["roomId"], reply,message_type)
-                    floor=r[0]+'-'+r[1]
                     # #message_type="pdf"
-                    reply += " \n <br> \n and the map of the floor: \n <br> \n * "+str(display_map(floor))
+                    reply=json.dumps(floor_map)
+                    message_type="pdf"
             else:
                 reply="Do you mean:\n"
                 for r in rooms:
@@ -386,11 +395,23 @@ def process_webhook():
                 else:
                     t=floor.split("-")
                     if len(t) == 3 :
-                        reply = display_map((t[0]+"-"+t[1]).upper())
+                        reply = display_map(t[0]+"-"+t[1])
                         if reply != "Connection error to map server":
                             message_type="pdf"
                     else:
                         reply = "No floor is corresponding. Try **map/plan floor_name** or **map/plan floor_name** \n<br>\n <blockquote> with floor_name like ILM-3 or SJC13-3 </blockquote>"
+    elif text.lower().startswith("building") or text.lower().startswith("batiment"):
+        # Find the floor
+        if text.lower() in ["building","batiment"]:
+            reply = "Usage of building/batiment command is:\n"
+            reply += "\tbuilding/batiment command followed by building/town/country name like:\n"
+            reply += "\t\tbuiding Toronto\n"        
+            reply += "\t\t\tor\n"        
+            reply += "\t\tbatiment ILM\n"        
+        else:
+            building=text.lower().replace('building ','')
+            building=building.lower().replace('batiment ','')
+            reply = display_building(building.upper())
     elif text.startswith("book") or text.startswith("reserve"):
         if text in ["book","reserve"]:
             reply = "Usage of book/reserve command is:\n"
@@ -468,7 +489,7 @@ def process_webhook():
         # if reply == "":
         #     return reply
         reply="Command not found ! Type help to have the list of existing commands !"
-    sys.stderr.write("reply: "+str(reply)+"\n")
+    sys.stderr.write("reply: "+"{0:.3000}".format(reply)+"\n")
     if reply != "":
         if not removed :
             stats(post_data['data']['personEmail'],post_data['data']['roomId'])
@@ -592,6 +613,16 @@ def display_map(floor):
     data = {  
         "cmd": "map",         
         "data": {"floor": floor}
+    }    
+    message = json.dumps(data)  
+    reply=send_message_to_queue(message)
+    return reply
+
+def display_building(building):
+    sys.stderr.write("Display building for: "+building+"\n")
+    data = {  
+        "cmd": "building",         
+        "data": {"building": building}
     }    
     message = json.dumps(data)  
     reply=send_message_to_queue(message)
@@ -723,7 +754,14 @@ def log_message_to_room(room_id, author, message, message_reply,message_type="te
             "html" : "Author: "+author+" \n Request: "+message+" \n Reply: "+message_reply
         }        
     elif message_type == "pdf":
-        return post_pdffile(room_id,message_reply,html="Author: "+author+" \n Request: "+message+" \n Reply: Here is the map !\n")
+        s = json.loads(message_reply)
+        if "text" in s and "pdf" in s:
+            return post_pdffile(room_id,s["pdf"],markdown="Author: "+author+" <br /> Request: "+message+" <br /> Reply: "+s["text"])
+        else:
+            message_body = {
+                "roomId" : room_id,
+                "html" : "Author: "+author+" \n Request: "+message+" \n Reply: Unreadadble reply !\n"
+            }        
     else:
         try:
             sys.stderr.write("message_reply: "+str(message_reply)+"\n")
@@ -790,8 +828,14 @@ def send_message_to_room(room_id, message,message_type="text"):
             "html" : message
         }
     elif message_type == "pdf":
-        sys.stderr.write("Post PDF message\n")
-        return post_pdffile(room_id,message,html="Here is the map !\n")
+        s = json.loads(message)
+        if "text" in s and "pdf" in s:
+            return post_pdffile(room_id,s["pdf"],markdown=s["text"])
+        else:
+            message_body = {
+                "roomId" : room_id,
+                "html" : "Unreadadble reply !\n"
+            }        
     else:
         name=message[0]
         title=message[1]
@@ -1010,6 +1054,8 @@ if __name__ == '__main__':
 
     bot_id=get_bot_id()
     bot_name=get_bot_name()
+    sys.stderr.write("Bot ID: "+bot_id+"\n")
+    sys.stderr.write("Bot Name: "+bot_name+"\n")
 
     corr_id=None
     response=None
@@ -1017,4 +1063,4 @@ if __name__ == '__main__':
     channel=None
     callback_queue=None
 
-    app.run(debug=True, host='0.0.0.0', port=int("5000"))
+    app.run(debug=False, host='0.0.0.0', port=int("5000"), threaded=True)

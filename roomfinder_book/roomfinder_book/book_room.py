@@ -13,6 +13,18 @@ from Queue import Queue
 import argparse
 import unidecode
 
+def max(a,b):
+    if a < b:
+        return b
+    else:
+        return a
+
+def min(a,b):
+    if a < b:
+        return a
+    else:
+        return b
+
 def doWork():
     while True:
         data = q.get()
@@ -51,7 +63,7 @@ def doSomethingWithResult(response):
 
 
         elems=tree.findall(".//faultcode")
-        if elems != [] :
+        if elems:
             print("Error occured")
             status= "N/A"
 
@@ -77,10 +89,13 @@ def is_available(room_email,start_time,end_time):
         status=elem.text
 
     elems=tree.findall(".//faultcode")
-    if elems != [] :
-        print("Error occured")
+    if elems:
+        sys.stderr.write("Error occured\n")
+        sys.stderr.write("tree: "+str(tree)+"\n")
+        sys.stderr.write("response: "+response.text.encode('utf-8')+"\n")
         status= "N/A"
 
+    sys.stderr.write("Room status: "+str(status)+"\n")
     return (status == "Free")
 
 @app.route('/', methods=['GET', 'POST'])
@@ -136,11 +151,14 @@ def book():
         if room_email=="":
             return "Sorry, "+str(j["room_name"])+" does not exists !"
         else:
-            if is_available(room_email,str(j["starttime"]), str(j["endtime"])):
-                book_room(str(j["room_name"]), room_email, str(j["user_name"]), str(j["user_email"]), str(j["starttime"]), str(j["endtime"]))
-                return "Room "+str(j["room_name"])+" booked for "+str(j["user_name"]+" from "+str(j["starttime"])+" to "+str(j["endtime"]))
-            else:
-                return "Sorry, room "+str(j["room_name"])+" is busy !"
+            try:
+                if is_available(room_email,str(j["starttime"]), str(j["endtime"])):
+                    book_room(str(j["room_name"]), room_email, str(j["user_name"]), str(j["user_email"]), str(j["starttime"]), str(j["endtime"]))
+                    return "Room "+str(j["room_name"])+" booked for "+str(j["user_name"]+" from "+str(j["starttime"])+" to "+str(j["endtime"]))
+                else:
+                    return "Sorry, room "+str(j["room_name"])+" is busy !"
+            except Exception as e:
+                sys.stderr.write("Exception: "+str(e))
     else:
         return "Error should be a POST"
    
@@ -239,10 +257,12 @@ def dispo_building(b,start=None, end=None):
     xml_template = open("getavailibility_template.xml", "r").read()
     xml = Template(xml_template)
 
+
     MAX_THREADS=20
+
     q = Queue()
     try:
-        for i in range(MAX_THREADS):
+        for i in range(min(MAX_THREADS,len(rooms))):
             t = Thread(target=doWork)
             t.daemon = True
             t.start()
