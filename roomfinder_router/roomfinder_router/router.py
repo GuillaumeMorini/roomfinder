@@ -228,6 +228,7 @@ def find_dir(cco):
 
 def building(name):
     name=name.upper()
+    sys.stderr.write("Looking for building with name: "+name+"\n")
     url="http://wwwin.cisco.com/c/dam/cec/organizations/gbs/wpr/serverBuildingOnlineDetail.txt"
     try:
         s = requests.Session()

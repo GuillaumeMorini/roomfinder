@@ -166,6 +166,7 @@ def process_demoroom_members():
 @app.route('/', methods=["POST"])
 # Bot functions to process the incoming messages posted by Cisco Spark
 def process_webhook():
+    text=""
     post_data = request.get_json(force=True)
     sys.stderr.write("post_data="+str(post_data)+"\n")
     message_type="text"
@@ -183,12 +184,12 @@ def process_webhook():
     #     sys.stderr.write("markdown: "+str(message["markdown"].encode('utf-8'))+"\n")
     # if "html" in message:
     #     sys.stderr.write("html: "+str(message["html"].encode('utf-8'))+"\n")
-    if "text" in message:
+    if "errors" in message or "text" not in message:
+        message["text"]=""
+        text=""
+    else:
         text=message["text"].replace('@Roomfinder','').lstrip().rstrip().lower().encode("utf-8")
         text=message["text"].replace('Roomfinder','').lstrip().rstrip().lower().encode("utf-8")
-    else:
-
-        message["text"]=""
     sys.stderr.write("text: "+str(message["text"].encode('utf-8'))+"\n")
 
     # If someone is mentioned, do not answer
@@ -488,7 +489,10 @@ def process_webhook():
         # reply=natural_langage_bot(text)
         # if reply == "":
         #     return reply
-        reply="Command not found ! Type help to have the list of existing commands !"
+        if text=="":
+            reply="There seem to be an error with Cisco Spark ! Sorry about that, try again later !"
+        else:
+            reply="Command not found ! Type help to have the list of existing commands !"
     sys.stderr.write("reply: "+"{0:.3000}".format(reply)+"\n")
     if reply != "":
         if not removed :
