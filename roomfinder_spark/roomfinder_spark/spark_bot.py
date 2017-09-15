@@ -193,7 +193,7 @@ def process_webhook():
     sys.stderr.write("text: "+str(message["text"].encode('utf-8'))+"\n")
 
     # If someone is mentioned, do not answer
-    if 'mentionedPeople' in message:
+    if 'mentionedPeople' in message or ( "event" in message and message["event"] == 'deleted' ):
         sys.stderr.write("mentionned: "+str(message["mentionedPeople"])+"\n")
         sys.stderr.write("Bot id    : "+str(bot_id)+"\n")
         if bot_id not in message["mentionedPeople"]:
