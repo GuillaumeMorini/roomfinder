@@ -192,8 +192,12 @@ def process_webhook():
         text=message["text"].replace('Roomfinder','').lstrip().rstrip().lower().encode("utf-8")
     sys.stderr.write("text: "+str(message["text"].encode('utf-8'))+"\n")
 
+    if "event" in message and message["event"] == 'deleted' :
+        sys.stderr.write('Message deleted\n')
+        return ""
+
     # If someone is mentioned, do not answer
-    if 'mentionedPeople' in message or ( "event" in message and message["event"] == 'deleted' ):
+    if 'mentionedPeople' in message:
         sys.stderr.write("mentionned: "+str(message["mentionedPeople"])+"\n")
         sys.stderr.write("Bot id    : "+str(bot_id)+"\n")
         if bot_id not in message["mentionedPeople"]:
@@ -222,51 +226,54 @@ def process_webhook():
             buildings=[" ILM-"]
 
         building=buildings[0][1:]
-        u = dispo_server + "/dispo?key="+str(building)
-        page = requests.get(u, headers = app_headers)
-        tally = page.json()
-        sys.stderr.write("Tally: "+str(tally)+"\n")
-        #tally = sorted(tally.items(), key = lambda (k,v): v, reverse=True)
-        results=(i[1] for i in tally[1] if i[0]=="Free")
-        start = " in building "+str(building)+" "+tally[0][2]
-        end = tally[0][3]
+        try:
+            u = dispo_server + "/dispo?key="+str(building)
+            page = requests.get(u, headers = app_headers)
+            tally = page.json()
+            sys.stderr.write("Tally: "+str(tally)+"\n")
+            #tally = sorted(tally.items(), key = lambda (k,v): v, reverse=True)
+            results=(i[1] for i in tally[1] if i[0]=="Free")
+            start = " in building "+str(building)+" "+tally[0][2]
+            end = tally[0][3]
 
-        number = re.findall(r' [0-9]+', text)
-        print "number: "+str(number)
-        toto=list(results)
-        sys.stderr.write("result: "+str(toto)+"\n")
+            number = re.findall(r' [0-9]+', text)
+            print "number: "+str(number)
+            toto=list(results)
+            sys.stderr.write("result: "+str(toto)+"\n")
 
-        # Test if there is a criteria on the number of seats
-        if number:
-            if len(number) == 1:
-                inf = int(number[0])
-                filtered_results=[result for result in toto if int(result.split('(')[1].split(')')[0])>=inf]
-                sys.stderr.write("filtered_results: "+str(filtered_results)+"\n")
-#                reply = ", with more than "+str(inf)+" seats, "+start+" "+end
-                reply = ", with more than "+str(inf)+" seats, int the next 2 hours"
+            # Test if there is a criteria on the number of seats
+            if number:
+                if len(number) == 1:
+                    inf = int(number[0])
+                    filtered_results=[result for result in toto if int(result.split('(')[1].split(')')[0])>=inf]
+                    sys.stderr.write("filtered_results: "+str(filtered_results)+"\n")
+    #                reply = ", with more than "+str(inf)+" seats, "+start+" "+end
+                    reply = ", with more than "+str(inf)+" seats, int the next 2 hours"
+                else:
+                    inf = int(number[0])
+                    sup = int(number[1])
+                    filtered_results=[result for result in toto if inf <= int(result.split('(')[1].split(')')[0]) <= sup]
+                    sys.stderr.write("filtered_results: "+str(filtered_results)+"\n")
+    #                reply = ", with more than "+str(inf)+" and less than "+str(sup)+" seats, "+start+" "+end
+                    reply = ", with more than "+str(inf)+" and less than "+str(sup)+" seats in the next 2 hours"               
             else:
-                inf = int(number[0])
-                sup = int(number[1])
-                filtered_results=[result for result in toto if inf <= int(result.split('(')[1].split(')')[0]) <= sup]
-                sys.stderr.write("filtered_results: "+str(filtered_results)+"\n")
-#                reply = ", with more than "+str(inf)+" and less than "+str(sup)+" seats, "+start+" "+end
-                reply = ", with more than "+str(inf)+" and less than "+str(sup)+" seats in the next 2 hours"               
-        else:
-#            reply = " "+start+" "+end
-            reply = " in the next 2 hours"
-            filtered_results=toto
+    #            reply = " "+start+" "+end
+                reply = " in the next 2 hours"
+                filtered_results=toto
 
-        titi=list(filtered_results)
-        # Test if filtered result list is empty or not
-        if titi:
-            reply = "The current available rooms"+reply+" are:\n"
+            titi=list(filtered_results)
+            # Test if filtered result list is empty or not
+            if titi:
+                reply = "The current available rooms"+reply+" are:\n"
 
-            for result in titi:
-                reply += "* %s\n" % (result)
-                #sys.stderr.write("Salle: "+result+"\n")
-            reply += "\nYou can book one of the rooms with the keyword : **book ROOM-NAME [option: 30m or 1h]**"
-        else:
-            reply = "Sorry, there are currently no available rooms"+reply+"\n"
+                for result in titi:
+                    reply += "* %s\n" % (result)
+                    #sys.stderr.write("Salle: "+result+"\n")
+                reply += "\nYou can book one of the rooms with the keyword : **book ROOM-NAME [option: 30m or 1h]**"
+            else:
+                reply = "Sorry, there are currently no available rooms"+reply+"\n"
+        except Exception as e:
+            reply="Dispo server is not available !"
     # Check if message contains word "options" and if so send options
     elif text in ["options","help","aide","?","/help","hello","hi"] :
         reply = "Here are the keywords you can use: \n"
@@ -652,17 +659,6 @@ def find_image(keyword):
     else:
         return "Sorry no image found !"
 
-# Utilities to interact with the Roomfinder-App Server
-def get_available():
-    u = app_server + "/"
-    page = requests.get(u, headers = app_headers)
-    tally = page.json()
-    #print "Tally: "+str(tally)
-    #tally = sorted(tally.items(), key = lambda (k,v): v, reverse=True)
-    room_list=(i[1].split()[0]+" "+i[1].split()[1] for i in tally[1] if i[0]=="Free")
-    start = tally[0][2]
-    end = tally[0][3]
-    return start, end, room_list
 
 # Spark Utility Functions
 #### Message Utilities

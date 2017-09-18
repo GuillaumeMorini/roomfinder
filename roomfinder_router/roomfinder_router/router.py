@@ -136,12 +136,10 @@ def find_dir(cco):
             for r in reply["results"]:
                 index=r
                 reply["results"][r]["description"]=index
-
     else:
         sys.stderr.write("Exact CCO found !\n")
         for r in reply["results"]:
-            index=r
-            reply["results"][r]["cn"]=index
+            reply["results"][r]["cn"]=r
 
     if "results" not in reply :
         sys.stderr.write('no results\n')
@@ -162,7 +160,9 @@ def find_dir(cco):
             sys.stderr.write("One person found !\n")
             index=list(l.keys())[0]
             cco=l[index]["cn"]
-            reply["results"][index]["description"]=index
+            #reply["results"][index]["description"]=index
+    else:
+        index=cco
     sys.stderr.write("cco2: "+str(cco)+"\n")
     sys.stderr.write("index: "+str(index.encode('utf-8'))+"\n")
     # Add picture URL from picture server
