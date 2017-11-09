@@ -386,10 +386,10 @@ def process_webhook():
             floor=floor.replace('plan ','')
             pattern = re.compile("^([0-7]+)$")
             m = pattern.match(floor)
-            sys.stderr.write("display_map: "+floor+"\n")
             if m:
                 # Map and number => ILM
                 floor='ILM-'+m.group()
+                sys.stderr.write("display_map: "+floor+"\n")
                 reply = display_map(floor.upper())
                 message_type="pdf"
             else:
@@ -397,13 +397,16 @@ def process_webhook():
                 m2 = pattern2.match(floor)
                 if m2:
                     floor=m2.group()
+                    sys.stderr.write("display_map: "+floor+"\n")
                     reply = display_map(floor.upper())
                     if reply != "Connection error to map server":
                         message_type="pdf"
                 else:
                     t=floor.split("-")
                     if len(t) == 3 :
-                        reply = display_map(t[0]+"-"+t[1])
+                        floor=t[0]+"-"+t[1]
+                        sys.stderr.write("display_map: "+floor+"\n")
+                        reply = display_map(floor.upper())
                         if reply != "Connection error to map server":
                             message_type="pdf"
                     else:
@@ -449,7 +452,7 @@ def process_webhook():
             reply += "\t\t inside SJC13-3-SMILE\n"  
         else:      
             inside = text.split()[1].upper()
-            if inside.startswith('ilm') :
+            if inside.startswith('ILM') :
                 reply=display_inside(inside)
                 message_type="image"
             else :
