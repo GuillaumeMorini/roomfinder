@@ -4,14 +4,16 @@ from flask import Flask, request
 import json, datetime
 import sys, os
 from string import Template
-import xml.etree.ElementTree as ET
-import subprocess
+import defusedxml.ElementTree as ET
 import requests
 from requests_ntlm import HttpNtlmAuth
 from threading import Thread
 from Queue import Queue
 import argparse
 import unidecode
+
+# Need to replace with requests
+import subprocess
 
 def max(a,b):
     if a < b:
@@ -352,9 +354,9 @@ if __name__ == '__main__':
     result=list()
     rooms={}
     try:
-    	app.run(debug=True, host='0.0.0.0', port=int("5000"))
+    	app.run(host='0.0.0.0', port=int("5000"))
     except:
     	try:
-    		app.run(debug=True, host='0.0.0.0', port=int("5000"))
+    		app.run(host='0.0.0.0', port=int("5000"))
         except Exception as ex:
             print "Web server error: "+str(ex)

@@ -113,9 +113,9 @@ if __name__ == '__main__':
 
 
     try:
-    	app.run(debug=True, host='0.0.0.0', port=int("5000"))
+    	app.run(host='0.0.0.0', port=int("5000"))
     except:
     	try:
-    		app.run(debug=True, host='0.0.0.0', port=int("5000"))
+    		app.run(host='0.0.0.0', port=int("5000"))
     	except:
     		print "Dispo web services error"

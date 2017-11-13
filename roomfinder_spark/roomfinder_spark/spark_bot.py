@@ -25,8 +25,8 @@
 __author__ = 'gmorini@cisco.com'
 
 from flask import Flask, request, Response
-import requests, json, re, urllib, random, socket
-import xml.etree.ElementTree as ET
+import os, requests, json, re, urllib, socket
+#import defusedxml.ElementTree as ET
 import ntpath
 import datetime
 from requests_toolbelt.multipart.encoder import MultipartEncoder
@@ -656,7 +656,7 @@ def find_image(keyword):
     test=page.text.encode('utf-8').replace('jsonFlickrFeed(','').replace(')','').replace('\\\'','\\\\\'')
     j=json.loads(test)
     if len(j["items"]) > 0 :
-        i=random.randrange(0, len(j["items"]))
+        i= ord(os.urandom(1))%len(j["items"])
         link=j["items"][i]["media"]["m"]
         return link
     else:
