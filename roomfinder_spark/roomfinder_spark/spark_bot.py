@@ -26,7 +26,6 @@ __author__ = 'gmorini@cisco.com'
 
 from flask import Flask, request, Response
 import os, requests, json, re, urllib, socket
-#import defusedxml.ElementTree as ET
 import ntpath
 import datetime
 from requests_toolbelt.multipart.encoder import MultipartEncoder
@@ -38,7 +37,6 @@ import lnetatmo
 import time
 import unicodedata
 import feedparser
-from subprocess import check_output
 
 admin_list=["rcronier@cisco.com","gmorini@cisco.com","johnroomfinder@gmail.com"]
 log_dir="/log/"
