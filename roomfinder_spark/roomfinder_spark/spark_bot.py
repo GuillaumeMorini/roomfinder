@@ -999,18 +999,6 @@ if __name__ == '__main__':
     # print "Bot Email: " + bot_email
     sys.stderr.write("Bot Email: " + bot_email + "\n")
 
-    app_server = args.app
-    # print "Arg App: " + str(app_server)
-    if (app_server == None):
-        app_server = os.getenv("roomfinder_data_server")
-        # print "Env App: " + str(app_server)
-        if (app_server == None):
-            get_app_server = raw_input("What is the data server address? ")
-            # print "Input App: " + str(get_app_server)
-            app_server = get_app_server
-    # print "App Server: " + app_server
-    sys.stderr.write("Data Server: " + str(app_server) + "\n")
-
     dispo_server = args.dispo
     if (dispo_server == None):
         dispo_server = os.getenv("roomfinder_dispo_server")
