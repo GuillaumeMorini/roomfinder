@@ -12,9 +12,6 @@ from Queue import Queue
 import argparse
 import unidecode
 
-# Need to replace with requests
-import subprocess
-
 def max(a,b):
     if a < b:
         return b
@@ -133,12 +130,10 @@ def book():
         xml_template = open("resolvenames_template.xml", "r").read()
         xml = Template(xml_template)
         data = unicode(xml.substitute(name=str(j["room_name"])))
-        header = "\"content-type: text/xml;charset=utf-8\""
-        command = "curl --silent --header " + header +" --data '" + data + "' --ntlm "+ "-u "+ user+":"+password+" "+ url
-        #print "command: "+str(command)
-        response = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True).communicate()[0]
-        #print "response: "+str(response)
-        tree = ET.fromstring(response.encode('utf-8'))
+        headers = {}
+        headers["Content-type"] = "text/xml; charset=utf-8"
+        response=requests.post(url,headers = headers, data= data, auth= HttpNtlmAuth(user,password))
+        tree = ET.fromstring(response.text.encode('utf-8'))
 
         room_name=""
         room_email=""
@@ -213,13 +208,11 @@ def findRooms(prefix=None,anywhere=False):
 
     data = unicode(xml.substitute(name=prefix))
 
-    header = "\"content-type: text/xml;charset=utf-8\""
-    #command = "curl --silent --header " + header +" --data '" + data + "' --ntlm "+"--negotiate "+ "-u "+ user+":"+password+" "+ url
-    command = "curl --silent --header " + header +" --data '" + data + "' --ntlm "+ "-u "+ user+":"+password+" "+ url
-    #print "command: "+str(command)
-    response = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True).communicate()[0]
-    #print "response: "+str(response)
-    tree = ET.fromstring(response.encode('utf-8'))
+    headers = {}
+    headers["Content-type"] = "text/xml; charset=utf-8"
+
+    response=requests.post(url,headers = headers, data= data, auth= HttpNtlmAuth(user,password))
+    tree = ET.fromstring(response.text.encode('utf-8'))
 
     elems=tree.findall(".//{http://schemas.microsoft.com/exchange/services/2006/types}Resolution")
     for elem in elems:
@@ -288,10 +281,10 @@ def book_room(room_name, room_email, user_name, user_email, start_time, end_time
     xml_template = open("book_room.xml", "r").read()
     xml = Template(xml_template)
     data = unicode(xml.substitute(starttime=start_time,endtime=end_time,user=unidecode.unidecode(unicode(user_name.replace("\'",""))),user_email=user_email,room=room_name,room_email=room_email))
-    header = "\"content-type: text/xml;charset=utf-8\""
-    command = "curl --silent --header " + header +" --data '" + data + "' --ntlm "+ "-u "+ user+":"+password+" "+ url
-    response = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True).communicate()[0]
-    return str(response)   
+    headers = {}
+    headers["Content-type"] = "text/xml; charset=utf-8"
+    response=requests.post(url,headers = headers, data= data, auth= HttpNtlmAuth(user,password))
+    return str(response.text)   
 
 if __name__ == '__main__':
     from argparse import ArgumentParser
