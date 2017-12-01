@@ -130,8 +130,12 @@ def find_dir(cco):
             return 'Timeout looking for name\n'
         reply=r.json()
         if 'responseCode' not in reply or reply["responseCode"] != 0:
-            sys.stderr.write('Nobody found with this name or CCO in the directory\n')
-            return 'Nobody found with this name or CCO in the directory\n'
+            if reply["responseCode"] == 2:
+                sys.stderr.write('Nobody found with this name or CCO in the directory\n')
+                return 'Nobody found with this name or CCO in the directory\n'
+            else:
+                sys.stderr.write('Connection error to the directory\n')
+                return 'Connection error to the directory\n'                
         else:
             for r in reply["results"]:
                 index=r
