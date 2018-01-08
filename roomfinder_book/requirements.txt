@@ -1,5 +1,6 @@
 ArgumentParser
 flask
 requests
-requests_ntlm
+requests_ntlm==1.0.0
 unidecode
+defusedxml

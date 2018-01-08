@@ -176,7 +176,7 @@ def find_dir(cco):
     # Add Link to directory
     reply["results"][index]["link"]=dir_detail_server+cco
     # Add manager name
-    if "manager" in reply["results"][index]:
+    if "manager" in reply["results"][index] and reply["results"][index]["manager"] is not None:
         sys.stderr.write("Manager found\n")
         manager_cco=reply["results"][index]["manager"].split(',')[0].split('=')[1]
         u = dir_server + manager_cco
@@ -218,7 +218,7 @@ def find_dir(cco):
         text+=reply["results"][index]["title"]+"<br>;"
     else:
         text+=";"
-    if reply["results"][index]["manager_name"] != None:
+    if reply["results"][index]["manager"] != None and "manager_name" in reply["results"][index]:
         text+=reply["results"][index]["manager_name"]+"<br>;"
     else:
         text+=";"

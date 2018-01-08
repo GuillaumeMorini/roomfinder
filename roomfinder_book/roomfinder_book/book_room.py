@@ -12,6 +12,8 @@ from Queue import Queue
 import argparse
 import unidecode
 
+MAX_THREADS=10
+
 def max(a,b):
     if a < b:
         return b
@@ -138,6 +140,8 @@ def book():
         room_name=""
         room_email=""
         elems=tree.findall(".//{http://schemas.microsoft.com/exchange/services/2006/types}Resolution")
+
+        ### Need to verify if multiple elements exists ###
         for elem in elems:
             tmp = elem.findall(".//{http://schemas.microsoft.com/exchange/services/2006/types}EmailAddress")[0].text
             if tmp.startswith("CONF_"):
@@ -251,9 +255,6 @@ def dispo_building(b,start=None, end=None):
 
     xml_template = open("getavailibility_template.xml", "r").read()
     xml = Template(xml_template)
-
-
-    MAX_THREADS=20
 
     q = Queue()
     try:
