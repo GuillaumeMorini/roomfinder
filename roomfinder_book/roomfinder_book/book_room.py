@@ -291,7 +291,7 @@ if __name__ == '__main__':
     from argparse import ArgumentParser
     parser = ArgumentParser("Room Finder Book Room Service")
     parser.add_argument("-url","--url", help="url for exchange server, e.g. 'https://mail.domain.com/ews/exchange.asmx'.")
-    parser.add_argument("-d","--data", help="url for data server, e.g. 'http://data.domain.com:5000'.")
+    # parser.add_argument("-d","--data", help="url for data server, e.g. 'http://data.domain.com:5000'.")
     parser.add_argument("-u","--user", help="user for exchange server, e.g. 'toto@toto.com'.")
     parser.add_argument("-p","--password", help="password for exchange server.")
     args = parser.parse_args()
@@ -308,15 +308,15 @@ if __name__ == '__main__':
 
     # sys.stderr.write("Exchange URL: " + url + "\n")
 
-    data = args.data
+    # data = args.data
 
-    if (data == None):
-        data = os.getenv("roomfinder_data_server")
-        # print "Exchange URL: " + str(url)
-        if (data == None):
-            get_data_server = raw_input("What is the Data server URL? ")
-            # print "Input URL: " + str(get_exchange_server)
-            data = get_data_server
+    # if (data == None):
+    #     data = os.getenv("roomfinder_data_server")
+    #     # print "Exchange URL: " + str(url)
+    #     if (data == None):
+    #         get_data_server = raw_input("What is the Data server URL? ")
+    #         # print "Input URL: " + str(get_exchange_server)
+    #         data = get_data_server
 
     # sys.stderr.write("Data server URL: " + data + "\n")
 
