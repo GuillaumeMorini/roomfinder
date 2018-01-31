@@ -273,7 +273,7 @@ def building(name):
                                                         found.append({"id": building["buildingId"],"name": building["buildingName"]})
                 if len(found)>15:
                     return "Sorry too much building ! Please refine your request !"
-                elif if len(found)==0:
+                elif len(found)==0:
                     return "Sorry not found !"
                 else:
                     txt="Are you looking for one of these buildings:"
