@@ -113,8 +113,8 @@ def find_dir(cco):
     u = dir_server + urllib.pathname2url('*'+cco+'*')
     try:
         r=requests.get(u, timeout=TIMEOUT)
-    except requests.exceptions.RequestException:
-        sys.stderr.write('Timeout looking for exact CCO\n')
+    except requests.exceptions.RequestException as e:
+        sys.stderr.write('Timeout looking for exact CCO. Exception: '+str(e)+'\n')
         return 'Timeout looking for exact CCO\n'
     reply=r.json()
     if 'responseCode' not in reply :
@@ -125,8 +125,8 @@ def find_dir(cco):
         u = dir_server_2 + urllib.pathname2url('*'+cco+'*')
         try:
             r=requests.get(u, timeout=TIMEOUT)
-        except requests.exceptions.RequestException:
-            sys.stderr.write('Timeout looking for name\n')
+        except requests.exceptions.RequestException as e:
+            sys.stderr.write('Timeout looking for name. Exception: '+str(e)+'\n')
             return 'Timeout looking for name\n'
         reply=r.json()
         if 'responseCode' not in reply or reply["responseCode"] != 0:
