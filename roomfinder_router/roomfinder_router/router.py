@@ -273,11 +273,14 @@ def building(name):
                                                         found.append({"id": building["buildingId"],"name": building["buildingName"]})
                 if len(found)>15:
                     return "Sorry too much building ! Please refine your request !"
-                txt="Are you looking for one of these buildings:"
-                for e in found:
-                    id=e["id"]
-                    name=e["name"]
-                    txt+="\n * "+str(id.encode('utf-8'))+" ("+str(name.encode('utf-8'))+")"
+                elif if len(found)==0:
+                    return "Sorry not found !"
+                else:
+                    txt="Are you looking for one of these buildings:"
+                    for e in found:
+                        id=e["id"]
+                        name=e["name"]
+                        txt+="\n * "+str(id.encode('utf-8'))+" ("+str(name.encode('utf-8'))+")"
                 return txt
         return "Connection error to building server"
     except Exception as e:
