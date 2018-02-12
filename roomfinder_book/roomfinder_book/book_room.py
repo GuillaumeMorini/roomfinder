@@ -81,9 +81,11 @@ def is_available(room_email,start_time,end_time):
     headers = {}
     headers["Content-type"] = "text/xml; charset=utf-8"
     data=unicode(xml.substitute(email=room_email,starttime=start_time,endtime=end_time)).strip()
+    status = "KO"
     response=requests.post(url,headers = headers, data= data, auth= HttpNtlmAuth(user,password))
+    if response is not None : 
+        status = "Free"
     tree = ET.fromstring(response.text.encode('utf-8'))
-    status = "Free"
     # arrgh, namespaces!!
     elems=tree.findall(".//{http://schemas.microsoft.com/exchange/services/2006/types}BusyType")
     for elem in elems:
