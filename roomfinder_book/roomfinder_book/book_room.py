@@ -55,7 +55,9 @@ def doSomethingWithResult(response):
         # arrgh, namespaces!!
         elems=tree.findall(".//{http://schemas.microsoft.com/exchange/services/2006/types}BusyType")
         for elem in elems:
-            status=elem.text
+            if status == "Free" :
+                status=elem.text
+                sys.stderr.write("Change status to: "+str(status)+"\n")
 
         tree2=ET.fromstring(response.request.body.encode('utf-8'))
         elems=tree2.findall(".//{http://schemas.microsoft.com/exchange/services/2006/types}Address")
